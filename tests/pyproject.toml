@@ -1,0 +1,6 @@
+[tool.ruff]
+# Extend the `pyproject.toml` file in the parent directory.
+extend = "../pyproject.toml"
+
+[tool.ruff.lint]
+ignore = ["D101", "D102", "D103"]

@@ -1,0 +1,53 @@
+[project]
+name = "datarobotx-idp"
+version = "0.0.1"
+dependencies = ["datarobot==3.3.0", "requests==2.31.0"]
+requires-python = ">=3.8"
+
+[project.optional-dependencies]
+kedro = [
+    "kedro==0.18.14",
+    "kedro-datasets==2.0.0"
+]
+dev = [
+    "ruff==0.1.6",
+    "mypy==1.8.0",
+    "pytest==7.4.3",
+    "types-requests==2.31.0",
+    "pandas-stubs<=2.1.5"
+]
+
+[build-system]
+requires = ["setuptools >= 65.5.0", "wheel>=0.42.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["datarobotx.*"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["D", "F", "I"]
+ignore = ["D100", "D104"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.isort]
+force-sort-within-sections = true
+forced-separate = ["datarobot", "datarobotx"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.mypy]
+exclude = ["tests"]
+
+[[tool.mypy.overrides]]
+module = [
+    "fsspec",
+    "requests_toolbelt"
+]
+ignore_missing_imports = true

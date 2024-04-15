@@ -1,0 +1,94 @@
+import pandas as pd
+import pytest
+
+from datarobotx.idp.datasets import get_or_create_dataset_from_df, get_or_create_dataset_from_file
+from datarobotx.idp.use_cases import get_or_create_use_case
+
+
+@pytest.fixture
+def use_case(dr_endpoint, dr_token, cleanup_dr):
+    with cleanup_dr("useCases/"):
+        yield get_or_create_use_case(
+            dr_endpoint,
+            dr_token,
+            "pytest use case",
+        )
+
+
+@pytest.fixture
+def cleanup_env(cleanup_dr):
+    with cleanup_dr("datasets/", id_attribute="datasetId"):
+        yield
+
+
+@pytest.fixture
+def dummy_df(tmp_path):
+    return pd.DataFrame(
+        {"num_legs": [2, 4, 8, 0], "num_wings": [2, 0, 0, 0], "num_specimen_seen": [10, 2, 1, 8]},
+        index=["falcon", "dog", "spider", "fish"],
+    )
+
+
+@pytest.fixture
+def dummy_dataset_file(tmp_path, dummy_df):
+    path = tmp_path / "py_test.csv"
+    dummy_df.to_csv(path)
+    return str(path)
+
+
+def test_get_or_create_from_file(dr_endpoint, dr_token, use_case, dummy_dataset_file, cleanup_env):
+    use_case_id_1 = get_or_create_dataset_from_file(
+        dr_endpoint,
+        dr_token,
+        use_case,
+        "pytest dataset #1",
+        dummy_dataset_file,
+    )
+    assert len(use_case_id_1)
+
+    use_case_id_2 = get_or_create_dataset_from_file(
+        dr_endpoint,
+        dr_token,
+        use_case,
+        "pytest dataset #1",
+        dummy_dataset_file,
+    )
+    assert use_case_id_1 == use_case_id_2
+
+    use_case_id_3 = get_or_create_dataset_from_file(
+        dr_endpoint,
+        dr_token,
+        use_case,
+        "pytest dataset #2",
+        dummy_dataset_file,
+    )
+    assert use_case_id_1 != use_case_id_3
+
+
+def test_get_or_create_from_df(dr_endpoint, dr_token, use_case, dummy_df, cleanup_env):
+    use_case_id_1 = get_or_create_dataset_from_df(
+        dr_endpoint,
+        dr_token,
+        use_case,
+        "pytest dataset #1",
+        dummy_df,
+    )
+    assert len(use_case_id_1)
+
+    use_case_id_2 = get_or_create_dataset_from_df(
+        dr_endpoint,
+        dr_token,
+        use_case,
+        "pytest dataset #1",
+        dummy_df,
+    )
+    assert use_case_id_1 == use_case_id_2
+
+    use_case_id_3 = get_or_create_dataset_from_df(
+        dr_endpoint,
+        dr_token,
+        use_case,
+        "pytest dataset #2",
+        dummy_df,
+    )
+    assert use_case_id_1 != use_case_id_3
