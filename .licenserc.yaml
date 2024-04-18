@@ -24,7 +24,7 @@ header:
     copyright-owner: DataRobot, Inc.
     content: |-
 
-      Copyright 2023 DataRobot, Inc. and its affiliates.
+      Copyright 2024 DataRobot, Inc. and its affiliates.
 
       All rights reserved.
 
@@ -36,14 +36,14 @@ header:
       Released under the terms of DataRobot Tool and Utility Agreement.
 
   paths:
-    - '**/*.py'
+    - "**/*.py"
     # - You can temporarily list files below which will be checked when running the tool locally.
     # - 'new-file01.py'
 
   paths-ignore:
     # these files/directories should not be analyzed
     #
-    - 'build/'
-    - '__init__.py'
+    - "build/"
+    - "__init__.py"
 
   comment: on-failure
