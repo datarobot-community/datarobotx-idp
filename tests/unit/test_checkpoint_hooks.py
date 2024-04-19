@@ -8,7 +8,7 @@
 # This is proprietary source code of DataRobot, Inc. and its
 # affiliates.
 #
-# Released under the terms of DataRobot Tool and Utility Agreement. 
+# Released under the terms of DataRobot Tool and Utility Agreement.
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
 import uuid
