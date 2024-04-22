@@ -1,25 +1,16 @@
 [project]
 name = "datarobotx-idp"
-version = "0.0.1"
-dependencies = ["datarobot==3.3.0", "requests==2.31.0"]
+version = "0.2.0-alpha"
 requires-python = ">=3.8"
-
-[project.optional-dependencies]
-kedro = [
-    "kedro==0.18.14",
-    "kedro-datasets==2.0.0"
-]
-dev = [
-    "ruff==0.1.6",
-    "mypy==1.8.0",
-    "pytest==7.4.3",
-    "types-requests==2.31.0",
-    "pandas-stubs<=2.1.5"
-]
+dynamic = ["dependencies", "optional-dependencies"]
 
 [build-system]
 requires = ["setuptools >= 65.5.0", "wheel>=0.42.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+optional-dependencies = {dev = { file = ["dev-requirements.txt"] }}
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -15,9 +15,12 @@ import functools
 import logging
 from typing import Any, Dict
 
-from kedro.framework.hooks import hook_impl
-from kedro.io import DataCatalog
-from kedro.pipeline.node import Node
+try:
+    from kedro.framework.hooks import hook_impl
+    from kedro.io import DataCatalog
+    from kedro.pipeline.node import Node
+except ImportError as e:
+    raise ImportError("Consider including kedro in your project requirements`") from e
 
 from datarobotx.idp.common.hashing import get_hash
 
