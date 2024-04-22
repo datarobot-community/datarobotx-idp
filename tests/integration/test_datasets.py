@@ -50,58 +50,58 @@ def dummy_dataset_file(tmp_path, dummy_df):
 
 
 def test_get_or_create_from_file(dr_endpoint, dr_token, use_case, dummy_dataset_file, cleanup_env):
-    use_case_id_1 = get_or_create_dataset_from_file(
+    ds_id_1 = get_or_create_dataset_from_file(
         dr_endpoint,
         dr_token,
         use_case,
         "pytest dataset #1",
         dummy_dataset_file,
     )
-    assert len(use_case_id_1)
+    assert len(ds_id_1)
 
-    use_case_id_2 = get_or_create_dataset_from_file(
+    ds_id_2 = get_or_create_dataset_from_file(
         dr_endpoint,
         dr_token,
         use_case,
         "pytest dataset #1",
         dummy_dataset_file,
     )
-    assert use_case_id_1 == use_case_id_2
+    assert ds_id_1 == ds_id_2
 
-    use_case_id_3 = get_or_create_dataset_from_file(
+    ds_id_3 = get_or_create_dataset_from_file(
         dr_endpoint,
         dr_token,
         use_case,
         "pytest dataset #2",
         dummy_dataset_file,
     )
-    assert use_case_id_1 != use_case_id_3
+    assert ds_id_1 != ds_id_3
 
 
 def test_get_or_create_from_df(dr_endpoint, dr_token, use_case, dummy_df, cleanup_env):
-    use_case_id_1 = get_or_create_dataset_from_df(
+    ds_id_1 = get_or_create_dataset_from_df(
         dr_endpoint,
         dr_token,
         use_case,
         "pytest dataset #1",
         dummy_df,
     )
-    assert len(use_case_id_1)
+    assert len(ds_id_1)
 
-    use_case_id_2 = get_or_create_dataset_from_df(
+    ds_id_2 = get_or_create_dataset_from_df(
         dr_endpoint,
         dr_token,
         use_case,
         "pytest dataset #1",
         dummy_df,
     )
-    assert use_case_id_1 == use_case_id_2
+    assert ds_id_1 == ds_id_2
 
-    use_case_id_3 = get_or_create_dataset_from_df(
+    ds_id_3 = get_or_create_dataset_from_df(
         dr_endpoint,
         dr_token,
         use_case,
         "pytest dataset #2",
         dummy_df,
     )
-    assert use_case_id_1 != use_case_id_3
+    assert ds_id_1 != ds_id_3
