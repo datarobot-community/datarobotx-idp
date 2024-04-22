@@ -13,8 +13,11 @@
 
 from typing import Any, Dict
 
-from kedro.framework.hooks import hook_impl
-from kedro.io import DataCatalog
+try:
+    from kedro.framework.hooks import hook_impl
+    from kedro.io import DataCatalog
+except ImportError as e:
+    raise ImportError("Consider including kedro in your project requirements`") from e
 
 from datarobotx.idp.common.handle_io import get_feed_dict
 

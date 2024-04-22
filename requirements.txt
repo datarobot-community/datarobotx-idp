@@ -1,0 +1,2 @@
+datarobot >=3.3.0, <4
+requests >=2.31.0, <3
