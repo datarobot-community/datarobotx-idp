@@ -26,7 +26,7 @@ from datarobotx.idp.common.hashing import get_hash
 def _find_existing_environment_version(
     execution_environment_id: str, env_version_token: str
 ) -> str:
-    for env in dr.ExecutionEnvironmentVersion.list(execution_environment_id):
+    for env in dr.ExecutionEnvironmentVersion.list(execution_environment_id):  # type: ignore
         if env.description and (
             env_version_token in env.description
             and env.build_status == EXECUTION_ENVIRONMENT_VERSION_BUILD_STATUS.SUCCESS
@@ -56,7 +56,7 @@ def get_or_create_execution_environment_version(
         return _find_existing_environment_version(execution_environment_id, env_version_token)
     except KeyError as exc:
         kwargs["description"] = kwargs.get("description", "") + f"\nChecksum: {env_version_token}"
-        env_version = dr.ExecutionEnvironmentVersion.create(
+        env_version = dr.ExecutionEnvironmentVersion.create(  # type: ignore
             execution_environment_id, docker_context_path, max_wait=45 * 60, **kwargs
         )
         if env_version.build_status != EXECUTION_ENVIRONMENT_VERSION_BUILD_STATUS.SUCCESS:

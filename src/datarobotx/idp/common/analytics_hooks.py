@@ -31,7 +31,7 @@ class AnalyticsHooks:
     def __init__(self, analytics_trace_id: str):
         self.analytics_trace_id = analytics_trace_id
 
-    @hook_impl
+    @hook_impl  # type: ignore
     def after_catalog_created(
         self,
         catalog: DataCatalog,
@@ -47,7 +47,7 @@ class AnalyticsHooks:
             pass
 
     @staticmethod
-    def set_analytics_trace(conf_creds: Dict[str, Any], analytics_trace_id: str):
+    def set_analytics_trace(conf_creds: Dict[str, Any], analytics_trace_id: str) -> None:
         """Set DataRobot client analytics trace."""
         import uuid
 
@@ -57,7 +57,7 @@ class AnalyticsHooks:
         unique_id = uuid.uuid4()
         trace_name = f"recipe->{analytics_trace_id}->{unique_id}"
 
-        client = dr.Client(
+        client = dr.Client(  # type: ignore
             token=dr_creds["api_token"], endpoint=dr_creds["endpoint"], trace_context=trace_name
         )
         client.get("version/")

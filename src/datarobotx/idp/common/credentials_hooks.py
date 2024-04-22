@@ -25,7 +25,7 @@ from datarobotx.idp.common.handle_io import get_feed_dict
 class CredentialsHooks:
     """Include credentials in the catalog so they can be used by nodes."""
 
-    @hook_impl
+    @hook_impl  # type: ignore
     def after_catalog_created(
         self,
         catalog: DataCatalog,
@@ -41,11 +41,11 @@ class CredentialsHooks:
         catalog.add_feed_dict(creds)
 
     @staticmethod
-    def validate_credentials(conf_creds: Dict[str, Any]):
+    def validate_credentials(conf_creds: Dict[str, Any]) -> None:
         """Confirm credentials appear to be valid and functional."""
         import datarobot as dr
 
         dr_creds = conf_creds["datarobot"]
 
-        client = dr.Client(token=dr_creds["api_token"], endpoint=dr_creds["endpoint"])
+        client = dr.Client(token=dr_creds["api_token"], endpoint=dr_creds["endpoint"])  # type: ignore
         client.get("version/")

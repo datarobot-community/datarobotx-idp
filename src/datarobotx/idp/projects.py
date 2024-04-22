@@ -16,6 +16,7 @@
 from typing import Any
 
 import datarobot as dr
+from datarobot import Project
 
 
 def _find_existing_project(project_name: str, dataset_id: str, dataset_version_id: str) -> str:
@@ -39,5 +40,7 @@ def get_or_create_project_from_dataset(
             dataset_version_id=kwargs["dataset_version_id"],
         )
     except KeyError:
-        project = dr.Project.create_from_dataset(dataset_id=dataset_id, project_name=name, **kwargs)
+        project: Project = dr.Project.create_from_dataset(
+            dataset_id=dataset_id, project_name=name, **kwargs
+        )
         return str(project.id)

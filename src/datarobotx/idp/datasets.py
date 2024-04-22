@@ -19,6 +19,7 @@ from typing import Any
 import pandas as pd
 
 import datarobot as dr
+from datarobot import Dataset
 
 from datarobotx.idp.common.hashing import get_hash
 
@@ -51,7 +52,7 @@ def get_or_create_dataset_from_file(
     try:
         return _find_existing_dataset(use_case_id, dataset_token)
     except KeyError:
-        dataset = dr.Dataset.create_from_file(file_path=file_path, use_cases=use_case_id)
+        dataset: Dataset = dr.Dataset.create_from_file(file_path=file_path, use_cases=use_case_id)
         # Dataset API does not have a description attribute (also not exposed in Workbench UI)
         dataset.modify(name=f"{name} [{dataset_token}]")
         return str(dataset.id)
@@ -78,7 +79,7 @@ def get_or_create_dataset_from_df(
     try:
         return _find_existing_dataset(use_case_id, dataset_token)
     except KeyError:
-        dataset = dr.Dataset.create_from_in_memory_data(
+        dataset: Dataset = dr.Dataset.create_from_in_memory_data(
             data_frame=data_frame, use_cases=use_case_id
         )
         # Dataset API does not have a description attribute (also not exposed in Workbench UI)
