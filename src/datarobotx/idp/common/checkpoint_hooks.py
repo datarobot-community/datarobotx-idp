@@ -29,8 +29,8 @@ class CheckpointHooks:
     """
 
     def __init__(self) -> None:
-        self.node_original_func = {}
-        self.node_inputs_hash = {}
+        self.node_original_func = {}  # type: ignore
+        self.node_inputs_hash = {}  # type: ignore
         self.logger = logging.getLogger(__name__)
 
     @property
@@ -44,7 +44,7 @@ class CheckpointHooks:
         assert len(node.name)
         return f"{node.name}_checksum"
 
-    @hook_impl
+    @hook_impl  # type: ignore
     def before_node_run(
         self,
         node: Node,
@@ -77,7 +77,7 @@ class CheckpointHooks:
             if len(checksum):
                 self.node_inputs_hash[id(node)] = checksum
 
-    @hook_impl
+    @hook_impl  # type: ignore
     def after_node_run(
         self,
         node: Node,
