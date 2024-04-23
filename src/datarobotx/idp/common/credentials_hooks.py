@@ -25,7 +25,7 @@ from datarobotx.idp.common.handle_io import get_feed_dict
 class CredentialsHooks:
     """Include credentials in the catalog so they can be used by nodes."""
 
-    @hook_impl  # type: ignore
+    @hook_impl
     def after_catalog_created(
         self,
         catalog: DataCatalog,

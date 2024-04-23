@@ -47,7 +47,7 @@ class CheckpointHooks:
         assert len(node.name)
         return f"{node.name}_checksum"
 
-    @hook_impl  # type: ignore
+    @hook_impl
     def before_node_run(
         self,
         node: Node,
@@ -80,7 +80,7 @@ class CheckpointHooks:
             if len(checksum):
                 self.node_inputs_hash[id(node)] = checksum
 
-    @hook_impl  # type: ignore
+    @hook_impl
     def after_node_run(
         self,
         node: Node,

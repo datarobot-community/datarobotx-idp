@@ -1,5 +1,8 @@
 ruff==0.1.6
 mypy==1.8.0
 pytest==7.4.3
+# type checking related
 types-requests==2.31.0
 pandas-stubs<=2.1.5
+kedro==0.19.5
+kedro-datasets==3.0.0

@@ -31,7 +31,7 @@ class AnalyticsHooks:
     def __init__(self, analytics_trace_id: str):
         self.analytics_trace_id = analytics_trace_id
 
-    @hook_impl  # type: ignore
+    @hook_impl
     def after_catalog_created(
         self,
         catalog: DataCatalog,
