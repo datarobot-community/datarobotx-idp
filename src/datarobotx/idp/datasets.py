@@ -14,6 +14,7 @@
 # mypy: disable-error-code="attr-defined"
 # pyright: reportPrivateImportUsage=false
 from pathlib import Path
+import time
 from typing import Any
 
 import pandas as pd
@@ -24,10 +25,21 @@ from datarobot import Dataset
 from datarobotx.idp.common.hashing import get_hash
 
 
-def _find_existing_dataset(use_case_id: str, dataset_token: str) -> str:
+def _find_existing_dataset(timeout_secs: int, use_case_id: str, dataset_token: str) -> str:
     for dataset in dr.Dataset.list(use_cases=use_case_id):
         if dataset_token in dataset.name:
-            return dataset.id
+            waited_secs = 0
+            while True:
+                status = Dataset.get(dataset.id).processing_state
+                if status == "COMPLETED":
+                    return str(dataset.id)
+                elif status == "ERROR":
+                    break
+                elif waited_secs > timeout_secs:
+                    raise TimeoutError("Timed out waiting for dataset to process.")
+                time.sleep(3)
+                waited_secs += 3
+
     raise KeyError("No matching dataset found")
 
 
@@ -50,7 +62,9 @@ def get_or_create_dataset_from_file(
     dataset_token = get_hash(use_case_id, name, Path(file_path), **kwargs)
 
     try:
-        return _find_existing_dataset(use_case_id, dataset_token)
+        return _find_existing_dataset(
+            timeout_secs=600, use_case_id=use_case_id, dataset_token=dataset_token
+        )
     except KeyError:
         dataset: Dataset = dr.Dataset.create_from_file(file_path=file_path, use_cases=use_case_id)
         # Dataset API does not have a description attribute (also not exposed in Workbench UI)
@@ -77,7 +91,9 @@ def get_or_create_dataset_from_df(
     dataset_token = get_hash(use_case_id, name, data_frame, **kwargs)
 
     try:
-        return _find_existing_dataset(use_case_id, dataset_token)
+        return _find_existing_dataset(
+            timeout_secs=600, use_case_id=use_case_id, dataset_token=dataset_token
+        )
     except KeyError:
         dataset: Dataset = dr.Dataset.create_from_in_memory_data(
             data_frame=data_frame, use_cases=use_case_id
