@@ -44,11 +44,8 @@ def get_or_create_llm_blueprint(
     try:
         return _find_existing_llm_blueprint(playground=playground, name=name, **kwargs)
     except KeyError:
-        if "vector_database_settings" in kwargs:
-            vdb_settings = kwargs.pop("vector_database_settings")
-            if isinstance(vdb_settings, dict):
-                vdb_settings = VectorDatabaseSettings(**vdb_settings)
-        else:
-            vdb_settings = None
+        vdb_settings = kwargs.pop("vector_database_settings", None)
+        if isinstance(vdb_settings, dict):
+            vdb_settings = VectorDatabaseSettings(**vdb_settings)
         bp = LLMBlueprint.create(playground, name, vector_database_settings=vdb_settings, **kwargs)
         return str(bp.id)
