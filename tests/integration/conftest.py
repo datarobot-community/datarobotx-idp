@@ -21,7 +21,7 @@ import datarobot as dr
 from datarobot.utils.pagination import unpaginate
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def cleanup_dr(dr_endpoint, dr_token):
     """Build a context manager for cleaning up DR assets."""
     headers = {"Authorization": f"Bearer {dr_token}"}
