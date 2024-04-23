@@ -14,12 +14,15 @@
 import pytest
 
 import datarobot as dr
-from datarobotx.idp.llm_blueprints import get_or_create_llm_blueprint
+from datarobotx.idp.llm_blueprints import (
+    get_or_create_llm_blueprint,
+    get_or_register_llm_blueprint_custom_model_version,
+)
 from datarobotx.idp.playgrounds import get_or_create_playground
 from datarobotx.idp.use_cases import get_or_create_use_case
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def use_case(dr_endpoint, dr_token, cleanup_dr):
     with cleanup_dr("useCases/"):
         yield get_or_create_use_case(
@@ -29,7 +32,7 @@ def use_case(dr_endpoint, dr_token, cleanup_dr):
         )
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def playground(dr_endpoint, dr_token, cleanup_dr, use_case):
     with cleanup_dr("genai/playgrounds/"):
         yield get_or_create_playground(
@@ -43,7 +46,7 @@ def cleanup_env(cleanup_dr):
         yield
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def llm(dr_endpoint, dr_token):
     from datarobot.models.genai.llm import LLMDefinition
 
@@ -51,18 +54,40 @@ def llm(dr_endpoint, dr_token):
     return LLMDefinition.list(as_dict=False)[0].id
 
 
-def test_get_or_create(dr_endpoint, dr_token, playground, cleanup_env, llm):
-    bp_1 = get_or_create_llm_blueprint(
-        dr_endpoint, dr_token, playground, "pytest llm blueprint #1", llm=llm
-    )
-    assert len(bp_1)
+class TestLLMBlueprints:
+    def test_get_or_create(self, dr_endpoint, dr_token, playground, cleanup_env, llm):
+        bp_1 = get_or_create_llm_blueprint(
+            dr_endpoint, dr_token, playground, "pytest llm blueprint #1", llm=llm
+        )
+        assert len(bp_1)
 
-    bp_2 = get_or_create_llm_blueprint(
-        dr_endpoint, dr_token, playground, "pytest llm blueprint #1", llm=llm
-    )
-    assert bp_1 == bp_2
+        bp_2 = get_or_create_llm_blueprint(
+            dr_endpoint, dr_token, playground, "pytest llm blueprint #1", llm=llm
+        )
+        assert bp_1 == bp_2
 
-    bp_3 = get_or_create_llm_blueprint(
-        dr_endpoint, dr_token, playground, "pytest llm blueprint #2", llm=llm
-    )
-    assert bp_1 != bp_3
+        bp_3 = get_or_create_llm_blueprint(
+            dr_endpoint, dr_token, playground, "pytest llm blueprint #2", llm=llm
+        )
+        assert bp_1 != bp_3
+
+    def test_get_or_register_custom_model_version(
+        self, dr_endpoint, dr_token, playground, cleanup_env, cleanup_dr, llm
+    ):
+        bp_1 = get_or_create_llm_blueprint(
+            dr_endpoint, dr_token, playground, "pytest llm blueprint #1", llm=llm
+        )
+
+        bp_2 = get_or_create_llm_blueprint(
+            dr_endpoint, dr_token, playground, "pytest llm blueprint #2", llm=llm
+        )
+
+        with cleanup_dr("customModels/"):
+            cmv_1 = get_or_register_llm_blueprint_custom_model_version(dr_endpoint, dr_token, bp_1)
+            assert len(cmv_1)
+
+            cmv_2 = get_or_register_llm_blueprint_custom_model_version(dr_endpoint, dr_token, bp_1)
+            assert cmv_1 == cmv_2
+
+            cmv_3 = get_or_register_llm_blueprint_custom_model_version(dr_endpoint, dr_token, bp_2)
+            assert cmv_1 != cmv_3
