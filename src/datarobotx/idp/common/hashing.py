@@ -23,6 +23,8 @@ from typing import Any, Mapping, Sequence
 import pandas as pd
 from pandas.util import hash_pandas_object
 
+from datarobot.models.api_object import APIObject
+
 HASHING_ALGORITHM = sha256
 CHECKSUM_FILE_EXTENSION = ".sha256"
 TRUNCATE_HASH_TO = 7
@@ -87,6 +89,9 @@ def get_hash(*args: Any, **kwargs: Any) -> str:
                 hash_pandas_object(arg).to_numpy().data,
             )
             arg = arg.encode("utf-8")
+        elif isinstance(arg, APIObject):
+            d = {k: v for k, v in arg.__dict__.items() if not k.startswith("_") and not callable(v)}
+            arg = get_hash(d).encode("utf-8")
         else:
             raise TypeError(f"Cannot tokenize object of type {type(arg)}")
         hasher.update(arg)
