@@ -18,13 +18,13 @@ import os
 import pytest
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def dr_token():
     """DR api token."""
     return os.environ["DATAROBOT_API_TOKEN"]
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def dr_endpoint():
     """DR api endpoint."""
     return os.environ["DATAROBOT_ENDPOINT"]
