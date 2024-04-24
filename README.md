@@ -3,7 +3,7 @@ Collection of unofficial idempotent DataRobot helpers. Ready for use in your orc
 
 # Installation
 ```bash
-git clone https://github.com/datarobot/datarobotx-idp
+git clone https://github.com/datarobot-community/datarobotx-idp
 cd datarobotx-idp
 pip install -e .
 ```
