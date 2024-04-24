@@ -40,3 +40,15 @@ def default_prediction_server_id():
 def sklearn_drop_in_env():
     """Sklearn drop-in environment id."""
     return "5e8c889607389fe0f466c72d"
+
+
+@pytest.fixture
+def snowflake_user():
+    """DR api token."""
+    return os.environ["SNOWFLAKE_USER"]
+
+
+@pytest.fixture
+def snowflake_password():
+    """DR api endpoint."""
+    return os.environ["SNOWFLAKE_PASSWORD"]

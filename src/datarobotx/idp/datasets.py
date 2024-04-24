@@ -101,3 +101,39 @@ def get_or_create_dataset_from_df(
         # Dataset API does not have a description attribute (also not exposed in Workbench UI)
         dataset.modify(name=f"{name} [{dataset_token}]")
         return str(dataset.id)
+
+
+def get_or_create_dataset_from_datasource(
+    endpoint: str,
+    token: str,
+    name: str,
+    data_source_id: str,
+    use_case_id: str,
+    **kwargs: Any,
+) -> str:
+    """
+    Get or create a DR dataset from a datasource with requested parameters.
+
+    Notes
+    -----
+    Records a checksum in the dataset name to allow future calls to this
+    function to validate whether a desired dataset already exists
+    """
+    dr.Client(token=token, endpoint=endpoint)
+    dataset_token = get_hash(use_case_id, name, data_source_id, **kwargs)
+
+    try:
+        return _find_existing_dataset(
+            timeout_secs=600, use_case_id=use_case_id, dataset_token=dataset_token
+        )
+    except KeyError:
+        pass
+
+    dataset = dr.Dataset.create_from_data_source(  # type: ignore
+        use_cases=use_case_id,
+        data_source_id=data_source_id,
+        **kwargs,
+    )
+    dataset.modify(name=f"{name} [{dataset_token}]")
+
+    return str(dataset.id)
