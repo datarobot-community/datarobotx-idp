@@ -40,3 +40,28 @@ def default_prediction_server_id():
 def sklearn_drop_in_env():
     """Sklearn drop-in environment id."""
     return "5e8c889607389fe0f466c72d"
+
+
+# TODO: refactor datastore, datasets tests to use snowflake fixtures below
+@pytest.fixture(scope="module")
+def snowflake_jdbc_url():
+    return (
+        "jdbc:snowflake://{account}.snowflakecomputing.com/?warehouse={warehouse}&db={db}".format(
+            account="datarobot_partner", warehouse="DEMO_WH", db="SANDBOX"
+        )
+    )
+
+
+@pytest.fixture(scope="module")
+def snowflake_driver_id():
+    return "6409af3ae3ad5839b69a4daa"
+
+
+@pytest.fixture(scope="module")
+def snowflake_training_table_name():
+    return {"table": "LENDING_CLUB_10K", "schema": "TRAINING"}
+
+
+@pytest.fixture(scope="module")
+def snowflake_scoring_table_name():
+    return {"table": "LENDING_CLUB_10K", "schema": "SCORING"}

@@ -22,6 +22,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from datarobot import Project
 from datarobotx.idp.common.hashing import get_hash
 
 
@@ -195,3 +196,13 @@ class TestHasher:
         token1 = get_hash({"foo": "bar", "bar": [1, 2, 3.0]})
         token2 = get_hash({"foo": "bar", "bar": [1, 2, 3.0]})
         assert token1 == token2
+
+    def test_dr_api_obj(self):
+        token1 = get_hash(Project(id="1234", project_name="foo"))
+        assert all(c in string.hexdigits for c in token1)
+
+        token2 = get_hash(Project(id="1234", project_name="foo"))
+        assert token1 == token2
+
+        token3 = get_hash(Project(id="12345", project_name="foo"))
+        assert token1 != token3

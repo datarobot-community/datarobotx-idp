@@ -11,6 +11,7 @@
 # Released under the terms of DataRobot Tool and Utility Agreement.
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
+from typing import Any, Dict, Union
 
 from .common.hashing import get_hash
 
@@ -26,52 +27,34 @@ def _find_existing_datasource(canonical_name: str) -> str:
 def get_or_create_datasource(
     endpoint: str,
     token: str,
+    data_source_type: str,
     canonical_name: str,
-    data_store_id: str,
-    table: str | None = None,
-    schema: str | None = None,
-    partition_column: str | None = None,
-    query: str | None = None,
-    fetch_size: int | None = None,
-    data_source_type: str = "jdbc",
+    params: Union[Dict[str, Any], dr.DataSourceParameters],  # type: ignore
 ) -> str:
     """Get or create a DR datasource with requested parameters.
 
     Notes
     -----
-    Records a checksum in the datasource name to allow future calls to this
+    Records a checksum in the canonical name to allow future calls to this
     function to validate whether a desired datasource already exists
     """
     dr.Client(token=token, endpoint=endpoint)  # type: ignore
-    # hash all input params
-    datasource_token = get_hash(
-        canonical_name,
-        data_store_id,
-        table,
-        schema,
-        partition_column,
-        query,
-        fetch_size,
-        data_source_type,
-    )
-    datasource_name = f"{canonical_name} [{datasource_token}]"
+
+    datasource_token = get_hash(data_source_type, canonical_name, params)
+    canonical_name = f"{canonical_name} [{datasource_token}]"
     try:
-        datasource = dr.DataSource.get(_find_existing_datasource(datasource_name))  # type: ignore
-        return str(datasource.id)
+        return _find_existing_datasource(canonical_name)
     except IndexError:
         pass
 
-    datasource_params = dr.DataSourceParameters(  # type: ignore
-        data_store_id=data_store_id,
-        table=table,
-        schema=schema,
-        partition_column=partition_column,
-        query=query,
-        fetch_size=fetch_size,
-    )
+    if isinstance(params, dr.DataSourceParameters):  # type: ignore
+        params_obj = params
+    else:
+        params_obj = dr.DataSourceParameters(**params)  # type: ignore
+
     datasource = dr.DataSource.create(  # type: ignore
-        canonical_name=datasource_name,
-        params=datasource_params,
         data_source_type=data_source_type,
+        canonical_name=canonical_name,
+        params=params_obj,
     )
     return str(datasource.id)
