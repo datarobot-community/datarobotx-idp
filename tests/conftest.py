@@ -42,6 +42,18 @@ def sklearn_drop_in_env():
     return "5e8c889607389fe0f466c72d"
 
 
+@pytest.fixture
+def snowflake_user():
+    """DR api token."""
+    return os.environ["SNOWFLAKE_USER"]
+
+
+@pytest.fixture
+def snowflake_password():
+    """DR api endpoint."""
+    return os.environ["SNOWFLAKE_PASSWORD"]
+
+
 # TODO: refactor datastore, datasets tests to use snowflake fixtures below
 @pytest.fixture(scope="module")
 def snowflake_jdbc_url():
