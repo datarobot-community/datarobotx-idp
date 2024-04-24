@@ -56,28 +56,31 @@ def test_get_or_create(
     cleanup_env,
 ):
     data_store_id_1 = get_or_create_datastore(
+        endpoint=dr_endpoint,
+        token=dr_token,
+        data_store_type="jdbc",
         canonical_name=canonical_name_1,
         driver_id=snowflake_driver_id,
         jdbc_url=jdbc_url,
-        token=dr_token,
-        endpoint=dr_endpoint,
     )
     assert len(data_store_id_1)
 
     data_store_id_2 = get_or_create_datastore(
+        endpoint=dr_endpoint,
+        token=dr_token,
+        data_store_type="jdbc",
         canonical_name=canonical_name_1,
         driver_id=snowflake_driver_id,
         jdbc_url=jdbc_url,
-        token=dr_token,
-        endpoint=dr_endpoint,
     )
     assert data_store_id_1 == data_store_id_2
 
     data_store_id_3 = get_or_create_datastore(
+        endpoint=dr_endpoint,
+        token=dr_token,
+        data_store_type="jdbc",
         canonical_name=canonical_name_2,
         driver_id=snowflake_driver_id,
         jdbc_url=jdbc_url,
-        token=dr_token,
-        endpoint=dr_endpoint,
     )
     assert data_store_id_1 != data_store_id_3

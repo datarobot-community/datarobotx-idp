@@ -21,17 +21,18 @@ import datarobot as dr
 
 def _find_existing_datastore(canonical_name: str) -> str:
     dss = dr.DataStore.list()  # type: ignore
-    datastore = [ds for ds in dss if ds.canonical_name and ds.canonical_name == canonical_name][0]
+    datastore = [
+        ds for ds in dss if ds.canonical_name is not None and ds.canonical_name == canonical_name
+    ][0]
     return str(datastore.id)
 
 
 def get_or_create_datastore(
     endpoint: str,
     token: str,
+    data_store_type: str,
     canonical_name: str,
     driver_id: str,
-    jdbc_url: str,
-    data_store_type: str = "jdbc",
     **kwargs: Any,
 ) -> str:
     """Get or create a DR datastore with requested parameters.
@@ -43,12 +44,11 @@ def get_or_create_datastore(
     """
     dr.Client(token=token, endpoint=endpoint)  # type: ignore
 
-    datastore_token = get_hash(canonical_name, driver_id, jdbc_url, data_store_type, **kwargs)
+    datastore_token = get_hash(canonical_name, driver_id, data_store_type, **kwargs)
 
     canonical_name = f"{canonical_name} [{datastore_token}]"
     try:
-        datastore = dr.DataStore.get(_find_existing_datastore(canonical_name))  # type: ignore
-        return str(datastore.id)
+        return _find_existing_datastore(canonical_name)
     except IndexError:
         pass
 
@@ -56,7 +56,6 @@ def get_or_create_datastore(
         data_store_type=data_store_type,
         canonical_name=canonical_name,
         driver_id=driver_id,
-        jdbc_url=jdbc_url,
         **kwargs,
     )
     return str(datastore.id)
