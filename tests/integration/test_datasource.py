@@ -41,6 +41,7 @@ def data_store_id(
     return get_or_create_datastore(
         token=dr_token,
         endpoint=dr_endpoint,
+        data_store_type="jdbc",
         canonical_name="pytest_datastore",
         driver_id=snowflake_driver_id,
         jdbc_url=snowflake_jdbc_url,

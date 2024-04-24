@@ -40,17 +40,18 @@ def get_or_create_datasource(
     """
     dr.Client(token=token, endpoint=endpoint)  # type: ignore
 
-    datasource_token = get_hash(data_source_type, canonical_name, params)
-    canonical_name = f"{canonical_name} [{datasource_token}]"
-    try:
-        return _find_existing_datasource(canonical_name)
-    except IndexError:
-        pass
-
     if isinstance(params, dr.DataSourceParameters):  # type: ignore
         params_obj = params
     else:
         params_obj = dr.DataSourceParameters(**params)  # type: ignore
+
+    datasource_token = get_hash(data_source_type, canonical_name, params_obj.collect_payload())
+    canonical_name = f"{canonical_name} [{datasource_token}]"
+
+    try:
+        return _find_existing_datasource(canonical_name)
+    except IndexError:
+        pass
 
     datasource = dr.DataSource.create(  # type: ignore
         data_source_type=data_source_type,
