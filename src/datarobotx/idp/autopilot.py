@@ -14,9 +14,10 @@
 # mypy: disable-error-code="attr-defined"
 # pyright: reportPrivateImportUsage=false
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import datarobot as dr
+from datarobot import Project
 
 from datarobotx.idp.common.hashing import get_hash
 from datarobotx.idp.projects import get_or_create_project_from_dataset
@@ -136,6 +137,7 @@ def get_or_create_autopilot_run(
     advanced_options_config: Optional[Dict[str, Any]] = None,
     use_case: Optional[str] = None,
     user_defined_segment_id_columns: Optional[List[str]] = None,
+    between_upload_and_set_target: Optional[Callable[[Project], Optional[Dict[str, Any]]]] = None,
 ) -> Optional[str]:
     """Get or create a new project with requested parameters.
 
@@ -163,6 +165,11 @@ def get_or_create_autopilot_run(
         If provided, the project will exist under the usecase
     user_defined_segment_id_columns : str, optional
         The column to use for segmented modeling (time series only), by default None
+    between_upload_and_set_target : Callable, optional
+        A function that takes as its first and only input the Project to run between upload
+        and set target, by default None
+        Can be used to change the feature list or other settings. The result of the callable
+        should be a dictionary that will be merged with the analyze_and_model_config.
     """
     dr.Client(token=token, endpoint=endpoint)
 
@@ -210,6 +217,15 @@ def get_or_create_autopilot_run(
             analyze_and_model_config=analyze_and_model_config,
             user_defined_segment_id_columns=user_defined_segment_id_columns,
         )
+
+    if between_upload_and_set_target is not None:
+        result = between_upload_and_set_target(project)
+        if (
+            result is not None
+            and isinstance(result, dict)
+            and isinstance(analyze_and_model_config, dict)
+        ):
+            analyze_and_model_config.update(result)
 
     project.analyze_and_model(  # type: ignore
         **analyze_and_model_config,
