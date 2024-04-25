@@ -1,5 +1,5 @@
 lint:
-	ruff format .
+	ruff format --check .
 	ruff check .
 	MYPYPATH=src mypy --namespace-packages --explicit-package-bases --strict .
         
