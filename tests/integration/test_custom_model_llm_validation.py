@@ -16,7 +16,7 @@ import pathlib
 import pytest
 
 from datarobotx.idp.custom_model_llm_validation import (
-    get_or_create_custom_model_llm_validation,
+    get_update_or_create_custom_model_llm_validation,
 )
 from datarobotx.idp.custom_model_versions import get_or_create_custom_model_version
 from datarobotx.idp.custom_models import get_or_create_custom_model
@@ -70,13 +70,14 @@ def custom_model_version(
     custom_model: str,
     custom_model_dir: pathlib.Path,
     cleanup_dr,
+    sklearn_drop_in_env,
 ) -> str:
     with cleanup_dr(f"customModels/{custom_model}/versions"):
         custom_model_version = get_or_create_custom_model_version(
             dr_endpoint,
             dr_token,
             custom_model,
-            base_environment_id="65f9b27eab986d30d4c64268",
+            base_environment_id=sklearn_drop_in_env,
             folder_path=custom_model_dir,
         )
         yield custom_model_version
@@ -96,7 +97,7 @@ def registered_model_version(
     cleanup_registered_models,
 ) -> str:
     registered_model_version = get_or_create_registered_custom_model_version(
-        dr_endpoint, dr_token, custom_model_version, "pytest_rmv"
+        dr_endpoint, dr_token, custom_model_version, "pytest rmv"
     )
     yield registered_model_version
 
@@ -107,6 +108,7 @@ def deployment(
     dr_token: str,
     registered_model_version: str,
     cleanup_dr,
+    default_prediction_server_id,
 ) -> str:
     with cleanup_dr("deployments/"):
         deployment = get_or_create_deployment_from_registered_model_version(
@@ -114,7 +116,7 @@ def deployment(
             dr_token,
             registered_model_version,
             label="pytest_d",
-            default_prediction_server_id="5f06612df1740600260aca72",
+            default_prediction_server_id=default_prediction_server_id,
         )
         yield deployment
 
@@ -143,7 +145,9 @@ def test_get_or_create_custom_model_llm_validation(
     target_column_name: str,
     cleanup_validation,
 ) -> None:
-    validation_id = get_or_create_custom_model_llm_validation(
+    from datarobot.models.genai import CustomModelLLMValidation
+
+    validation_id = get_update_or_create_custom_model_llm_validation(
         endpoint=dr_endpoint,
         token=dr_token,
         prompt_column_name="question",
@@ -151,7 +155,8 @@ def test_get_or_create_custom_model_llm_validation(
         deployment_id=deployment,
     )
     assert len(validation_id)
-    validation_id_2 = get_or_create_custom_model_llm_validation(
+
+    validation_id_2 = get_update_or_create_custom_model_llm_validation(
         endpoint=dr_endpoint,
         token=dr_token,
         prompt_column_name="question",
@@ -159,3 +164,15 @@ def test_get_or_create_custom_model_llm_validation(
         deployment_id=deployment,
     )
     assert validation_id == validation_id_2
+
+    # updates in place if validation for this deployment already exist
+    validation_id_3 = get_update_or_create_custom_model_llm_validation(
+        endpoint=dr_endpoint,
+        token=dr_token,
+        prompt_column_name="question",
+        target_column_name="answer",
+        deployment_id=deployment,
+        name="foo",
+    )
+    assert validation_id == validation_id_3
+    assert CustomModelLLMValidation.get(validation_id_3).name == "foo"

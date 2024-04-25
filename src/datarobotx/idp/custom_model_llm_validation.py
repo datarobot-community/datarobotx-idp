@@ -12,7 +12,7 @@
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
 import time
-from typing import Any, Union
+from typing import Any, Tuple, Union
 
 import datarobot as dr
 from datarobot.models.genai.custom_model_llm_validation import CustomModelLLMValidation
@@ -21,39 +21,35 @@ from datarobot.models.genai.custom_model_llm_validation import CustomModelLLMVal
 def _find_existing_validation(
     timeout_secs: int,
     deployment_id: Union[str, dr.Deployment],  # type: ignore
-    prompt_column_name: str,
-    target_column_name: str,
     **kwargs: Any,
-) -> str:
+) -> Tuple[str, str]:
     use_case = kwargs.pop("use_case", None)
-    for validation in CustomModelLLMValidation.list(
+    validation = CustomModelLLMValidation.list(
         deployment=deployment_id,
-        prompt_column_name=prompt_column_name,
-        target_column_name=target_column_name,
         use_cases=use_case,
-    ):
-        if all(getattr(validation, key) == kwargs[key] for key in kwargs):
-            waited_secs = 0
-            while True:
-                status = CustomModelLLMValidation.get(validation.id).validation_status
-                if status == "PASSED":
-                    return str(validation.id)
-                elif status == "FAILED":
-                    break
-                elif waited_secs > timeout_secs:
-                    raise TimeoutError("Timed out waiting for LLM validation to finish validating.")
-                time.sleep(3)
-                waited_secs += 3
-            return str(validation.id)
-    raise KeyError("No matching existing LLM validation found.")
+    )[0]
+
+    waited_secs = 0
+    while True:
+        validation_status = CustomModelLLMValidation.get(validation.id).validation_status
+        if validation_status == "PASSED" and all(
+            getattr(validation, key) == kwargs[key] for key in kwargs
+        ):
+            return str(validation.id), "GET"
+        elif validation_status in ["FAILED", "PASSED"]:
+            return str(validation.id), "PATCH"
+        elif waited_secs > timeout_secs:
+            raise TimeoutError("Timed out waiting for LLM validation to finish validating.")
+        time.sleep(3)
+        waited_secs += 3
 
 
-def get_or_create_custom_model_llm_validation(
+def get_update_or_create_custom_model_llm_validation(
     endpoint: str,
     token: str,
     prompt_column_name: str,
     target_column_name: str,
-    deployment_id: str,
+    deployment_id: Union[str, dr.Deployment],  # type: ignore
     **kwargs: Any,
 ) -> str:
     """
@@ -77,28 +73,41 @@ def get_or_create_custom_model_llm_validation(
         ID of the validation record.
     """
     dr.Client(token=token, endpoint=endpoint)  # type: ignore
+    name = kwargs.pop("name", None)
+    if name is None:
+        deployment = dr.Deployment.get(deployment_id)  # type: ignore
+        name = f'{deployment.label}: "{prompt_column_name}" -> "{target_column_name}"'
 
     try:
-        return _find_existing_validation(
+        existing_id, status = _find_existing_validation(
             timeout_secs=600,
             deployment_id=deployment_id,
             prompt_column_name=prompt_column_name,
             target_column_name=target_column_name,
+            name=name,
             **kwargs,
         )
-    except KeyError:
-        pass
-
-    name = kwargs.pop("name", None)
-    if name is None:
-        deployment = dr.Deployment.get(deployment_id)  # type: ignore
-        name = f"Custom Model LLM Validation for {deployment.label}: {prompt_column_name} -> {target_column_name}"
-    validation = CustomModelLLMValidation.create(
-        prompt_column_name=prompt_column_name,
-        target_column_name=target_column_name,
-        deployment_id=deployment_id,
-        name=name,
-        wait_for_completion=True,
-        **kwargs,
-    )
-    return str(validation.id)
+        if status == "PATCH":
+            validation = CustomModelLLMValidation.get(existing_id)
+            validation.update(
+                prompt_column_name=prompt_column_name,
+                target_column_name=target_column_name,
+                deployment=deployment_id,
+                name=name,
+                **kwargs,
+            )
+            try:
+                validation.revalidate(validation.id)
+            except dr.errors.ClientError:
+                pass  # DR will only allow revalidation if strictly needed
+        return existing_id
+    except IndexError:
+        validation = CustomModelLLMValidation.create(
+            prompt_column_name=prompt_column_name,
+            target_column_name=target_column_name,
+            deployment_id=deployment_id,
+            name=name,
+            wait_for_completion=True,
+            **kwargs,
+        )
+        return str(validation.id)
