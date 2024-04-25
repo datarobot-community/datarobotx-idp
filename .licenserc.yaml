@@ -37,8 +37,7 @@ header:
       https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
   paths:
-    # - "**/*.py"
-    - "**/foo.py"
+    - "**/*.py"
     # - You can temporarily list files below which will be checked when running the tool locally.
     # - 'new-file01.py'
 
