@@ -1,3 +1,16 @@
+#
+# Copyright 2024 DataRobot, Inc. and its affiliates.
+#
+# All rights reserved.
+#
+# DataRobot, Inc.
+#
+# This is proprietary source code of DataRobot, Inc. and its
+# affiliates.
+#
+# Released under the terms of DataRobot Tool and Utility Agreement.
+# https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
+
 from typing import Any
 
 import datarobot as dr
@@ -10,7 +23,7 @@ def get_or_create_custom_model_llm_validation(
     prompt_column_name: str,
     target_column_name: str,
     deployment_id: str,
-    **kwags: Any,
+    **kwargs: Any,
 ) -> str:
     """
     Get or create a custom model LLM validation record.
@@ -26,7 +39,7 @@ def get_or_create_custom_model_llm_validation(
         The target name that the deployed model will output.
     deployment_id : str
         ID of the deployment.
-    kwags : Any
+    kwargs : Any
         Additional parameters to create the validation record.
         Valid parameters:
             model : Optional[Union[Model, str]], optional
@@ -61,7 +74,7 @@ def get_or_create_custom_model_llm_validation(
     except:
         pass
 
-    name = kwags.pop("name", None)
+    name = kwargs.pop("name", None)
     if name is None:
         deployment = dr.Deployment.get(deployment_id)  # type: ignore
         name = f"Custom Model LLM Validation for {prompt_column_name} -> {target_column_name} - {deployment.label}"
@@ -70,6 +83,6 @@ def get_or_create_custom_model_llm_validation(
         target_column_name=target_column_name,
         deployment_id=deployment_id,
         name=name,
-        **kwags,
+        **kwargs,
     )
     return str(validation.id)
