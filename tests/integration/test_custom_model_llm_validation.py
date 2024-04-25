@@ -33,7 +33,7 @@ def custom_model_dir(tmp_path):
     model_dir = tmp_path / "custom_model_llm_validation"
     model_dir.mkdir(exist_ok=True, parents=True)
     custom_py = pathlib.Path(model_dir, "custom.py")
-    text = """
+    text = """\
 import pandas as pd
 def load_model(code_dir):
     return True
@@ -45,7 +45,7 @@ def score(data, model, **kwargs):
     except Exception as e:
         rv = f"{e.__class__.__name__}: {str(e)}"
     return pd.DataFrame({"answer": [rv]})
-    """
+"""
     custom_py.write_text(data=text)
     return model_dir
 

@@ -11,10 +11,41 @@
 # Released under the terms of DataRobot Tool and Utility Agreement.
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
-from typing import Any
+import time
+from typing import Any, Union
 
 import datarobot as dr
 from datarobot.models.genai.custom_model_llm_validation import CustomModelLLMValidation
+
+
+def _find_existing_validation(
+    timeout_secs: int,
+    deployment_id: Union[str, dr.Deployment],  # type: ignore
+    prompt_column_name: str,
+    target_column_name: str,
+    **kwargs: Any,
+) -> str:
+    use_case = kwargs.pop("use_case", None)
+    for validation in CustomModelLLMValidation.list(
+        deployment=deployment_id,
+        prompt_column_name=prompt_column_name,
+        target_column_name=target_column_name,
+        use_cases=use_case,
+    ):
+        if all(getattr(validation, key) == kwargs[key] for key in kwargs):
+            waited_secs = 0
+            while True:
+                status = CustomModelLLMValidation.get(validation.id).validation_status
+                if status == "PASSED":
+                    return str(validation.id)
+                elif status == "FAILED":
+                    break
+                elif waited_secs > timeout_secs:
+                    raise TimeoutError("Timed out waiting for LLM validation to finish validating.")
+                time.sleep(3)
+                waited_secs += 3
+            return str(validation.id)
+    raise KeyError("No matching existing LLM validation found.")
 
 
 def get_or_create_custom_model_llm_validation(
@@ -39,24 +70,6 @@ def get_or_create_custom_model_llm_validation(
         The target name that the deployed model will output.
     deployment_id : str
         ID of the deployment.
-    kwargs : Any
-        Additional parameters to create the validation record.
-        Valid parameters:
-            model : Optional[Union[Model, str]], optional
-                The specific model within the deployment, either `Model` or model ID.
-                If not specified, the underlying model ID will be derived from the
-                deployment info automatically.
-            use_case : Optional[Union[UseCase, str]], optional
-                The Use Case to link the validation to, either `UseCase` or Use Case ID.
-            name : Optional[str], optional
-                The name of the validation.
-            wait_for_completion : bool
-                If set to True code will wait for the validation job to complete before
-                returning the result (up to 10 minutes, raising timeout error after that).
-                Otherwise, you can check current validation status by using
-                CustomModelValidation.get with returned ID.
-            prediction_timeout : Optional[int], optional
-                The timeout, in seconds, for the prediction API used in this custom model validation.
 
     Returns
     -------
@@ -64,25 +77,28 @@ def get_or_create_custom_model_llm_validation(
         ID of the validation record.
     """
     dr.Client(token=token, endpoint=endpoint)  # type: ignore
+
     try:
-        validation = CustomModelLLMValidation.list(
-            deployment=deployment_id,
+        return _find_existing_validation(
+            timeout_secs=600,
+            deployment_id=deployment_id,
             prompt_column_name=prompt_column_name,
             target_column_name=target_column_name,
-        )[0]
-        return str(validation.id)
-    except:
+            **kwargs,
+        )
+    except KeyError:
         pass
 
     name = kwargs.pop("name", None)
     if name is None:
         deployment = dr.Deployment.get(deployment_id)  # type: ignore
-        name = f"Custom Model LLM Validation for {prompt_column_name} -> {target_column_name} - {deployment.label}"
+        name = f"Custom Model LLM Validation for {deployment.label}: {prompt_column_name} -> {target_column_name}"
     validation = CustomModelLLMValidation.create(
         prompt_column_name=prompt_column_name,
         target_column_name=target_column_name,
         deployment_id=deployment_id,
         name=name,
+        wait_for_completion=True,
         **kwargs,
     )
     return str(validation.id)
