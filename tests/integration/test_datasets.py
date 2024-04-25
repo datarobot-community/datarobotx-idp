@@ -1,6 +1,7 @@
 import pandas as pd
 import pytest
 
+import datarobot as dr
 from datarobotx.idp.credentials import get_replace_or_create_credential
 from datarobotx.idp.datasets import (
     get_or_create_dataset_from_datasource,
@@ -66,33 +67,15 @@ def cleanup_credentials(cleanup_dr):
 
 
 @pytest.fixture
-def snowflake_driver_id():
-    return "6409af3ae3ad5839b69a4daa"
-
-
-@pytest.fixture
-def jdbc_url():
-    return (
-        "jdbc:snowflake://{account}.snowflakecomputing.com/?warehouse={warehouse}&db={db}".format(
-            account="datarobot_partner", warehouse="DEMO_WH", db="SANDBOX"
-        )
-    )
-
-
-@pytest.fixture
-def data_store_id(dr_token, dr_endpoint, snowflake_driver_id, jdbc_url, cleanup_datastore):
+def data_store_id(dr_token, dr_endpoint, snowflake_driver_id, snowflake_jdbc_url, cleanup_datastore):
     return get_or_create_datastore(
-        token=dr_token,
         endpoint=dr_endpoint,
+        token=dr_token,
+        data_store_type='jdbc',
         canonical_name="pytest_datastore",
         driver_id=snowflake_driver_id,
-        jdbc_url=jdbc_url,
+        jdbc_url=snowflake_jdbc_url,
     )
-
-
-@pytest.fixture
-def snowflake_table_name():
-    return {"table": "LENDING_CLUB_10K", "schema": "TRAINING"}
 
 
 @pytest.fixture
@@ -110,13 +93,18 @@ def snowflake_credentials(
 
 
 @pytest.fixture
-def data_source_id(data_store_id, snowflake_table_name, cleanup_datasource, dr_token, dr_endpoint):
+def data_source_id(
+    data_store_id, snowflake_training_table_name, cleanup_datasource, dr_token, dr_endpoint
+):
     return get_or_create_datasource(
-        canonical_name="pytest datastore",
-        token=dr_token,
         endpoint=dr_endpoint,
-        data_store_id=data_store_id,
-        **snowflake_table_name,
+        token=dr_token,
+        data_source_type='jdbc',
+        canonical_name="pytest datastore",
+        params=dr.DataSourceParameters(
+            data_store_id=data_store_id,
+            **snowflake_training_table_name,
+        ),
     )
 
 
