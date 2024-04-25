@@ -67,11 +67,13 @@ def cleanup_credentials(cleanup_dr):
 
 
 @pytest.fixture
-def data_store_id(dr_token, dr_endpoint, snowflake_driver_id, snowflake_jdbc_url, cleanup_datastore):
+def data_store_id(
+    dr_token, dr_endpoint, snowflake_driver_id, snowflake_jdbc_url, cleanup_datastore
+):
     return get_or_create_datastore(
         endpoint=dr_endpoint,
         token=dr_token,
-        data_store_type='jdbc',
+        data_store_type="jdbc",
         canonical_name="pytest_datastore",
         driver_id=snowflake_driver_id,
         jdbc_url=snowflake_jdbc_url,
@@ -99,7 +101,7 @@ def data_source_id(
     return get_or_create_datasource(
         endpoint=dr_endpoint,
         token=dr_token,
-        data_source_type='jdbc',
+        data_source_type="jdbc",
         canonical_name="pytest datastore",
         params=dr.DataSourceParameters(
             data_store_id=data_store_id,

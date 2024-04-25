@@ -1,6 +1,5 @@
 lint:
-	ruff format .
-	ruff check .
+	ruff format --check .
 	MYPYPATH=src mypy --namespace-packages --explicit-package-bases --strict .
         
 .PHONY: copyright-check apply-copyright fix-licenses check-licenses
