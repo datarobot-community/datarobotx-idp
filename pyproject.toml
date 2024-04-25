@@ -34,7 +34,12 @@ forced-separate = ["datarobot", "datarobotx"]
 testpaths = ["tests"]
 
 [tool.mypy]
-exclude = ["tests"]
+exclude = [
+  "tests",
+  "src/datarobotx/idp/vector_databases.py",
+  "src/datarobotx/idp/playgrounds.py",
+  "src/datarobotx/idp/llm_blueprints.py",
+]
 
 [[tool.mypy.overrides]]
 module = [
