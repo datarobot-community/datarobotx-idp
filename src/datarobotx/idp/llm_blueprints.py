@@ -12,35 +12,28 @@
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
 
-from typing import Any
+from typing import Any, Union
 
 import datarobot as dr
 
 from datarobotx.idp.common.hashing import get_hash
 
 try:
-    from datarobot.models.genai.llm import LLMDefinition
+    from datarobot.models.genai import Playground
     from datarobot.models.genai.llm_blueprint import LLMBlueprint, VectorDatabaseSettings
 except ImportError as e:
     raise ImportError("datarobot>=3.4.0 is required for LLMBlueprint support") from e
 
 
-def _find_existing_llm_blueprint(**kwargs: Any) -> str:
-    pg = kwargs.pop("playground", None)
-    llm = kwargs.pop("llm", None)
-    if isinstance(llm, str):
-        kwargs["llm_id"] = llm
-    elif isinstance(llm, LLMDefinition):
-        kwargs["llm_id"] = llm.id
-
-    for bp in LLMBlueprint.list(playground=pg):
-        if all(getattr(bp, key) == kwargs[key] for key in kwargs):
+def _find_existing_llm_blueprint(playground: str, bp_token: str) -> str:
+    for bp in LLMBlueprint.list(playground=playground):
+        if bp.name is not None and bp_token in bp.name:
             return str(bp.id)
     raise KeyError("No matching LLM Blueprint found")
 
 
 def get_or_create_llm_blueprint(
-    endpoint: str, token: str, playground: str, name: str, **kwargs: Any
+    endpoint: str, token: str, playground: Union[str, Playground], name: str, **kwargs: Any
 ) -> str:
     """Get or create an LLM blueprint with requested parameters.
 
@@ -49,14 +42,18 @@ def get_or_create_llm_blueprint(
     Saves the blueprint after creation.
     """
     dr.Client(token=token, endpoint=endpoint)  # type: ignore
+
+    if isinstance(playground, Playground):
+        playground = str(Playground.id)
+    vdb_settings = kwargs.pop("vector_database_settings", None)
+    if isinstance(vdb_settings, dict):
+        vdb_settings = VectorDatabaseSettings(**vdb_settings)
+    bp_token = get_hash(playground, name, **kwargs)
+
     try:
-        return _find_existing_llm_blueprint(
-            playground=playground, name=name, is_saved=True, **kwargs
-        )
+        return _find_existing_llm_blueprint(playground, bp_token)
     except KeyError:
-        vdb_settings = kwargs.pop("vector_database_settings", None)
-        if isinstance(vdb_settings, dict):
-            vdb_settings = VectorDatabaseSettings(**vdb_settings)
+        name = f"{name} [{bp_token}]"
         bp = LLMBlueprint.create(playground, name, vector_database_settings=vdb_settings, **kwargs)
         bp.update(is_saved=True)
         return str(bp.id)
