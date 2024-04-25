@@ -67,11 +67,13 @@ def cleanup_credentials(cleanup_dr):
 
 
 @pytest.fixture
-def data_store_id(dr_token, dr_endpoint, snowflake_driver_id, snowflake_jdbc_url, cleanup_datastore):
+def data_store_id(
+    dr_token, dr_endpoint, snowflake_driver_id, snowflake_jdbc_url, cleanup_datastore
+):
     return get_or_create_datastore(
         endpoint=dr_endpoint,
         token=dr_token,
-        data_store_type='jdbc',
+        data_store_type="jdbc",
         canonical_name="pytest_datastore",
         driver_id=snowflake_driver_id,
         jdbc_url=snowflake_jdbc_url,
@@ -99,7 +101,7 @@ def data_source_id(
     return get_or_create_datasource(
         endpoint=dr_endpoint,
         token=dr_token,
-        data_source_type='jdbc',
+        data_source_type="jdbc",
         canonical_name="pytest datastore",
         params=dr.DataSourceParameters(
             data_store_id=data_store_id,
@@ -109,92 +111,92 @@ def data_source_id(
 
 
 def test_get_or_create_from_file(dr_endpoint, dr_token, use_case, dummy_dataset_file, cleanup_env):
-    use_case_id_1 = get_or_create_dataset_from_file(
+    ds_1 = get_or_create_dataset_from_file(
         dr_endpoint,
         dr_token,
-        use_case,
         "pytest dataset #1",
         dummy_dataset_file,
+        use_cases=use_case,
     )
-    assert len(use_case_id_1)
+    assert len(ds_1)
 
-    use_case_id_2 = get_or_create_dataset_from_file(
+    ds_2 = get_or_create_dataset_from_file(
         dr_endpoint,
         dr_token,
-        use_case,
         "pytest dataset #1",
         dummy_dataset_file,
+        use_cases=use_case,
     )
-    assert use_case_id_1 == use_case_id_2
+    assert ds_1 == ds_2
 
-    use_case_id_3 = get_or_create_dataset_from_file(
+    ds_3 = get_or_create_dataset_from_file(
         dr_endpoint,
         dr_token,
-        use_case,
         "pytest dataset #2",
         dummy_dataset_file,
+        use_cases=use_case,
     )
-    assert use_case_id_1 != use_case_id_3
+    assert ds_1 != ds_3
 
 
 def test_get_or_create_from_df(dr_endpoint, dr_token, use_case, dummy_df, cleanup_env):
-    use_case_id_1 = get_or_create_dataset_from_df(
+    ds_1 = get_or_create_dataset_from_df(
         dr_endpoint,
         dr_token,
-        use_case,
         "pytest dataset #1",
         dummy_df,
+        use_cases=use_case,
     )
-    assert len(use_case_id_1)
+    assert len(ds_1)
 
-    use_case_id_2 = get_or_create_dataset_from_df(
+    ds_2 = get_or_create_dataset_from_df(
         dr_endpoint,
         dr_token,
-        use_case,
         "pytest dataset #1",
         dummy_df,
+        use_cases=use_case,
     )
-    assert use_case_id_1 == use_case_id_2
+    assert ds_1 == ds_2
 
-    use_case_id_3 = get_or_create_dataset_from_df(
+    ds_3 = get_or_create_dataset_from_df(
         dr_endpoint,
         dr_token,
-        use_case,
         "pytest dataset #2",
         dummy_df,
+        use_cases=use_case,
     )
-    assert use_case_id_1 != use_case_id_3
+    assert ds_1 != ds_3
 
 
 def test_get_or_create_from_datasource(
     dr_endpoint, dr_token, data_source_id, use_case, snowflake_credentials, cleanup_env
 ):
-    use_case_id_1 = get_or_create_dataset_from_datasource(
+    ds_1 = get_or_create_dataset_from_datasource(
         token=dr_token,
         endpoint=dr_endpoint,
         name="pytest dataset #1",
         data_source_id=data_source_id,
-        use_case_id=use_case,
         credential_id=snowflake_credentials,
+        use_cases=use_case,
     )
-    assert len(use_case_id_1)
+    assert len(ds_1)
 
-    use_case_id_2 = get_or_create_dataset_from_datasource(
+    ds_2 = get_or_create_dataset_from_datasource(
         token=dr_token,
         endpoint=dr_endpoint,
         name="pytest dataset #1",
         data_source_id=data_source_id,
-        use_case_id=use_case,
         credential_id=snowflake_credentials,
+        use_cases=use_case,
     )
-    assert use_case_id_1 == use_case_id_2
+    assert ds_1 == ds_2
 
-    use_case_id_3 = get_or_create_dataset_from_datasource(
+    ds_3 = get_or_create_dataset_from_datasource(
         token=dr_token,
         endpoint=dr_endpoint,
         name="pytest dataset #2",
         data_source_id=data_source_id,
-        use_case_id=use_case,
         credential_id=snowflake_credentials,
+        use_cases=use_case,
     )
-    assert use_case_id_1 != use_case_id_3
+    assert ds_1 != ds_3
