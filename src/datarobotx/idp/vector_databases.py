@@ -12,7 +12,7 @@
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
 import time
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 import datarobot as dr
 
@@ -44,17 +44,32 @@ def _find_existing_vector_database(timeout_secs: int, **kwargs: Any) -> str:
 
 
 def get_or_create_vector_database_from_dataset(
-    endpoint: str, token: str, dataset_id: str, chunking_parameters: Dict[str, Any], **kwargs: Any
+    endpoint: str,
+    token: str,
+    dataset_id: str,
+    chunking_parameters: Union[ChunkingParameters, Dict[str, Any]],
+    **kwargs: Any,
 ) -> str:
     """Get or create a custom model with requested parameters."""
     dr.Client(endpoint=endpoint, token=token)  # type: ignore
+
+    if isinstance(chunking_parameters, ChunkingParameters):
+        chunking_parameters_dict = {
+            k: v
+            for k, v in chunking_parameters.__dict__.items()
+            if not k.startswith("_") and not callable(v)
+        }
+        chunking_parameters_obj = chunking_parameters
+    else:
+        chunking_parameters_dict = chunking_parameters
+        chunking_parameters_obj = ChunkingParameters(**chunking_parameters)
+
     try:
         params = {"dataset_id": dataset_id}
-        params.update(chunking_parameters)
+        params.update(chunking_parameters_dict)
         params.update(kwargs)
         return _find_existing_vector_database(timeout_secs=600, **params)
     except KeyError:
-        chunking_parameters_obj = ChunkingParameters(**chunking_parameters)
         db = VectorDatabase.create(
             dataset_id=dataset_id, chunking_parameters=chunking_parameters_obj, **kwargs
         )
