@@ -78,9 +78,9 @@ def reconcile_config_dictionaries(
             serverside_datetime_partitioning_config["feature_settings"] = [
                 dr.FeatureSettings(**config) for config in feature_settings_config
             ]
-        serverside_analyze_and_model_config["partitioning_method"] = (
-            dr.DatetimePartitioningSpecification(**serverside_datetime_partitioning_config)
-        )
+        serverside_analyze_and_model_config[
+            "partitioning_method"
+        ] = dr.DatetimePartitioningSpecification(**serverside_datetime_partitioning_config)
 
     if advanced_options_config is not None:
         serverside_analyze_and_model_config["advanced_options"] = dr.AdvancedOptions(
