@@ -15,7 +15,11 @@ import time
 from typing import Any, Tuple, Union
 
 import datarobot as dr
-from datarobot.models.genai.custom_model_llm_validation import CustomModelLLMValidation
+
+try:
+    from datarobot.models.genai.custom_model_llm_validation import CustomModelLLMValidation
+except ImportError as e:
+    raise ImportError("datarobot>=3.4.0 is required for CustomModelLLMValidation support") from e
 
 
 def _find_existing_validation(
