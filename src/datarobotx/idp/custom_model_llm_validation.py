@@ -1,5 +1,6 @@
 from typing import Any
 
+import datarobot as dr
 from datarobot.models.genai.custom_model_llm_validation import CustomModelLLMValidation
 
 
@@ -49,6 +50,7 @@ def get_or_create_custom_model_llm_validation(
     str
         ID of the validation record.
     """
+    dr.Client(token=token, endpoint=endpoint)  # type: ignore
     try:
         validation = CustomModelLLMValidation.list(
             deployment=deployment_id,
@@ -58,10 +60,16 @@ def get_or_create_custom_model_llm_validation(
         return str(validation.id)
     except:
         pass
+
+    name = kwags.pop("name", None)
+    if name is None:
+        deployment = dr.Deployment.get(deployment_id)  # type: ignore
+        name = f"Custom Model LLM Validation for {prompt_column_name} -> {target_column_name} - {deployment.label}"
     validation = CustomModelLLMValidation.create(
         prompt_column_name=prompt_column_name,
         target_column_name=target_column_name,
         deployment_id=deployment_id,
+        name=name,
         **kwags,
     )
     return str(validation.id)
