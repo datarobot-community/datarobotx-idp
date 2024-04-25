@@ -14,7 +14,7 @@
 # mypy: disable-error-code="attr-defined"
 # pyright: reportPrivateImportUsage=false
 import posixpath
-from typing import Any
+from typing import Any, Optional
 
 import requests
 
@@ -29,6 +29,7 @@ def _create_custom_model(
     name: str,
     target_type: str,
     custom_model_type: str = "inference",
+    target_name: Optional[str] = None,
     **kwargs: Any,
 ) -> str:
     url = posixpath.join(endpoint, "customModels/")
@@ -37,6 +38,8 @@ def _create_custom_model(
         "target_type": target_type,
         "custom_model_type": custom_model_type,
     }
+    if target_name:
+        body["custom_model_name"] = target_name
     body.update(kwargs)
     body = {camelize(k): v for k, v in body.items()}
     resp = requests.post(url, headers={"Authorization": f"Bearer {token}"}, json=body)
@@ -53,11 +56,27 @@ def _find_existing_custom_model(**kwargs: Any) -> str:
 
 
 def get_or_create_custom_model(
-    endpoint: str, token: str, name: str, target_type: str, **kwargs: Any
+    endpoint: str,
+    token: str,
+    name: str,
+    target_type: str,
+    target_name: Optional[str] = None,
+    **kwargs: Any,
 ) -> str:
     """Get or create a custom model with requested parameters."""
+    if target_type != "training" and target_name is None and target_type != "Anomaly":
+        raise ValueError(
+            "target_name is required for inference custom models that are not Anomaly Detection Models"
+        )
     dr.Client(endpoint=endpoint, token=token)
     try:
         return _find_existing_custom_model(name=name, target_type=target_type, **kwargs)
     except KeyError:
-        return _create_custom_model(endpoint, token, name, target_type, **kwargs)
+        return _create_custom_model(
+            endpoint=endpoint,
+            token=token,
+            name=name,
+            target_type=target_type,
+            target_name=target_name,
+            **kwargs,
+        )
