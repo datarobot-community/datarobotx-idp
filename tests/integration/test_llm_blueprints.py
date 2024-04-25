@@ -54,20 +54,40 @@ def llm(dr_endpoint, dr_token):
     return LLMDefinition.list(as_dict=False)[0].id
 
 
+@pytest.fixture
+def llm_settings():
+    return {"max_completion_length": 100}
+
+
 class TestLLMBlueprints:
-    def test_get_or_create(self, dr_endpoint, dr_token, playground, cleanup_env, llm):
+    def test_get_or_create(self, dr_endpoint, dr_token, playground, cleanup_env, llm, llm_settings):
         bp_1 = get_or_create_llm_blueprint(
-            dr_endpoint, dr_token, playground, "pytest llm blueprint #1", llm=llm
+            dr_endpoint,
+            dr_token,
+            playground,
+            "pytest llm blueprint #1",
+            llm=llm,
+            llm_settings=llm_settings,
         )
         assert len(bp_1)
 
         bp_2 = get_or_create_llm_blueprint(
-            dr_endpoint, dr_token, playground, "pytest llm blueprint #1", llm=llm
+            dr_endpoint,
+            dr_token,
+            playground,
+            "pytest llm blueprint #1",
+            llm=llm,
+            llm_settings=llm_settings,
         )
         assert bp_1 == bp_2
 
         bp_3 = get_or_create_llm_blueprint(
-            dr_endpoint, dr_token, playground, "pytest llm blueprint #2", llm=llm
+            dr_endpoint,
+            dr_token,
+            playground,
+            "pytest llm blueprint #2",
+            llm=llm,
+            llm_settings=llm_settings,
         )
         assert bp_1 != bp_3
 
