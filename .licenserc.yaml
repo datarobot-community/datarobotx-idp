@@ -22,7 +22,7 @@ header:
   license:
     spdx-id: N/A
     copyright-owner: DataRobot, Inc.
-    content: |-
+    content: |
 
       Copyright 2024 DataRobot, Inc. and its affiliates.
 
@@ -37,7 +37,8 @@ header:
       https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
   paths:
-    - "**/*.py"
+    # - "**/*.py"
+    - "**/foo.py"
     # - You can temporarily list files below which will be checked when running the tool locally.
     # - 'new-file01.py'
 
