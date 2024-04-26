@@ -1,20 +1,16 @@
 lint:
-	ruff format .
+	ruff format --check .
 	ruff check .
 	MYPYPATH=src mypy --namespace-packages --explicit-package-bases --strict .
         
 .PHONY: copyright-check apply-copyright fix-licenses check-licenses
 ## Copyright checks
 copyright-check:
-	docker run --rm -v $(CURDIR):/github/workspace \
-	    ghcr.io/apache/skywalking-eyes/license-eye:785bb7f3810572d6912666b4f64bad28e4360799 \
-	    -v info header check
+	docker run -it --rm -v $(CURDIR):/github/workspace apache/skywalking-eyes header check
 
 ## Add copyright notice to new files
 apply-copyright:
-	docker run --rm -v $(CURDIR):/github/workspace \
-	    ghcr.io/apache/skywalking-eyes/license-eye:785bb7f3810572d6912666b4f64bad28e4360799 \
-	    -v info header fix
+	docker run -it --rm -v $(CURDIR):/github/workspace apache/skywalking-eyes header fix
 
 fix-licenses: apply-copyright
 
