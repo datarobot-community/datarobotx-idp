@@ -60,9 +60,7 @@ def llm_settings():
 
 
 class TestLLMBlueprints:
-    def test_get_or_create(
-        self, dr_endpoint, dr_token, playground, cleanup_env, llm, llm_settings
-    ):
+    def test_get_or_create(self, dr_endpoint, dr_token, playground, cleanup_env, llm, llm_settings):
         bp_1 = get_or_create_llm_blueprint(
             dr_endpoint,
             dr_token,

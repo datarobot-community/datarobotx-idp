@@ -80,9 +80,7 @@ def get_or_create_llm_blueprint(
         return _find_existing_llm_blueprint(playground, bp_token)
     except KeyError:
         name = f"{name} [{bp_token}]"
-        bp = LLMBlueprint.create(
-            playground, name, vector_database_settings=vdb_settings, **kwargs
-        )
+        bp = LLMBlueprint.create(playground, name, vector_database_settings=vdb_settings, **kwargs)
         bp.update(is_saved=True)
         return str(bp.id)
 
