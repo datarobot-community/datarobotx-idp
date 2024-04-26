@@ -33,7 +33,12 @@ def test_get_or_create(dr_endpoint, dr_token, cleanup_env):
     )
     assert model_id_1 == model_id_2
 
+    with pytest.raises(ValueError):
+        model_id_3 = get_or_create_custom_model(
+            dr_endpoint, dr_token, "pytest model #2", "TextGeneration"
+        )
+
     model_id_3 = get_or_create_custom_model(
-        dr_endpoint, dr_token, "pytest model #2", "TextGeneration"
+        dr_endpoint, dr_token, "pytest model #2", "TextGeneration", target_name="bar"
     )
     assert model_id_1 != model_id_3
