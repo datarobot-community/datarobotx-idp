@@ -41,7 +41,9 @@ def cleanup_dr(dr_endpoint, dr_token):
         result = set()
         try:
             if paginated:
-                for asset in unpaginate(initial_url=asset_url, initial_params=params, client=client):
+                for asset in unpaginate(
+                    initial_url=asset_url, initial_params=params, client=client
+                ):
                     result.add(asset_url + asset[id_attribute] + "/")
 
             else:
