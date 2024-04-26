@@ -44,11 +44,12 @@ def cleanup_dr(dr_endpoint, dr_token):
                 for asset in unpaginate(
                     initial_url=asset_url, initial_params=params, client=client
                 ):
-                    result.add(asset_url + asset[id_attribute])
+                    result.add(asset_url + asset[id_attribute] + "/")
+
             else:
                 # Handle legacy case with no pagination
                 for asset in _make_pagination(asset_url, client):
-                    result.add(asset_url + asset[id_attribute])
+                    result.add(asset_url + asset[id_attribute] + "/")
         except KeyError:
             pass  # if route doesn't implement standard pagination correctly (e.g. /customApplications)
 
@@ -62,7 +63,6 @@ def cleanup_dr(dr_endpoint, dr_token):
         paginated=True,
         params=None,
     ):
-        # TODO: update to work with apigw urls
         url = posixpath.join(dr_endpoint, partial_url)
         if url[-1] != "/":
             url = url + "/"

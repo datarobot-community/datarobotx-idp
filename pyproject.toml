@@ -39,6 +39,7 @@ exclude = [
   "src/datarobotx/idp/vector_databases.py",
   "src/datarobotx/idp/playgrounds.py",
   "src/datarobotx/idp/llm_blueprints.py",
+  "src/datarobotx/idp/custom_model_llm_validation.py",
 ]
 
 [[tool.mypy.overrides]]
