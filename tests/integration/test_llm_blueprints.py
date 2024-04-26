@@ -41,8 +41,8 @@ def playground(dr_endpoint, dr_token, cleanup_dr, use_case):
 
 
 @pytest.fixture
-def cleanup_env(cleanup_dr):
-    with cleanup_dr("genai/llmBlueprints/"):
+def cleanup_env(cleanup_dr, playground):
+    with cleanup_dr("genai/llmBlueprints/", params={"playgroundId": playground}):
         yield
 
 
@@ -103,11 +103,20 @@ class TestLLMBlueprints:
         )
 
         with cleanup_dr("customModels/"):
-            cmv_1 = get_or_register_llm_blueprint_custom_model_version(dr_endpoint, dr_token, bp_1)
+            cm_1, cmv_1 = get_or_register_llm_blueprint_custom_model_version(
+                dr_endpoint, dr_token, bp_1
+            )
+            assert len(cm_1)
             assert len(cmv_1)
 
-            cmv_2 = get_or_register_llm_blueprint_custom_model_version(dr_endpoint, dr_token, bp_1)
+            cm_2, cmv_2 = get_or_register_llm_blueprint_custom_model_version(
+                dr_endpoint, dr_token, bp_1
+            )
+            assert cm_1 == cm_2
             assert cmv_1 == cmv_2
 
-            cmv_3 = get_or_register_llm_blueprint_custom_model_version(dr_endpoint, dr_token, bp_2)
+            cm_3, cmv_3 = get_or_register_llm_blueprint_custom_model_version(
+                dr_endpoint, dr_token, bp_2
+            )
+            assert cm_1 != cm_3
             assert cmv_1 != cmv_3

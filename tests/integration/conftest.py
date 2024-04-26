@@ -35,14 +35,15 @@ def cleanup_dr(dr_endpoint, dr_token):
             offset += len(resp)
             resp = client.get(initial_url, params={"offset": offset}).json()
 
-    def _get_assets(asset_url, id_attribute, paginated=True):
+    def _get_assets(asset_url, id_attribute, paginated=True, params=None):
         """Retrieve DR assets at a url."""
         client = dr.Client(endpoint=dr_endpoint, token=dr_token)  # type: ignore
         result = set()
         try:
             if paginated:
-                for asset in unpaginate(initial_url=asset_url, initial_params=None, client=client):
+                for asset in unpaginate(initial_url=asset_url, initial_params=params, client=client):
                     result.add(asset_url + asset[id_attribute] + "/")
+
             else:
                 # Handle legacy case with no pagination
                 for asset in _make_pagination(asset_url, client):
@@ -54,14 +55,18 @@ def cleanup_dr(dr_endpoint, dr_token):
 
     @contextmanager
     def _cleanup(
-        partial_url: str, id_attribute: str = "id", debug_override: bool = False, paginated=True
+        partial_url: str,
+        id_attribute: str = "id",
+        debug_override: bool = False,
+        paginated=True,
+        params=None,
     ):
         url = posixpath.join(dr_endpoint, partial_url)
         if url[-1] != "/":
             url = url + "/"
-        assets_before = _get_assets(url, id_attribute, paginated)
+        assets_before = _get_assets(url, id_attribute, paginated, params)
         yield
-        assets_after = _get_assets(url, id_attribute, paginated)
+        assets_after = _get_assets(url, id_attribute, paginated, params)
         for url in assets_after.difference(assets_before):
             if not debug_override:
                 requests.delete(url, headers=headers)
