@@ -23,7 +23,7 @@ repos:
 
     - id: lint-python
       name: lint-python
-      entry: python
+      entry: make lint-python
       language: system
       types: [python]
       stages:
