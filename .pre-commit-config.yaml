@@ -22,10 +22,8 @@ repos:
     hooks:
 
     - id: lint-python
-      name: lint-python
-      entry: make lint-python
+      name: Run python linter
+      entry: bash -c 'make lint-python'
       language: system
-      types: [python]
-      stages:
-        - manual
-        - push
+      types_or: [python, pyi]
+      stages: [manual, push, pre-commit]
