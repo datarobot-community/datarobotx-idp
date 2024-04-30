@@ -28,11 +28,11 @@ else
   cd "$current_dir/.." || exit
 
   # Search for all files with the specified file extensions
+  IFS=$'\n' # Set the internal field separator to newline
   for ext in $(echo "${file_extensions}" | tr "," "\n"); do
-    files_to_lint="${files_to_lint}$(find . -type f -name "*.${ext}") "
+    files_to_lint="${files_to_lint}$(find . -type f -name "*.${ext}")"$'\n'
   done
 fi
-
 # Loop through the files to lint and run the linter
 IFS=$'\n'
 for file in $(echo -e "${files_to_lint}"); do
@@ -40,6 +40,7 @@ for file in $(echo -e "${files_to_lint}"); do
   myVar="${file%"${file##*[! ]}"}"
   # Capture the output of the linter command
   # Check if the output contains any errors
+  echo "Linting ${myVar}..."
   if ! eval "${command} \"${myVar}\"" >/dev/null 2>&1; then
     # If there are errors, append the file name to the list of failed files
     failed_files="${failed_files}${file}\n"

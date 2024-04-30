@@ -48,3 +48,9 @@ module = [
     "requests_toolbelt"
 ]
 ignore_missing_imports = true
+
+[tool.yamlfix]
+allow_duplicate_keys = false
+line_length = 100
+none_representation = "null"
+sequence_style = "block_style"

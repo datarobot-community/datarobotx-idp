@@ -1,29 +1,26 @@
+---
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.0.1
     hooks:
       - id: check-yaml
       - id: end-of-file-fixer
-
-  - repo: https://github.com/pycqa/isort
-    # this is a fixer and will modify the file's import statements
-    rev: 5.11.5
-    hooks:
-      - id: isort
-
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.10.0.1
     hooks:
-    - id: shellcheck
-      args:
-        - --external-sources
-
+      - id: shellcheck
+        args:
+          - --external-sources
   - repo: local
     hooks:
-
-    - id: lint-python
-      name: Run python linter
-      entry: bash -c 'make lint-python'
-      language: system
-      types_or: [python, pyi]
-      stages: [manual, push, pre-commit]
+      - id: lint-changed
+        name: Run linter on changed files
+        entry: bash -c 'make lint-changed'
+        language: system
+        types_or:
+          - python
+          - pyi
+          - yaml
+        stages:
+          - manual
+          - push
