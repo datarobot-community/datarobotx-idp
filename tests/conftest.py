@@ -27,10 +27,12 @@ def dr_token():
 
 @pytest.fixture(scope="module")
 def dr_token_hash(dr_token):
-    """DR api token hash.
+    """
+    DR api token hash.
+
     Used to avoid organization pytest conflicts.
     """
-    token_hash = sha256(dr_token.encode('utf-8')).hexdigest()
+    token_hash = sha256(dr_token.encode("utf-8")).hexdigest()
     return token_hash[:7]
 
 
