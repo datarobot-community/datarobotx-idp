@@ -25,7 +25,7 @@ def pytest_addoption(parser):
         "--debug_override",
         action="store",
         default=False,
-        help="When set, will not delete test results when done.",
+        help="When set, will not delete created datarobot assets when done.",
     )
 
 
