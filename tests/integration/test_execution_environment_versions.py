@@ -72,8 +72,8 @@ def docker_context_path(tmp_path, requirements, dockerfile, app_py):
 
 
 @pytest.fixture
-def execution_environment(dr_endpoint, dr_token, cleanup_dr):
-    with cleanup_dr("executionEnvironments/"):
+def execution_environment(dr_endpoint, dr_token, cleanup_dr, debug_override):
+    with cleanup_dr("executionEnvironments/", debug_override=debug_override):
         yield get_or_create_execution_environment(
             dr_endpoint,
             dr_token,
@@ -82,8 +82,10 @@ def execution_environment(dr_endpoint, dr_token, cleanup_dr):
 
 
 @pytest.fixture
-def cleanup_env_ver(cleanup_dr, execution_environment):
-    with cleanup_dr(f"executionEnvironments/{execution_environment}/versions"):
+def cleanup_env_ver(cleanup_dr, execution_environment, debug_override):
+    with cleanup_dr(
+        f"executionEnvironments/{execution_environment}/versions", debug_override=debug_override
+    ):
         yield
 
 

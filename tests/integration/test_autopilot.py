@@ -74,8 +74,8 @@ def advanced_options_config():
 
 
 @pytest.fixture
-def use_case(dr_endpoint, dr_token, cleanup_dr):
-    with cleanup_dr("useCases/"):
+def use_case(dr_endpoint, dr_token, cleanup_dr, debug_override):
+    with cleanup_dr("useCases/", debug_override=debug_override):
         yield get_or_create_use_case(
             dr_endpoint,
             dr_token,
@@ -91,8 +91,8 @@ def df():
 
 
 @pytest.fixture
-def dataset(dr_endpoint, dr_token, df, use_case, cleanup_dr):
-    with cleanup_dr("datasets/", id_attribute="datasetId"):
+def dataset(dr_endpoint, dr_token, df, use_case, cleanup_dr, debug_override):
+    with cleanup_dr("datasets/", id_attribute="datasetId", debug_override=debug_override):
         yield get_or_create_dataset_from_df(
             dr_endpoint,
             dr_token,
@@ -103,8 +103,8 @@ def dataset(dr_endpoint, dr_token, df, use_case, cleanup_dr):
 
 
 @pytest.fixture
-def cleanup_projects(cleanup_dr):
-    with cleanup_dr("projects/", paginated=False):
+def cleanup_projects(cleanup_dr, debug_override):
+    with cleanup_dr("projects/", paginated=False, debug_override=debug_override):
         yield
 
 

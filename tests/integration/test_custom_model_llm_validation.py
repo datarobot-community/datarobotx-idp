@@ -51,8 +51,8 @@ def score(data, model, **kwargs):
 
 
 @pytest.fixture
-def custom_model(dr_token: str, dr_endpoint: str, cleanup_dr) -> str:
-    with cleanup_dr("customModels/"):
+def custom_model(dr_token: str, dr_endpoint: str, cleanup_dr, debug_override) -> str:
+    with cleanup_dr("customModels/", debug_override=debug_override):
         custom_model = get_or_create_custom_model(
             endpoint=dr_endpoint,
             token=dr_token,
@@ -71,8 +71,9 @@ def custom_model_version(
     custom_model_dir: pathlib.Path,
     cleanup_dr,
     sklearn_drop_in_env,
+    debug_override,
 ) -> str:
-    with cleanup_dr(f"customModels/{custom_model}/versions"):
+    with cleanup_dr(f"customModels/{custom_model}/versions", debug_override=debug_override):
         custom_model_version = get_or_create_custom_model_version(
             dr_endpoint,
             dr_token,
@@ -84,8 +85,8 @@ def custom_model_version(
 
 
 @pytest.fixture
-def cleanup_registered_models(cleanup_dr):
-    with cleanup_dr("registeredModels/"):
+def cleanup_registered_models(cleanup_dr, debug_override):
+    with cleanup_dr("registeredModels/", debug_override=debug_override):
         yield
 
 
@@ -109,8 +110,9 @@ def deployment(
     registered_model_version: str,
     cleanup_dr,
     default_prediction_server_id,
+    debug_override,
 ) -> str:
-    with cleanup_dr("deployments/"):
+    with cleanup_dr("deployments/", debug_override=debug_override):
         deployment = get_or_create_deployment_from_registered_model_version(
             dr_endpoint,
             dr_token,
@@ -122,8 +124,8 @@ def deployment(
 
 
 @pytest.fixture
-def cleanup_validation(cleanup_dr):
-    with cleanup_dr("genai/customModelLLMValidations/"):
+def cleanup_validation(cleanup_dr, debug_override):
+    with cleanup_dr("genai/customModelLLMValidations/", debug_override=debug_override):
         yield
 
 

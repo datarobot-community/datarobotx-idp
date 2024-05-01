@@ -29,8 +29,8 @@ def canonical_name_2():
 
 
 @pytest.fixture
-def cleanup_datastore(cleanup_dr):
-    with cleanup_dr("externalDataStores/"):
+def cleanup_datastore(cleanup_dr, debug_override):
+    with cleanup_dr("externalDataStores/", debug_override=debug_override):
         yield
 
 
@@ -49,8 +49,8 @@ def data_store_id(
 
 
 @pytest.fixture
-def cleanup_datasource(cleanup_dr):
-    with cleanup_dr("externalDataSources/"):
+def cleanup_datasource(cleanup_dr, debug_override):
+    with cleanup_dr("externalDataSources/", debug_override=debug_override):
         yield
 
 

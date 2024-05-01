@@ -23,8 +23,8 @@ from datarobotx.idp.use_cases import get_or_create_use_case
 
 
 @pytest.fixture(scope="class")
-def use_case(dr_endpoint, dr_token, cleanup_dr):
-    with cleanup_dr("useCases/"):
+def use_case(dr_endpoint, dr_token, cleanup_dr, debug_override):
+    with cleanup_dr("useCases/", debug_override=debug_override):
         yield get_or_create_use_case(
             dr_endpoint,
             dr_token,
@@ -33,8 +33,8 @@ def use_case(dr_endpoint, dr_token, cleanup_dr):
 
 
 @pytest.fixture(scope="class")
-def playground(dr_endpoint, dr_token, cleanup_dr, use_case):
-    with cleanup_dr("genai/playgrounds/"):
+def playground(dr_endpoint, dr_token, cleanup_dr, use_case, debug_override):
+    with cleanup_dr("genai/playgrounds/", debug_override=debug_override):
         yield get_or_create_playground(
             dr_endpoint, dr_token, "pytest playground", use_case=use_case
         )
@@ -94,7 +94,7 @@ class TestLLMBlueprints:
         assert bp_1 != bp_3
 
     def test_get_or_register_custom_model_version(
-        self, dr_endpoint, dr_token, playground, cleanup_env, cleanup_dr, llm
+        self, dr_endpoint, dr_token, playground, cleanup_env, cleanup_dr, llm, debug_override
     ):
         bp_1 = get_or_create_llm_blueprint(
             dr_endpoint, dr_token, playground, "pytest llm blueprint #1", llm=llm
@@ -104,7 +104,7 @@ class TestLLMBlueprints:
             dr_endpoint, dr_token, playground, "pytest llm blueprint #2", llm=llm
         )
 
-        with cleanup_dr("customModels/"):
+        with cleanup_dr("customModels/", debug_override=debug_override):
             cm_1, cmv_1 = get_or_register_llm_blueprint_custom_model_version(
                 dr_endpoint, dr_token, bp_1
             )

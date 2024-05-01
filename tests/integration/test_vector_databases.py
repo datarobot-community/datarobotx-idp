@@ -20,8 +20,8 @@ from datarobotx.idp.vector_databases import get_or_create_vector_database_from_d
 
 
 @pytest.fixture
-def use_case(dr_endpoint, dr_token, cleanup_dr):
-    with cleanup_dr("useCases/"):
+def use_case(dr_endpoint, dr_token, cleanup_dr, debug_override):
+    with cleanup_dr("useCases/", debug_override=debug_override):
         yield get_or_create_use_case(
             dr_endpoint,
             dr_token,
@@ -45,8 +45,10 @@ def dummy_text_file(tmp_path):
 
 
 @pytest.fixture
-def dummy_text_dataset(dr_endpoint, dr_token, dummy_text_file, use_case, cleanup_dr):
-    with cleanup_dr("datasets/", id_attribute="datasetId"):
+def dummy_text_dataset(
+    dr_endpoint, dr_token, dummy_text_file, use_case, cleanup_dr, debug_override
+):
+    with cleanup_dr("datasets/", id_attribute="datasetId", debug_override=debug_override):
         yield get_or_create_dataset_from_file(
             dr_endpoint,
             dr_token,

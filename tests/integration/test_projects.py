@@ -25,24 +25,24 @@ def dummy_df():
 
 
 @pytest.fixture
-def dummy_dataset1(dummy_df, cleanup_dr):
-    with cleanup_dr("datasets/", id_attribute="datasetId"):
+def dummy_dataset1(dummy_df, cleanup_dr, debug_override):
+    with cleanup_dr("datasets/", id_attribute="datasetId", debug_override=debug_override):
         yield dr.Dataset.create_from_in_memory_data(  # type: ignore
             data_frame=dummy_df
         )
 
 
 @pytest.fixture
-def dummy_dataset2(dummy_df, cleanup_dr):
-    with cleanup_dr("datasets/", id_attribute="datasetId"):
+def dummy_dataset2(dummy_df, cleanup_dr, debug_override):
+    with cleanup_dr("datasets/", id_attribute="datasetId", debug_override=debug_override):
         yield dr.Dataset.create_from_in_memory_data(  # type: ignore
             data_frame=dummy_df
         )
 
 
 @pytest.fixture
-def cleanup_projects(cleanup_dr):
-    with cleanup_dr("projects/", paginated=False):
+def cleanup_projects(cleanup_dr, debug_override):
+    with cleanup_dr("projects/", paginated=False, debug_override=debug_override):
         yield
 
 

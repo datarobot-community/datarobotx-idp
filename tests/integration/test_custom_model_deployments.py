@@ -24,8 +24,8 @@ from datarobotx.idp.registered_model_versions import get_or_create_registered_cu
 
 
 @pytest.fixture
-def custom_model(cleanup_dr, dr_endpoint, dr_token):
-    with cleanup_dr("customModels/"):
+def custom_model(cleanup_dr, dr_endpoint, dr_token, debug_override):
+    with cleanup_dr("customModels/", debug_override=debug_override):
         yield get_or_create_custom_model(
             dr_endpoint,
             dr_token,
@@ -37,9 +37,15 @@ def custom_model(cleanup_dr, dr_endpoint, dr_token):
 
 @pytest.fixture
 def custom_model_version(
-    cleanup_dr, custom_model, dr_endpoint, dr_token, folder_path, sklearn_drop_in_env
+    cleanup_dr,
+    custom_model,
+    dr_endpoint,
+    dr_token,
+    folder_path,
+    sklearn_drop_in_env,
+    debug_override,
 ):
-    with cleanup_dr(f"customModels/{custom_model}/versions/"):
+    with cleanup_dr(f"customModels/{custom_model}/versions/", debug_override=debug_override):
         yield get_or_create_custom_model_version(
             dr_endpoint, dr_token, custom_model, sklearn_drop_in_env, folder_path
         )
@@ -57,17 +63,17 @@ def deployment_name():
 
 @pytest.fixture
 def registered_model_version(
-    cleanup_dr, dr_endpoint, dr_token, custom_model_version, registered_model_name
+    cleanup_dr, dr_endpoint, dr_token, custom_model_version, registered_model_name, debug_override
 ):
-    with cleanup_dr("registeredModels/"):
+    with cleanup_dr("registeredModels/", debug_override=debug_override):
         yield get_or_create_registered_custom_model_version(
             dr_endpoint, dr_token, custom_model_version, registered_model_name
         )
 
 
 @pytest.fixture
-def cleanup_deployments(cleanup_dr, registered_model_version):
-    with cleanup_dr("deployments/"):
+def cleanup_deployments(cleanup_dr, registered_model_version, debug_override):
+    with cleanup_dr("deployments/", debug_override=debug_override):
         yield
 
 

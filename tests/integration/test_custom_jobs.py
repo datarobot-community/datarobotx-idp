@@ -72,8 +72,8 @@ def folder_path(tmp_path, metadata):
 
 
 @pytest.fixture()
-def cleanup_apps(cleanup_dr):
-    with cleanup_dr("customJobs/"):
+def cleanup_apps(cleanup_dr, debug_override):
+    with cleanup_dr("customJobs/", debug_override=debug_override):
         yield
 
 

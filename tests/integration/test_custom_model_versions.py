@@ -23,8 +23,8 @@ from datarobotx.idp.custom_models import get_or_create_custom_model
 
 
 @pytest.fixture()
-def dummy_credential(dr_endpoint, dr_token, cleanup_dr):
-    with cleanup_dr("credentials/", id_attribute="credentialId"):
+def dummy_credential(dr_endpoint, dr_token, cleanup_dr, debug_override):
+    with cleanup_dr("credentials/", id_attribute="credentialId", debug_override=debug_override):
         name = "pytest_credential"
         credential_id = get_replace_or_create_credential(
             dr_endpoint, dr_token, name, "api_token", api_token="foobar"
@@ -33,8 +33,8 @@ def dummy_credential(dr_endpoint, dr_token, cleanup_dr):
 
 
 @pytest.fixture
-def custom_model(cleanup_dr, dr_endpoint, dr_token):
-    with cleanup_dr("customModels/"):
+def custom_model(cleanup_dr, dr_endpoint, dr_token, debug_override):
+    with cleanup_dr("customModels/", debug_override=debug_override):
         yield get_or_create_custom_model(
             dr_endpoint, dr_token, "pytest custom model", "Regression", target_name="foo"
         )
@@ -89,8 +89,8 @@ def folder_path_with_metadata_and_reqs(folder_path_with_metadata):
 
 
 @pytest.fixture
-def cleanup_model_ver(cleanup_dr, custom_model):
-    with cleanup_dr(f"customModels/{custom_model}/versions"):
+def cleanup_model_ver(cleanup_dr, custom_model, debug_override):
+    with cleanup_dr(f"customModels/{custom_model}/versions", debug_override=debug_override):
         yield
 
 

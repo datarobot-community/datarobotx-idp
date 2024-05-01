@@ -18,8 +18,8 @@ from datarobotx.idp.use_cases import get_or_create_use_case
 
 
 @pytest.fixture
-def use_case(dr_endpoint, dr_token, cleanup_dr):
-    with cleanup_dr("useCases/"):
+def use_case(dr_endpoint, dr_token, cleanup_dr, debug_override):
+    with cleanup_dr("useCases/", debug_override=debug_override):
         yield get_or_create_use_case(
             dr_endpoint,
             dr_token,

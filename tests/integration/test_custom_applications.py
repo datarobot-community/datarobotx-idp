@@ -31,8 +31,8 @@ def custom_app_name(dr_token_hash):
 
 
 @pytest.fixture()
-def custom_app_exec_env(dr_endpoint, dr_token, cleanup_dr):
-    with cleanup_dr("executionEnvironments/"):
+def custom_app_exec_env(dr_endpoint, dr_token, cleanup_dr, debug_override):
+    with cleanup_dr("executionEnvironments/", debug_override=debug_override):
         yield get_or_create_execution_environment(
             dr_endpoint,
             dr_token,
@@ -108,9 +108,11 @@ def docker_context_path_mod(tmp_path, requirements, dockerfile, app_py):
 
 @pytest.fixture()
 def custom_app_exec_env_version(
-    dr_endpoint, dr_token, cleanup_dr, custom_app_exec_env, docker_context_path
+    dr_endpoint, dr_token, cleanup_dr, custom_app_exec_env, docker_context_path, debug_override
 ):
-    with cleanup_dr(f"executionEnvironments/{custom_app_exec_env}/versions"):
+    with cleanup_dr(
+        f"executionEnvironments/{custom_app_exec_env}/versions", debug_override=debug_override
+    ):
         yield get_or_create_execution_environment_version(
             dr_endpoint,
             dr_token,
@@ -120,8 +122,8 @@ def custom_app_exec_env_version(
 
 
 @pytest.fixture()
-def cleanup_apps(cleanup_dr):
-    with cleanup_dr("customApplications/"):
+def cleanup_apps(cleanup_dr, debug_override):
+    with cleanup_dr("customApplications/", debug_override=debug_override):
         yield
 
 

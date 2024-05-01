@@ -38,8 +38,8 @@ def analyze_and_model_config():
 
 
 @pytest.fixture
-def use_case(dr_endpoint, dr_token, cleanup_dr):
-    with cleanup_dr("useCases/"):
+def use_case(dr_endpoint, dr_token, cleanup_dr, debug_override):
+    with cleanup_dr("useCases/", debug_override=debug_override):
         yield get_or_create_use_case(
             dr_endpoint,
             dr_token,
@@ -59,8 +59,8 @@ def df():
 
 
 @pytest.fixture
-def dataset(dr_endpoint, dr_token, df, use_case, cleanup_dr):
-    with cleanup_dr("datasets/", id_attribute="datasetId"):
+def dataset(dr_endpoint, dr_token, df, use_case, cleanup_dr, debug_override):
+    with cleanup_dr("datasets/", id_attribute="datasetId", debug_override=debug_override):
         yield get_or_create_dataset_from_df(
             dr_endpoint,
             dr_token,
@@ -71,8 +71,10 @@ def dataset(dr_endpoint, dr_token, df, use_case, cleanup_dr):
 
 
 @pytest.fixture
-def autopilot_model(dr_endpoint, dr_token, use_case, dataset, analyze_and_model_config, cleanup_dr):
-    with cleanup_dr("projects/", paginated=False):
+def autopilot_model(
+    dr_endpoint, dr_token, use_case, dataset, analyze_and_model_config, cleanup_dr, debug_override
+):
+    with cleanup_dr("projects/", paginated=False, debug_override=debug_override):
         yield get_or_create_autopilot_run(
             dr_endpoint,
             dr_token,
@@ -105,17 +107,17 @@ def deployment_name(dr_token_hash):
 
 @pytest.fixture
 def registered_model_version(
-    cleanup_dr, dr_endpoint, dr_token, recommended_model, registered_model_name
+    cleanup_dr, dr_endpoint, dr_token, recommended_model, registered_model_name, debug_override
 ):
-    with cleanup_dr("registeredModels/"):
+    with cleanup_dr("registeredModels/", debug_override=debug_override):
         yield get_or_create_registered_leaderboard_model_version(
             dr_endpoint, dr_token, recommended_model, registered_model_name
         )
 
 
 @pytest.fixture
-def cleanup_deployments(cleanup_dr, registered_model_version):
-    with cleanup_dr("deployments/"):
+def cleanup_deployments(cleanup_dr, registered_model_version, debug_override):
+    with cleanup_dr("deployments/", debug_override=debug_override):
         yield
 
 

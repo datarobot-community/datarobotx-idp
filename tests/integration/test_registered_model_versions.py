@@ -39,8 +39,8 @@ def analyze_and_model_config():
 
 
 @pytest.fixture
-def use_case(dr_endpoint, dr_token, cleanup_dr):
-    with cleanup_dr("useCases/"):
+def use_case(dr_endpoint, dr_token, cleanup_dr, debug_override):
+    with cleanup_dr("useCases/", debug_override=debug_override):
         yield get_or_create_use_case(
             dr_endpoint,
             dr_token,
@@ -60,8 +60,8 @@ def df():
 
 
 @pytest.fixture
-def dataset(dr_endpoint, dr_token, df, use_case, cleanup_dr):
-    with cleanup_dr("datasets/", id_attribute="datasetId"):
+def dataset(dr_endpoint, dr_token, df, use_case, cleanup_dr, debug_override):
+    with cleanup_dr("datasets/", id_attribute="datasetId", debug_override=debug_override):
         yield get_or_create_dataset_from_df(
             dr_endpoint,
             dr_token,
@@ -72,8 +72,10 @@ def dataset(dr_endpoint, dr_token, df, use_case, cleanup_dr):
 
 
 @pytest.fixture
-def autopilot_model(dr_endpoint, dr_token, use_case, dataset, analyze_and_model_config, cleanup_dr):
-    with cleanup_dr("projects/", paginated=False):
+def autopilot_model(
+    dr_endpoint, dr_token, use_case, dataset, analyze_and_model_config, cleanup_dr, debug_override
+):
+    with cleanup_dr("projects/", paginated=False, debug_override=debug_override):
         yield get_or_create_autopilot_run(
             dr_endpoint,
             dr_token,
@@ -90,8 +92,8 @@ def recommended_model(autopilot_model, cleanup_dr):
 
 
 @pytest.fixture
-def custom_model(cleanup_dr, dr_endpoint, dr_token):
-    with cleanup_dr("customModels/"):
+def custom_model(cleanup_dr, dr_endpoint, dr_token, debug_override):
+    with cleanup_dr("customModels/", debug_override=debug_override):
         yield get_or_create_custom_model(
             dr_endpoint,
             dr_token,
@@ -103,9 +105,15 @@ def custom_model(cleanup_dr, dr_endpoint, dr_token):
 
 @pytest.fixture
 def custom_model_version(
-    cleanup_dr, custom_model, dr_endpoint, dr_token, folder_path, sklearn_drop_in_env
+    cleanup_dr,
+    custom_model,
+    dr_endpoint,
+    dr_token,
+    folder_path,
+    sklearn_drop_in_env,
+    debug_override,
 ):
-    with cleanup_dr(f"customModels/{custom_model}/versions/"):
+    with cleanup_dr(f"customModels/{custom_model}/versions/", debug_override=debug_override):
         yield get_or_create_custom_model_version(
             dr_endpoint, dr_token, custom_model, sklearn_drop_in_env, folder_path
         )
@@ -122,8 +130,8 @@ def external_model_target():
 
 
 @pytest.fixture
-def cleanup_registered_models(cleanup_dr):
-    with cleanup_dr("registeredModels/"):
+def cleanup_registered_models(cleanup_dr, debug_override):
+    with cleanup_dr("registeredModels/", debug_override=debug_override):
         yield
 
 
