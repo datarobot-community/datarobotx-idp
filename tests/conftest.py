@@ -19,6 +19,16 @@ import os
 import pytest
 
 
+def pytest_addoption(parser):
+    """Parse command line arguments."""
+    parser.addoption(
+        "--debug_override",
+        action="store",
+        default=False,
+        help="When set, will not delete test results when done.",
+    )
+
+
 @pytest.fixture(scope="module")
 def dr_token():
     """DR api token."""

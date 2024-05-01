@@ -21,8 +21,13 @@ import datarobot as dr
 from datarobot.utils.pagination import unpaginate
 
 
+@pytest.fixture(scope="session")
+def global_debug_override(pytestconfig):
+    return pytestconfig.getoption("debug_override")
+
+
 @pytest.fixture(scope="module")
-def cleanup_dr(dr_endpoint, dr_token):
+def cleanup_dr(dr_endpoint, dr_token, global_debug_override):
     """Build a context manager for cleaning up DR assets."""
     headers = {"Authorization": f"Bearer {dr_token}"}
 
@@ -70,7 +75,7 @@ def cleanup_dr(dr_endpoint, dr_token):
         yield
         assets_after = _get_assets(url, id_attribute, paginated, params)
         for url in assets_after.difference(assets_before):
-            if not debug_override:
+            if not debug_override and not global_debug_override:
                 requests.delete(url, headers=headers)
 
     return _cleanup
