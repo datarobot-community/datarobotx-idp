@@ -22,7 +22,7 @@ import pytest
 def pytest_addoption(parser):
     """Parse command line arguments."""
     parser.addoption(
-        "--debug_override",
+        "--preserve_dr_assets",
         action="store",
         default=False,
         help="When set, will not delete test results when done.",
