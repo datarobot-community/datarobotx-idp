@@ -42,7 +42,9 @@ def playground(dr_endpoint, dr_token, cleanup_dr, use_case):
 
 @pytest.fixture
 def cleanup_env(cleanup_dr, playground, debug_override):
-    with cleanup_dr("genai/llmBlueprints/", params={"playgroundId": playground}, debug_override=debug_override):
+    with cleanup_dr(
+        "genai/llmBlueprints/", params={"playgroundId": playground}, debug_override=debug_override
+    ):
         yield
 
 
