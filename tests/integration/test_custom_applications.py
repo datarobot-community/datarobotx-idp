@@ -26,6 +26,11 @@ from datarobotx.idp.execution_environments import get_or_create_execution_enviro
 
 
 @pytest.fixture()
+def custom_app_name(dr_token_hash):
+    return "pytest custom app #{i} " + dr_token_hash
+
+
+@pytest.fixture()
 def custom_app_exec_env(dr_endpoint, dr_token, cleanup_dr):
     with cleanup_dr("executionEnvironments/"):
         yield get_or_create_execution_environment(
@@ -126,12 +131,13 @@ def test_get_or_create(
     custom_app_exec_env_version,
     docker_context_path_mod,
     custom_app_exec_env,
+    custom_app_name,
     cleanup_apps,
 ):
     custom_app_id_1 = get_replace_or_create_custom_app_from_env(
         dr_endpoint,
         dr_token,
-        "pytest custom app 1",
+        custom_app_name.format(i=1),
         custom_app_exec_env,
         custom_app_exec_env_version,
     )
@@ -140,7 +146,7 @@ def test_get_or_create(
     custom_app_id_2 = get_replace_or_create_custom_app_from_env(
         dr_endpoint,
         dr_token,
-        "pytest custom app 1",
+        custom_app_name.format(i=1),
         custom_app_exec_env,
         custom_app_exec_env_version,
     )
@@ -149,7 +155,7 @@ def test_get_or_create(
     custom_app_id_3 = get_replace_or_create_custom_app_from_env(
         dr_endpoint,
         dr_token,
-        "pytest custom app 2",
+        custom_app_name.format(i=2),
         custom_app_exec_env,
         custom_app_exec_env_version,
     )
@@ -165,7 +171,7 @@ def test_get_or_create(
     custom_app_id_4 = get_replace_or_create_custom_app_from_env(
         dr_endpoint,
         dr_token,
-        "pytest custom app 2",
+        custom_app_name.format(i=2),
         custom_app_exec_env,
         custom_app_exec_env_version_mod,
     )
@@ -176,6 +182,6 @@ def test_get_or_create(
         _find_existing_custom_app(
             dr_endpoint,
             dr_token,
-            name="pytest custom app 2",
+            name=custom_app_name.format(i=2),
             env_version_id=custom_app_exec_env_version,
         )

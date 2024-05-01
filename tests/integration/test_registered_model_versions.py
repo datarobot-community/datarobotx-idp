@@ -112,9 +112,8 @@ def custom_model_version(
 
 
 @pytest.fixture
-def cleanup_registered_models(cleanup_dr):
-    with cleanup_dr("registeredModels/"):
-        yield
+def registered_model_name(dr_token_hash):
+    return "pytest {source} registered model #{i} " + dr_token_hash
 
 
 @pytest.fixture
@@ -122,21 +121,36 @@ def external_model_target():
     return ExternalTarget(name="completion", type="Regression")
 
 
+@pytest.fixture
+def cleanup_registered_models(cleanup_dr):
+    with cleanup_dr("registeredModels/"):
+        yield
+
+
 def test_get_or_create_from_custom_model(
-    dr_endpoint, dr_token, cleanup_registered_models, custom_model_version
+    dr_endpoint, dr_token, cleanup_registered_models, custom_model_version, registered_model_name
 ):
     model_1 = get_or_create_registered_custom_model_version(
-        dr_endpoint, dr_token, custom_model_version, "pytest custom registered model #1"
+        dr_endpoint,
+        dr_token,
+        custom_model_version,
+        registered_model_name.format(source="custom", i=1),
     )
     assert len(model_1)
 
     model_2 = get_or_create_registered_custom_model_version(
-        dr_endpoint, dr_token, custom_model_version, "pytest custom registered model #1"
+        dr_endpoint,
+        dr_token,
+        custom_model_version,
+        registered_model_name.format(source="custom", i=1),
     )
     assert model_1 == model_2
 
     model_3 = get_or_create_registered_custom_model_version(
-        dr_endpoint, dr_token, custom_model_version, "pytest custom registered model #2"
+        dr_endpoint,
+        dr_token,
+        custom_model_version,
+        registered_model_name.format(source="custom", i=2),
     )
     assert model_1 != model_3
 
@@ -144,26 +158,30 @@ def test_get_or_create_from_custom_model(
         dr_endpoint,
         dr_token,
         custom_model_version,
-        "pytest custom registered model #2",
+        registered_model_name.format(source="custom", i=2),
         description="New description",
     )
     assert model_3 != model_4
 
     dr.Client(endpoint=dr_endpoint, token=dr_token)
-    registered_model = _find_existing_registered_model("pytest custom registered model #2")
+    registered_model = _find_existing_registered_model(
+        registered_model_name.format(source="custom", i=2)
+    )
     versions = [version.id for version in registered_model.list_versions()]
     assert model_3 in versions and model_4 in versions
 
 
 def test_get_or_create_external(
-    dr_endpoint, dr_token, cleanup_registered_models, external_model_target
+    dr_endpoint, dr_token, cleanup_registered_models, external_model_target, registered_model_name
 ):
+    registered_external_model_name = registered_model_name.format(source="external", i=1)
+
     model_1 = get_or_create_registered_external_model_version(
         dr_endpoint,
         dr_token,
         "pytest external registered model version #1",
         external_model_target,
-        "pytest external registered model",
+        registered_external_model_name,
     )
     assert len(model_1)
 
@@ -172,7 +190,7 @@ def test_get_or_create_external(
         dr_token,
         "pytest external registered model version #1",
         external_model_target,
-        "pytest external registered model",
+        registered_external_model_name,
     )
     assert model_1 == model_2
 
@@ -181,19 +199,19 @@ def test_get_or_create_external(
         dr_token,
         "pytest external registered model version #2",
         external_model_target,
-        "pytest external registered model",
+        registered_external_model_name,
     )
     assert model_1 != model_3
 
 
 def test_get_or_create_from_leaderboard(
-    dr_endpoint, dr_token, cleanup_registered_models, recommended_model
+    dr_endpoint, dr_token, cleanup_registered_models, recommended_model, registered_model_name
 ):
     model_1 = get_or_create_registered_leaderboard_model_version(
         dr_endpoint,
         dr_token,
         recommended_model,
-        "pytest datarobot registered model version #1",
+        registered_model_name.format(source="datarobot", i=1),
     )
     assert len(model_1)
 
@@ -201,7 +219,7 @@ def test_get_or_create_from_leaderboard(
         dr_endpoint,
         dr_token,
         recommended_model,
-        "pytest datarobot registered model version #1",
+        registered_model_name.format(source="datarobot", i=1),
     )
     assert model_1 == model_2
 
@@ -209,6 +227,6 @@ def test_get_or_create_from_leaderboard(
         dr_endpoint,
         dr_token,
         recommended_model,
-        "pytest datarobot registered model version #2",
+        registered_model_name.format(source="datarobot", i=2),
     )
     assert model_1 != model_3

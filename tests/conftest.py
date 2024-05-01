@@ -13,6 +13,7 @@
 
 """Fixtures common to all tests."""
 
+from hashlib import sha256
 import os
 
 import pytest
@@ -22,6 +23,17 @@ import pytest
 def dr_token():
     """DR api token."""
     return os.environ["DATAROBOT_API_TOKEN"]
+
+
+@pytest.fixture(scope="module")
+def dr_token_hash(dr_token):
+    """
+    DR api token hash.
+
+    Used to avoid organization pytest conflicts.
+    """
+    token_hash = sha256(dr_token.encode("utf-8")).hexdigest()
+    return token_hash[:7]
 
 
 @pytest.fixture(scope="module")

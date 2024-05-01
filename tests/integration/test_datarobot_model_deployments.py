@@ -94,8 +94,13 @@ def other_model(autopilot_model):
 
 
 @pytest.fixture
-def registered_model_name():
-    return "pytest datarobot registered model"
+def registered_model_name(dr_token_hash):
+    return f"pytest datarobot registered model {dr_token_hash}"
+
+
+@pytest.fixture
+def deployment_name(dr_token_hash):
+    return "pytest datarobot deployment #{i}"
 
 
 @pytest.fixture
@@ -120,12 +125,13 @@ def test_get_or_create(
     cleanup_deployments,
     registered_model_version,
     default_prediction_server_id,
+    deployment_name,
 ):
     deployment_1 = get_or_create_deployment_from_registered_model_version(
         dr_endpoint,
         dr_token,
         registered_model_version,
-        "pytest custom deployment #1",
+        deployment_name.format(i=1),
         default_prediction_server_id=default_prediction_server_id,
     )
     assert len(deployment_1)
@@ -134,7 +140,7 @@ def test_get_or_create(
         dr_endpoint,
         dr_token,
         registered_model_version,
-        "pytest custom deployment #1",
+        deployment_name.format(i=1),
         default_prediction_server_id=default_prediction_server_id,
     )
     assert deployment_1 == deployment_2
@@ -143,7 +149,7 @@ def test_get_or_create(
         dr_endpoint,
         dr_token,
         registered_model_version,
-        "pytest custom deployment #2",
+        deployment_name.format(i=2),
         default_prediction_server_id=default_prediction_server_id,
     )
     assert deployment_1 != deployment_3
@@ -156,6 +162,7 @@ def test_get_create_or_replace(
     registered_model_version,
     registered_model_name,
     default_prediction_server_id,
+    deployment_name,
     cleanup_deployments,
 ):
     deployment_1 = get_replace_or_create_deployment_from_registered_model(
@@ -163,7 +170,7 @@ def test_get_create_or_replace(
         dr_token,
         registered_model_version,
         registered_model_name,
-        "pytest custom deployment #1",
+        deployment_name.format(i=1),
         default_prediction_server_id=default_prediction_server_id,
     )
     assert len(deployment_1)
@@ -173,7 +180,7 @@ def test_get_create_or_replace(
         dr_token,
         registered_model_version,
         registered_model_name,
-        "pytest custom deployment #1",
+        deployment_name.format(i=1),
         default_prediction_server_id=default_prediction_server_id,
     )
     assert deployment_1 == deployment_2
@@ -186,7 +193,7 @@ def test_get_create_or_replace(
         dr_token,
         registered_model_version_2,
         registered_model_name,
-        "pytest custom deployment #1",
+        deployment_name.format(i=1),
         default_prediction_server_id=default_prediction_server_id,
     )
     # swapping in a new registered model version replaces deployment instead of creating new
@@ -204,7 +211,7 @@ def test_get_create_or_replace(
         dr_token,
         registered_model_version_2,
         registered_model_name,
-        "pytest custom deployment #2",
+        deployment_name.format(i=2),
         default_prediction_server_id=default_prediction_server_id,
     )
     assert deployment_1 != deployment_4

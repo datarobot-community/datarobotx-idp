@@ -114,7 +114,7 @@ def get_replace_or_create_deployment_from_registered_model(
                 .get_version(registered_model_version_id)
                 .model_id
             )
-            dr.Deployment.get(curr_deployment_id).replace_model(model_id, reason=reason)
+            dr.Deployment.get(curr_deployment_id).perform_model_replace(model_id, reason=reason)
         return curr_deployment_id
     except KeyError:
         kwargs["description"] = kwargs.get("description", "") + f"\nChecksum: {deployment_token}"
