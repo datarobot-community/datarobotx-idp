@@ -11,8 +11,6 @@
 # Released under the terms of DataRobot Tool and Utility Agreement.
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
-import datetime as dt
-
 import pandas as pd
 import pytest
 
@@ -96,13 +94,13 @@ def other_model(autopilot_model):
 
 
 @pytest.fixture
-def registered_model_name():
-    return f"pytest datarobot registered model {dt.datetime.now().isoformat()}"
+def registered_model_name(dr_token_hash):
+    return f"pytest datarobot registered model {dr_token_hash}"
 
 
 @pytest.fixture
-def deployment_name():
-    return "pytest datarobot deployment #{i}" + dt.datetime.now().isoformat()
+def deployment_name(dr_token_hash):
+    return "pytest datarobot deployment #{i}"
 
 
 @pytest.fixture

@@ -11,7 +11,6 @@
 # Released under the terms of DataRobot Tool and Utility Agreement.
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
-import datetime as dt
 import os
 
 import pytest
@@ -27,8 +26,8 @@ from datarobotx.idp.execution_environments import get_or_create_execution_enviro
 
 
 @pytest.fixture()
-def custom_app_name():
-    return "pytest custom app #{i} " + dt.datetime.now().isoformat()
+def custom_app_name(dr_token_hash):
+    return "pytest custom app #{i} " + dr_token_hash
 
 
 @pytest.fixture()

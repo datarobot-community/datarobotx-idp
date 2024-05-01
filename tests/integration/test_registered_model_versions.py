@@ -11,8 +11,6 @@
 # Released under the terms of DataRobot Tool and Utility Agreement.
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
-import datetime as dt
-
 import pandas as pd
 import pytest
 
@@ -114,8 +112,8 @@ def custom_model_version(
 
 
 @pytest.fixture
-def registered_model_name():
-    return "pytest {source} registered model #{i} " + dt.datetime.now().isoformat()
+def registered_model_name(dr_token_hash):
+    return "pytest {source} registered model #{i} " + dr_token_hash
 
 
 @pytest.fixture
