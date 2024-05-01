@@ -27,8 +27,8 @@ def canonical_name_2():
 
 
 @pytest.fixture
-def cleanup_env(cleanup_dr):
-    with cleanup_dr("externalDataStores/"):
+def cleanup_env(cleanup_dr, debug_override):
+    with cleanup_dr("externalDataStores/", debug_override):
         yield
 
 

@@ -17,8 +17,8 @@ from datarobotx.idp.execution_environments import get_or_create_execution_enviro
 
 
 @pytest.fixture
-def cleanup_env(cleanup_dr):
-    with cleanup_dr("executionEnvironments/"):
+def cleanup_env(cleanup_dr, debug_override):
+    with cleanup_dr("executionEnvironments/", debug_override=debug_override):
         yield
 
 
