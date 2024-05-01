@@ -21,6 +21,11 @@ import datarobot as dr
 from datarobot.utils.pagination import unpaginate
 
 
+@pytest.fixture(scope="session")
+def debug_override(pytestconfig):
+    return pytestconfig.getoption("debug_override")
+
+
 @pytest.fixture(scope="module")
 def cleanup_dr(dr_endpoint, dr_token):
     """Build a context manager for cleaning up DR assets."""

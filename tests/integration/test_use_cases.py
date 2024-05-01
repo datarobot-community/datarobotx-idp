@@ -17,8 +17,8 @@ from datarobotx.idp.use_cases import get_or_create_use_case
 
 
 @pytest.fixture
-def cleanup_env(cleanup_dr):
-    with cleanup_dr("useCases/"):
+def cleanup_env(cleanup_dr, debug_override):
+    with cleanup_dr("useCases/", debug_override=debug_override):
         yield
 
 

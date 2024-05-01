@@ -17,8 +17,8 @@ from datarobotx.idp.credentials import get_replace_or_create_credential
 
 
 @pytest.fixture
-def cleanup_env(cleanup_dr):
-    with cleanup_dr("credentials/", id_attribute="credentialId"):
+def cleanup_env(cleanup_dr, debug_override):
+    with cleanup_dr("credentials/", id_attribute="credentialId", debug_override=debug_override):
         yield
 
 

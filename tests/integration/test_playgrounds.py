@@ -28,8 +28,8 @@ def use_case(dr_endpoint, dr_token, cleanup_dr):
 
 
 @pytest.fixture
-def cleanup_env(cleanup_dr):
-    with cleanup_dr("genai/playgrounds/"):
+def cleanup_env(cleanup_dr, debug_override):
+    with cleanup_dr("genai/playgrounds/", debug_override=debug_override):
         yield
 
 

@@ -17,8 +17,8 @@ from datarobotx.idp.custom_models import get_or_create_custom_model
 
 
 @pytest.fixture
-def cleanup_env(cleanup_dr):
-    with cleanup_dr("customModels/"):
+def cleanup_env(cleanup_dr, debug_override):
+    with cleanup_dr("customModels/", debug_override=debug_override):
         yield
 
 
