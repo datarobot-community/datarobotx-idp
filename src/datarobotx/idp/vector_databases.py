@@ -73,4 +73,7 @@ def get_or_create_vector_database_from_dataset(
         db = VectorDatabase.create(
             dataset_id=dataset_id, chunking_parameters=chunking_parameters_obj, **kwargs
         )
+        while db.execution_status != "COMPLETED":
+            db = VectorDatabase.get(db.id)
+            time.sleep(5)
         return str(db.id)
