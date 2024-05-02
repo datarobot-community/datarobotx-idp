@@ -14,6 +14,7 @@
 # mypy: disable-error-code="attr-defined"
 # pyright: reportPrivateImportUsage=false
 import json
+import os
 import pathlib
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -118,3 +119,83 @@ def get_or_create_custom_model_version(
         if (pathlib.Path(folder_path) / "requirements.txt").exists():
             _ensure_dependency_build(custom_model_id, env_version.id)  # pylint: disable=no-member
         return str(env_version.id)  # pylint: disable=no-member
+
+
+def get_or_create_custom_model_version_from_previous(
+    endpoint: str,
+    token: str,
+    custom_model_id: str,
+    base_environment_id: str,
+    runtime_parameter_values: Optional[List[Dict[str, Any]]] = None,
+    **kwargs: Any,
+) -> str:
+    """Get or create a custom model version from a previous version with requested parameters.
+
+    Notes
+    -----
+    Records a checksum in the model version description field to allow future calls to this
+    function to validate whether a desired model version already exists
+    """
+    dr.Client(token=token, endpoint=endpoint)
+    folder_path = kwargs.pop("folder_path", None)
+    files = kwargs.pop("files", [])
+
+    if files and not isinstance(files[0], tuple) and isinstance(files[0], str):
+        files = [(filename, os.path.basename(filename)) for filename in files]
+
+    files_to_hash = [pathlib.Path(f[0]) for f in files]
+
+    if folder_path is not None:
+        folder_path_pathlib = Path(folder_path)
+    else:
+        folder_path_pathlib = None
+
+    max_wait = kwargs.pop("max_wait", 20 * 60)
+
+    model_version_token = get_hash(
+        custom_model_id,
+        base_environment_id,
+        runtime_parameter_values=runtime_parameter_values,
+        folder_path=folder_path_pathlib,
+        *files_to_hash,
+        **kwargs,
+    )
+    try:
+        existing_version_id = _find_existing_custom_model_version(
+            custom_model_id, model_version_token
+        )
+        if folder_path and (pathlib.Path(folder_path) / "requirements.txt").exists():
+            _ensure_dependency_build(custom_model_id, existing_version_id)
+        if "requirements.txt" in [f[1] for f in files]:
+            _ensure_dependency_build(custom_model_id, existing_version_id)
+        return existing_version_id
+
+    except KeyError:
+        custom_model_version = dr.CustomModelVersion.create_from_previous(
+            custom_model_id,
+            base_environment_id,
+            max_wait=max_wait,
+            folder_path=folder_path,
+            files=files,
+            **kwargs,
+        )
+        if runtime_parameter_values is not None:
+            env_version_id = _patch_custom_model_version(
+                endpoint,
+                token,
+                custom_model_id,
+                base_environment_id,
+                is_major_update="false",
+                runtime_parameter_values=json.dumps(
+                    [to_api(param) for param in runtime_parameter_values]
+                ),
+            )
+            custom_model_version = dr.CustomModelVersion.get(custom_model_id, env_version_id)
+
+        custom_model_version.update(description=f"\nChecksum: {model_version_token}")  # pylint: disable=no-member
+
+        if folder_path and (pathlib.Path(folder_path) / "requirements.txt").exists():
+            _ensure_dependency_build(custom_model_id, custom_model_version.id)
+        if "requirements.txt" in [f[1] for f in files]:
+            _ensure_dependency_build(custom_model_id, custom_model_version.id)
+        return str(custom_model_version.id)
