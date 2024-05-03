@@ -48,11 +48,11 @@ def dummy_text_file(tmp_path):
 def dummy_text_dataset(dr_endpoint, dr_token, dummy_text_file, use_case, cleanup_dr):
     with cleanup_dr("datasets/", id_attribute="datasetId"):
         yield get_or_create_dataset_from_file(
-            dr_endpoint,
-            dr_token,
-            use_case,
-            "pytest dataset #1",
-            dummy_text_file,
+            endpoint=dr_endpoint,
+            token=dr_token,
+            use_cases=use_case,
+            name="pytest dataset #1",
+            file_path=dummy_text_file,
         )
 
 
@@ -71,30 +71,30 @@ def test_get_or_create(
     dr_endpoint, dr_token, use_case, dummy_text_dataset, chunking_parameters, cleanup_env
 ):
     db_1 = get_or_create_vector_database_from_dataset(
-        dr_endpoint,
-        dr_token,
-        dummy_text_dataset,
-        chunking_parameters,
+        endpoint=dr_endpoint,
+        token=dr_token,
+        dataset_id=dummy_text_dataset,
+        chunking_parameters=chunking_parameters,
         name="pytest vdb #1",
         use_case=use_case,
     )
     assert len(db_1)
 
     db_2 = get_or_create_vector_database_from_dataset(
-        dr_endpoint,
-        dr_token,
-        dummy_text_dataset,
-        chunking_parameters,
+        endpoint=dr_endpoint,
+        token=dr_token,
+        dataset_id=dummy_text_dataset,
+        chunking_parameters=chunking_parameters,
         name="pytest vdb #1",
         use_case=use_case,
     )
     assert db_1 == db_2
 
     db_3 = get_or_create_vector_database_from_dataset(
-        dr_endpoint,
-        dr_token,
-        dummy_text_dataset,
-        chunking_parameters,
+        endpoint=dr_endpoint,
+        token=dr_token,
+        dataset_id=dummy_text_dataset,
+        chunking_parameters=chunking_parameters,
         name="pytest vdb #2",
         use_case=use_case,
     )

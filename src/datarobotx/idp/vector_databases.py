@@ -22,23 +22,28 @@ except ImportError as e:
     raise ImportError("datarobot>=3.4.0 is required for VectorDatabase support") from e
 
 
+def _wait_for_creation(db: VectorDatabase, timeout_secs: int) -> VectorDatabase:
+    waited_secs = 0
+    while True:
+        db = VectorDatabase.get(db.id)
+        if db.execution_status == dr.enums.VectorDatabaseExecutionStatus.COMPLETED:
+            return db
+        elif db.execution_status == dr.enums.VectorDatabaseExecutionStatus.ERROR:
+            raise ValueError(f"VectorDatabase creation failed: {db.error_message}")
+        elif waited_secs > timeout_secs:
+            raise TimeoutError("Timed out waiting for VectorDatabase to build.")
+        time.sleep(3)
+        waited_secs += 3
+
+
 def _find_existing_vector_database(timeout_secs: int, **kwargs: Any) -> str:
     use_case = kwargs.pop("use_case", None)
     kwargs["separators"] = set(kwargs["separators"])
     for db in VectorDatabase.list(use_case=use_case):
         setattr(db, "separators", set(db.separators))
         if all(getattr(db, key) == kwargs[key] for key in kwargs):
-            waited_secs = 0
-            while True:
-                status = VectorDatabase.get(db.id).execution_status
-                if status == "COMPLETED":
-                    return str(db.id)
-                elif status == "ERROR":
-                    break
-                elif waited_secs > timeout_secs:
-                    raise TimeoutError("Timed out waiting for VectorDatabase to build.")
-                time.sleep(3)
-                waited_secs += 3
+            db = _wait_for_creation(db, timeout_secs)
+            return str(db.id)
 
     raise KeyError("No matching vector database found")
 
@@ -53,6 +58,7 @@ def get_or_create_vector_database_from_dataset(
     """Get or create a custom model with requested parameters."""
     dr.Client(endpoint=endpoint, token=token)  # type: ignore
 
+    timeout_secs = kwargs.pop("timeout_secs", 600)
     if isinstance(chunking_parameters, ChunkingParameters):
         chunking_parameters_dict = {
             k: v
@@ -68,9 +74,10 @@ def get_or_create_vector_database_from_dataset(
         params = {"dataset_id": dataset_id}
         params.update(chunking_parameters_dict)
         params.update(kwargs)
-        return _find_existing_vector_database(timeout_secs=600, **params)
+        return _find_existing_vector_database(timeout_secs, **params)
     except KeyError:
         db = VectorDatabase.create(
             dataset_id=dataset_id, chunking_parameters=chunking_parameters_obj, **kwargs
         )
+        db = _wait_for_creation(db, timeout_secs)
         return str(db.id)
