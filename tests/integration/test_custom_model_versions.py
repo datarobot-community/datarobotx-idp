@@ -226,13 +226,27 @@ def test_get_or_create(
 
     assert updated_version_3 != updated_version_1
 
+    updated_version_4 = get_or_create_custom_model_version_from_previous(
+        endpoint=dr_endpoint,
+        token=dr_token,
+        custom_model_id=custom_model,
+        base_environment_id=sklearn_drop_in_env,
+        files=list_of_files,
+        runtime_parameter_values=pythonic_runtime_parameters,
+        maximum_memory=4096 * 1024 * 1024,
+    )
+
+    assert updated_version_4 == updated_version_3
+
     with tempfile.TemporaryDirectory() as d:
         zip_file_path = pathlib.Path(d) / "model.zip"
         dr.CustomModelVersion.get(
-            custom_model_id=custom_model, custom_model_version_id=updated_version_3
+            custom_model_id=custom_model, custom_model_version_id=updated_version_4
         ).download(zip_file_path)
 
         # iterate over the zip file contents to find file1
         zip_ref = zipfile.ZipFile(zip_file_path, "r")
         assert "file1" in zip_ref.namelist()
+        assert "requirements.txt" in zip_ref.namelist()
         assert zip_ref.read("file1") == b"foo"
+        assert zip_ref.read("requirements.txt") == b"scikit-learn==1.4.2"
