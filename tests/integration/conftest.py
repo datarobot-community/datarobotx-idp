@@ -22,7 +22,7 @@ from datarobot.utils.pagination import unpaginate
 
 
 @pytest.fixture(scope="session")
-def global_persist_test_results(pytestconfig):
+def global_preserve_dr_assets(pytestconfig):
     return pytestconfig.getoption("preserve_dr_assets")
 
 
