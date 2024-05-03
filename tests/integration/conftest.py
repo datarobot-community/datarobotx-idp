@@ -96,6 +96,17 @@ def score(data, model, **kwargs):
 
 @pytest.fixture
 def folder_path(tmp_path, custom_py):
-    p = tmp_path / "custom.py"
+    dir = tmp_path / "custom_model"
+    dir.mkdir()
+    p = dir / "custom.py"
     p.write_text(custom_py)
-    return str(tmp_path.resolve())
+    return str(dir.resolve())
+
+
+@pytest.fixture
+def another_folder_path(tmp_path, custom_py):
+    dir = tmp_path / "another_custom_model"
+    dir.mkdir()
+    p = dir / "custom.py"
+    p.write_text(custom_py)
+    return str(dir.resolve())

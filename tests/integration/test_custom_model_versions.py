@@ -12,13 +12,18 @@
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
 import pathlib
+import tempfile
+import zipfile
 
 import pytest
 import yaml
 
 import datarobot as dr
 from datarobotx.idp.credentials import get_replace_or_create_credential
-from datarobotx.idp.custom_model_versions import get_or_create_custom_model_version
+from datarobotx.idp.custom_model_versions import (
+    get_or_create_custom_model_version,
+    get_or_create_custom_model_version_from_previous,
+)
 from datarobotx.idp.custom_models import get_or_create_custom_model
 
 
@@ -81,11 +86,31 @@ def folder_path_with_metadata(model_metadata, folder_path):
 
 
 @pytest.fixture
+def another_folder_path_with_metadata(model_metadata, another_folder_path):
+    p = pathlib.Path(another_folder_path)
+    p = p / "model-metadata.yaml"
+    with open(p, "w") as f:
+        yaml.dump(model_metadata, f)
+    return another_folder_path
+
+
+@pytest.fixture
 def folder_path_with_metadata_and_reqs(folder_path_with_metadata):
     requirements = "scikit-learn==1.4.0"
     p = pathlib.Path(folder_path_with_metadata)
     (p / "requirements.txt").write_text(requirements)
     return folder_path_with_metadata
+
+
+@pytest.fixture
+def updated_folder_path_with_metadata_and_reqs(another_folder_path_with_metadata):
+    requirements = "scikit-learn==1.4.2"
+    p = pathlib.Path(another_folder_path_with_metadata)
+    (p / "requirements.txt").write_text(requirements)
+    p = p / "files"
+    p.mkdir()
+    (p / "file1").write_text("foo")
+    return another_folder_path_with_metadata
 
 
 @pytest.fixture
@@ -102,6 +127,7 @@ def test_get_or_create(
     sklearn_drop_in_env,
     pythonic_runtime_parameters,
     folder_path_with_metadata_and_reqs,
+    updated_folder_path_with_metadata_and_reqs,
 ):
     model_ver_id_1 = get_or_create_custom_model_version(
         dr_endpoint,
@@ -160,3 +186,38 @@ def test_get_or_create(
         ).build_status
         == "success"
     )
+    updated_version_1 = get_or_create_custom_model_version_from_previous(
+        endpoint=dr_endpoint,
+        token=dr_token,
+        custom_model_id=custom_model,
+        base_environment_id=sklearn_drop_in_env,
+        folder_path=updated_folder_path_with_metadata_and_reqs,
+        runtime_parameter_values=pythonic_runtime_parameters,
+        maximum_memory=4096 * 1024 * 1024,
+    )
+    assert updated_version_1 != model_ver_id_5
+
+    updated_version_2 = get_or_create_custom_model_version_from_previous(
+        endpoint=dr_endpoint,
+        token=dr_token,
+        custom_model_id=custom_model,
+        base_environment_id=sklearn_drop_in_env,
+        folder_path=updated_folder_path_with_metadata_and_reqs,
+        runtime_parameter_values=pythonic_runtime_parameters,
+        maximum_memory=4096 * 1024 * 1024,
+    )
+
+    assert updated_version_1 == updated_version_2
+
+    with tempfile.TemporaryDirectory() as d:
+        zip_file_path = pathlib.Path(d) / "model.zip"
+        dr.CustomModelVersion.get(
+            custom_model_id=custom_model, custom_model_version_id=updated_version_2
+        ).download(zip_file_path)
+
+        # iterate over the zip file contents to find file1
+        zip_ref = zipfile.ZipFile(zip_file_path, "r")
+        assert "files/file1" in zip_ref.namelist()
+        assert "requirements.txt" in zip_ref.namelist()
+        assert zip_ref.read("files/file1") == b"foo"
+        assert zip_ref.read("requirements.txt") == b"scikit-learn==1.4.2"

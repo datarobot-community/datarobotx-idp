@@ -59,7 +59,8 @@ def _ensure_dependency_build(custom_model_id: str, custom_model_version_id: str)
         )
 
 
-def get_or_create_custom_model_version(
+def _get_or_create(
+    from_previous: bool,
     endpoint: str,
     token: str,
     custom_model_id: str,
@@ -68,13 +69,6 @@ def get_or_create_custom_model_version(
     runtime_parameter_values: Optional[List[Dict[str, Any]]] = None,
     **kwargs: Any,
 ) -> str:
-    """Get or create a custom model version with requested parameters.
-
-    Notes
-    -----
-    Records a checksum in the model version description field to allow future calls to this
-    function to validate whether a desired model version already exists
-    """
     dr.Client(token=token, endpoint=endpoint)
     model_version_token = get_hash(
         Path(folder_path),
@@ -93,7 +87,11 @@ def get_or_create_custom_model_version(
         return existing_version_id
 
     except KeyError:
-        env_version = dr.CustomModelVersion.create_clean(
+        if not from_previous:
+            create = dr.CustomModelVersion.create_clean  # type: ignore
+        else:
+            create = dr.CustomModelVersion.create_from_previous  # type: ignore
+        env_version = create(
             custom_model_id,
             base_environment_id,
             folder_path=folder_path,
@@ -113,8 +111,64 @@ def get_or_create_custom_model_version(
             )
             env_version = dr.CustomModelVersion.get(custom_model_id, env_version_id)
 
-        env_version.update(description=f"\nChecksum: {model_version_token}")  # pylint: disable=no-member
+        env_version.update(description=f"\nChecksum: {model_version_token}")
 
         if (pathlib.Path(folder_path) / "requirements.txt").exists():
-            _ensure_dependency_build(custom_model_id, env_version.id)  # pylint: disable=no-member
-        return str(env_version.id)  # pylint: disable=no-member
+            _ensure_dependency_build(custom_model_id, env_version.id)
+        return str(env_version.id)
+
+
+def get_or_create_custom_model_version(
+    endpoint: str,
+    token: str,
+    custom_model_id: str,
+    base_environment_id: str,
+    folder_path: str,
+    runtime_parameter_values: Optional[List[Dict[str, Any]]] = None,
+    **kwargs: Any,
+) -> str:
+    """Get or create a custom model version with requested parameters.
+
+    Notes
+    -----
+    Records a checksum in the model version description field to allow future calls to this
+    function to validate whether a desired model version already exists
+    """
+    return _get_or_create(
+        from_previous=False,
+        endpoint=endpoint,
+        token=token,
+        custom_model_id=custom_model_id,
+        base_environment_id=base_environment_id,
+        folder_path=folder_path,
+        runtime_parameter_values=runtime_parameter_values,
+        **kwargs,
+    )
+
+
+def get_or_create_custom_model_version_from_previous(
+    endpoint: str,
+    token: str,
+    custom_model_id: str,
+    base_environment_id: str,
+    folder_path: str,
+    runtime_parameter_values: Optional[List[Dict[str, Any]]] = None,
+    **kwargs: Any,
+) -> str:
+    """Get or create a custom model version from a previous version with requested parameters.
+
+    Notes
+    -----
+    Records a checksum in the model version description field to allow future calls to this
+    function to validate whether a desired model version already exists
+    """
+    return _get_or_create(
+        from_previous=True,
+        endpoint=endpoint,
+        token=token,
+        custom_model_id=custom_model_id,
+        base_environment_id=base_environment_id,
+        folder_path=folder_path,
+        runtime_parameter_values=runtime_parameter_values,
+        **kwargs,
+    )
