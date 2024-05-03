@@ -19,6 +19,16 @@ import os
 import pytest
 
 
+def pytest_addoption(parser):
+    """Parse command line arguments."""
+    parser.addoption(
+        "--preserve_dr_assets",
+        action="store",
+        default=False,
+        help="When set, will not delete created datarobot assets when done.",
+    )
+
+
 @pytest.fixture(scope="module")
 def dr_token():
     """DR api token."""
