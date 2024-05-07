@@ -133,8 +133,8 @@ def test_get_or_create(
         dr_endpoint,
         dr_token,
         custom_model,
-        sklearn_drop_in_env,
-        folder_path_with_metadata_and_reqs,
+        base_environment_id=sklearn_drop_in_env,
+        folder_path=folder_path_with_metadata_and_reqs,
     )
     assert len(model_ver_id_1)
 
@@ -142,8 +142,8 @@ def test_get_or_create(
         dr_endpoint,
         dr_token,
         custom_model,
-        sklearn_drop_in_env,
-        folder_path_with_metadata_and_reqs,
+        base_environment_id=sklearn_drop_in_env,
+        folder_path=folder_path_with_metadata_and_reqs,
     )
     assert model_ver_id_1 == model_ver_id_2
 
@@ -151,8 +151,8 @@ def test_get_or_create(
         dr_endpoint,
         dr_token,
         custom_model,
-        sklearn_drop_in_env,
-        folder_path_with_metadata_and_reqs,
+        base_environment_id=sklearn_drop_in_env,
+        folder_path=folder_path_with_metadata_and_reqs,
         maximum_memory=4096 * 1024 * 1024,
     )
     assert model_ver_id_1 != model_ver_id_3
@@ -161,8 +161,8 @@ def test_get_or_create(
         dr_endpoint,
         dr_token,
         custom_model,
-        sklearn_drop_in_env,
-        folder_path_with_metadata_and_reqs,
+        base_environment_id=sklearn_drop_in_env,
+        folder_path=folder_path_with_metadata_and_reqs,
         runtime_parameter_values=pythonic_runtime_parameters,
         maximum_memory=4096 * 1024 * 1024,
     )
@@ -172,8 +172,8 @@ def test_get_or_create(
         dr_endpoint,
         dr_token,
         custom_model,
-        sklearn_drop_in_env,
-        folder_path_with_metadata_and_reqs,
+        base_environment_id=sklearn_drop_in_env,
+        folder_path=folder_path_with_metadata_and_reqs,
         runtime_parameter_values=pythonic_runtime_parameters,
         maximum_memory=4096 * 1024 * 1024,
     )
