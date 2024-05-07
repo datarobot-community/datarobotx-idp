@@ -11,17 +11,12 @@ exit_codes=()
 # Read the linting scripts into an array
 mapfile -t scripts < <(find ./ -name 'lint_*.sh')
 
-# Run python linting first to prevent issues with ipynb generating python files to lint
-/linters/lint_python.sh "$files"
-
 # Run each script in parallel
 for script in "${scripts[@]}"; do
     # Run all scripts that aren't the python linter in parallel
-    if [[ "$script" != *"lint_python.sh"* ]]; then
       "$script" "$files" &
       # Store the PID of the process
       pids+=($!)
-    fi
 done
 
 # Wait for all linting scripts to finish and capture their exit codes

@@ -324,9 +324,9 @@ def test_add_credentials_to_catalog(catalog_config):
         captured_inputs.update(kwargs)
         return ""
 
-    f = handle_io(
-        catalog=catalog_config, credentials=credentials, add_credentials_to_catalog=True
-    )(f_orig)
+    f = handle_io(catalog=catalog_config, credentials=credentials, add_credentials_to_catalog=True)(
+        f_orig
+    )
     f(inputs={"foo": "credentials:foo"}, outputs=list(catalog_config.keys())[0])
     assert captured_inputs["foo"] == credentials["foo"]
 

@@ -14,6 +14,7 @@ failed_files=""
 
 RED='\033[0;31m' # red Color
 GREEN='\033[0;32m' # Green Color
+YELLOW="\033[38;5;226m"
 NC='\033[0m' # No Color
 
 # Determine the files to lint
@@ -35,13 +36,13 @@ else
 fi
 # Loop through the files to lint and run the linter
 IFS=$'\n'
+echo -e "🎢 Running: ${YELLOW}[${command}] ${NC}"
 for file in $(echo -e "${files_to_lint}"); do
   #trim any trailing whitespace
-  myVar="${file%"${file##*[! ]}"}"
+  path="${file%"${file##*[! ]}"}"
   # Capture the output of the linter command
   # Check if the output contains any errors
-  echo "Linting ${myVar}..."
-  if ! eval "${command} \"${myVar}\"" >/dev/null 2>&1; then
+  if ! eval "${command} \"${path}\"" >/dev/null 2>&1; then
     # If there are errors, append the file name to the list of failed files
     failed_files="${failed_files}${file}\n"
   fi
