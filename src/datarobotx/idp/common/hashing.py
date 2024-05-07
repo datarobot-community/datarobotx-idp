@@ -13,16 +13,17 @@
 
 """Hashing utilities."""
 
+from hashlib import sha256
 import inspect
 import os
-from hashlib import sha256
 from pathlib import Path
 from struct import pack
 from typing import Any, Mapping, Sequence
 
 import pandas as pd
-from datarobot.models.api_object import APIObject
 from pandas.util import hash_pandas_object
+
+from datarobot.models.api_object import APIObject
 
 HASHING_ALGORITHM = sha256
 CHECKSUM_FILE_EXTENSION = ".sha256"
@@ -75,9 +76,7 @@ def get_hash(*args: Any, **kwargs: Any) -> str:
             arg = ""
             for root, dirs, files in os.walk(base_path):
                 dirs.sort()  # force deterministic traversal
-                arg = get_hash(
-                    str(Path(root).relative_to(base_path)), *dirs, *files, arg
-                )
+                arg = get_hash(str(Path(root).relative_to(base_path)), *dirs, *files, arg)
                 for filename in sorted(files):
                     with open(os.path.join(root, filename), "rb") as f:
                         for chunk in iter(lambda: f.read(8192), b""):
@@ -95,11 +94,7 @@ def get_hash(*args: Any, **kwargs: Any) -> str:
             )
             arg = arg.encode("utf-8")
         elif isinstance(arg, APIObject):
-            d = {
-                k: v
-                for k, v in arg.__dict__.items()
-                if not k.startswith("_") and not callable(v)
-            }
+            d = {k: v for k, v in arg.__dict__.items() if not k.startswith("_") and not callable(v)}
             arg = get_hash(d).encode("utf-8")
         else:
             raise TypeError(f"Cannot tokenize object of type {type(arg)}")

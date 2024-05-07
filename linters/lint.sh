@@ -12,7 +12,6 @@ log_error() {
 
 # Extract file list from the first argument
 file_list="$1"
-
 # Separate files based on their type
 IFS=$'\n' read -d '' -r -a py_files < <(grep '\.py$' "${file_list}" && printf '\0')
 IFS=$'\n' read -d '' -r -a yaml_files < <(grep '\.yaml$' "${file_list}" && printf '\0')

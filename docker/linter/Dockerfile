@@ -13,12 +13,17 @@ RUN apk --no-cache add bash curl openjdk11-jdk nodejs npm && \
 
 WORKDIR ${WORKDIR}
 
-# Install Python dependencies
+# Copy linter dependencies
 COPY ./docker/linter/linter-requirements.txt ${WORKDIR}/requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Get all dependencies required for project
+# this need for propper run of linters like mypy, pylint, etc.
+COPY ./dev-requirements.txt ${WORKDIR}/dev-requirements.txt
+COPY ./requirements.txt ${WORKDIR}/project-requirements.txt
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt -r dev-requirements.txt -r project-requirements.txt
 
 # Install Node.js dependencies
-RUN npm install -g eslint --no-optional
+# RUN npm install -g eslint --no-optional
 
 # Copy configs for linters
 COPY ./docker/linter/configs/ /root/.config/linter/
