@@ -16,7 +16,7 @@ fix-licenses: apply-copyright
 
 check-licenses: copyright-check
 
-.PHONY: build-linter-image lint-submodules check-linter-image lint-all
+.PHONY: build-linter-image lint-submodules check-linter-image check-dependencies lint-all mypy
 
 IMAGE := drx-idp:latest
 GIT_COMMIT := $(shell git log -1 --format=%H)
@@ -24,6 +24,11 @@ GIT_COMMIT := $(shell git log -1 --format=%H)
 # Build linter image
 build-linter-image:
 	docker build -t $(IMAGE) -f docker/linter/Dockerfile .
+
+check-dependencies:
+	@echo "🎱 Checking dependencies..."
+	pip install -r requirements.txt -r dev-requirements.txt -q
+	@echo "🎱 Dependencies are installed"
 
 check-linter-image:
 	@echo "🎱 Checking if linter image exists..."
@@ -49,3 +54,6 @@ lint-%: check-linter-image
 # Run specific linter with fix
 fix-%: check-linter-image
 	docker run --rm -v $(PWD):/workspace -w /workspace $(IMAGE) ./linters/lint_$*.sh "" --fix
+
+mypy: check-dependencies
+	MYPYPATH=src mypy --namespace-packages --explicit-package-bases --strict .
