@@ -1,10 +1,10 @@
 # Linters Docs
 
-The linters list can be easily extended by adding a new linter to the docker image and adding a new script to the `linters` directory.
+Linters list can be easily extended by adding new linter to the docker image and adding a new script to the `linters` directory.
 
 ### How to add a new linter
 
-First, add a linter installation to the docker folder's Dockerfile. For example, to add a linter for the `R` programming language, add the following lines to the `docker/linter/Dockerfile`:
+First of all you should add linter installation to the docker\`s Dockerfile. For example, if you want to add linter for `R` language, you should add the following lines to the `docker/linter/Dockerfile`:
 
 ```dockerfile
 ARG R_VERSION=4.2.2
@@ -16,9 +16,9 @@ RUN curl -O https://cdn.rstudio.com/r/centos-8/pkgs/R-${R_VERSION}-1-1.x86_64.rp
 
 RUN R -e "install.packages('lintr', repos='http://cran.us.r-project.org')"
 ```
-> Be sure that you bumped the version of the linter image before merging your PR with a new linter in the docker image.
+> Be sure that you bumped version of linter image before merging your PR with a new linter in docker image.
 
-Next, add a script to linters directory. For example, to add a linter for the `R` programming language, add the following script (`lint_r.sh`) to the (`./linters/lint_r.sh`):
+Then you should add a script to linters directory. For example, if you want to add linter for `R` language, you should add the following script (`lint_r.sh`) to the (`./linters/lint_r.sh`):
 
 ```bash
 #!/bin/bash
@@ -37,9 +37,23 @@ fi
 
 exit 0
 ```
+Each linter script has a similar structure. It should accept two parameters: `files` and `fix_param`. The `files` parameter is a list of files that should be checked by the linter. The `fix_param` parameter is a flag that indicates whether the linter should fix the issues automatically or not(if it is supported).
 
-Finally, run make command `make lint-r` to build a new docker image and run the linter for the `R` programming language.
+After that you can run make command `make lint-r` it will build a new docker image and run the linter for `R` language.
 
-### Linter Configurations
+### How to run linter
 
-To maintain good code style we should have a good style guides. In our case we keep all configs for linters in the docker image and use it for running linters. You can find examples in the (`./docker/linter/configs`) directory.
+To run linter for a specific language you should run the following command:
+
+```bash
+make lint-<language>
+```
+
+### How to run "--fix" command for linter(if it is supported)
+
+To run "--fix" command for a specific language you should run the following command:
+
+```bash
+make fix-<language>
+```
+all fix functionality are implemented in specific linter script files, like `./linters/lint_<language>.sh`.
