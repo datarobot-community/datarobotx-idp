@@ -90,7 +90,7 @@ def recommended_model(autopilot_model):
 
 @pytest.fixture()
 def other_model(autopilot_model):
-    return dr.Project.get(autopilot_model).get_models()[1].id
+    return dr.Project.get(autopilot_model).get_model_records()[1].id
 
 
 @pytest.fixture

@@ -109,12 +109,9 @@ def get_replace_or_create_deployment_from_registered_model(
             curr_registered_model_id,
         ) = _lookup_registered_model_version(endpoint, token, curr_deployment_id)
         if registered_model_version_id != curr_registered_model_version_id:
-            model_id = (
-                dr.RegisteredModel.get(curr_registered_model_id)
-                .get_version(registered_model_version_id)
-                .model_id
+            dr.Deployment.get(curr_deployment_id).perform_model_replace(
+                new_registered_model_version_id=registered_model_version_id, reason=reason
             )
-            dr.Deployment.get(curr_deployment_id).perform_model_replace(model_id, reason=reason)
         return curr_deployment_id
     except KeyError:
         kwargs["description"] = kwargs.get("description", "") + f"\nChecksum: {deployment_token}"
