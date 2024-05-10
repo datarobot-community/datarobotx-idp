@@ -18,7 +18,7 @@ else
     echo "🔬 Checking $file_format files..."
     ./linters/run_linter.sh  "ruff check" "$file_format" "$files"
     ./linters/run_linter.sh  "ruff format --check" "$file_format" "$files"
-    ./linters/run_linter.sh  "MYPYPATH=src mypy --namespace-packages --explicit-package-bases --strict" "$file_format" "$files"
+    ./linters/run_linter.sh  "MYPYPATH=src mypy --namespace-packages --explicit-package-bases --strict" "" "."
     # In case if you need black or isort
     # ./linters/run_linter.sh  "black --check" "$file_format" "$files"
     # ./linters/run_linter.sh  "isort --check" "$file_format" "$files"
