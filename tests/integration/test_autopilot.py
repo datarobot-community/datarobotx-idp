@@ -102,6 +102,34 @@ def dataset(dr_endpoint, dr_token, df, use_case, cleanup_dr):
         )
 
 
+@pytest.fixture()
+def calendar_dataset(dr_endpoint, dr_token, use_case, cleanup_dr):
+    holidays = ["Thanksgiving", "IndependenceDay", "BlackFriday"]
+    years = ["2016", "2017"]
+    dates = ["{}-11-26", "{}-07-04", "{}-11-25"]
+    df = pd.DataFrame(
+        {
+            "Date": [date.format(year) for year in years for date in dates],
+            "Holiday": holidays * 2,
+        }
+    )
+    with cleanup_dr("datasets/", id_attribute="datasetId"):
+        yield get_or_create_dataset_from_df(
+            dr_endpoint,
+            dr_token,
+            use_case_id=use_case,
+            name="pytest_test_calendar",
+            data_frame=df,
+        )
+
+
+@pytest.fixture
+def calendar_from_dataset(dr_endpoint, dr_token, calendar_dataset, cleanup_dr):
+    return dr.CalendarFile.create_calendar_from_dataset(
+        calendar_dataset, calendar_name="test_calendar"
+    ).id
+
+
 @pytest.fixture
 def cleanup_projects(cleanup_dr):
     with cleanup_dr("projects/", paginated=False):
@@ -111,8 +139,6 @@ def cleanup_projects(cleanup_dr):
 @pytest.fixture
 def partly_configured_dr_project(
     dataset,
-    datetime_partitioning_config,
-    advanced_options_config,
     mock_get_hash,
     cleanup_projects,
 ):
@@ -124,13 +150,11 @@ def partly_configured_dr_project(
     project = dr.Project.create_from_dataset(  # type: ignore
         dataset_id=dataset, project_name=project_name
     )
-    project.set_datetime_partitioning(**datetime_partitioning_config)
-    project.set_options(dr.AdvancedOptions(**advanced_options_config))
 
     return project
 
 
-def test_get_or_create(
+def test_get_or_create_autopilot_run(
     dr_endpoint,
     dr_token,
     dataset,
@@ -139,8 +163,10 @@ def test_get_or_create(
     feature_settings_config,
     advanced_options_config,
     use_case,
+    calendar_from_dataset,
     cleanup_projects,
 ):
+    datetime_partitioning_config["calendar_id"] = calendar_from_dataset
     project_id_1 = get_or_create_autopilot_run(
         dr_endpoint,
         dr_token,
@@ -185,7 +211,7 @@ def test_get_or_create(
     assert project_id_1 != project_id_3
 
 
-def test_get_or_create_partly_configured(
+def test_get_or_create_partly_configured_autopilot_run(
     dr_endpoint,
     dr_token,
     dataset,
