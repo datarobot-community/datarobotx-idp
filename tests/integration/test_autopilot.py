@@ -124,7 +124,7 @@ def calendar_dataset(dr_endpoint, dr_token, use_case, cleanup_dr):
 
 
 @pytest.fixture
-def calendar_from_dataset(dr_endpoint, dr_token, calendar_dataset, cleanup_dr):
+def calendar_from_dataset(dr_endpoint, dr_token, calendar_dataset):
     return dr.CalendarFile.create_calendar_from_dataset(
         calendar_dataset, calendar_name="test_calendar"
     ).id
