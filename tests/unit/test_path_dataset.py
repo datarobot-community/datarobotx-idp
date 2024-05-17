@@ -12,7 +12,7 @@
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
 from pathlib import Path
-from shutil import copytree, copy
+from shutil import copy, copytree
 import tempfile
 
 from kedro.io import DataCatalog
