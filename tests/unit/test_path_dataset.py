@@ -55,7 +55,6 @@ def asset_path(request, pathlib_path):
         return f
 
 
-
 @pytest.fixture()
 def storage_path(tmp_path, pathlib_path):
     _, save_type = pathlib_path
