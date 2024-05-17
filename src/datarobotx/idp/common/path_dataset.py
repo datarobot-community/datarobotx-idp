@@ -117,13 +117,18 @@ class PathDataset(AbstractVersionedDataset):  # type: ignore
 
         return local_path
 
-    def _save(self, data: Union[Path, str, tempfile.TemporaryDirectory[Any]]) -> None:
+    def _save(
+        self,
+        data: Union[Path, str, tempfile.TemporaryDirectory[Any], tempfile.NamedTemporaryFile],  # type: ignore
+    ) -> None:
         if isinstance(data, str):
             path = Path(data)
-        elif isinstance(data, tempfile.TemporaryDirectory):
-            path = Path(data.name)
-        else:
+        elif isinstance(data, Path):
             path = data
+        elif hasattr(
+            data, "name"
+        ):  # tempfile does not support isinstance checks https://bugs.python.org/issue33762
+            path = Path(data.name)
 
         assert path.is_file() or path.is_dir(), "Provided path must be a file or directory."
 
