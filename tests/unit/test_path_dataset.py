@@ -12,7 +12,7 @@
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
 from pathlib import Path
-from shutil import copytree
+from shutil import copytree, copy
 import tempfile
 
 from kedro.io import DataCatalog
@@ -33,7 +33,7 @@ def pathlib_path(request, tmp_path):
         return p, request.param
 
 
-@pytest.fixture(params=["path", "str", "tempdir"])
+@pytest.fixture(params=["path", "str", "tempdir", "tempfile"])
 def asset_path(request, pathlib_path):
     path, save_type = pathlib_path
     if request.param == "path":
@@ -41,11 +41,19 @@ def asset_path(request, pathlib_path):
     elif request.param == "str":
         return str(path.resolve())
     elif request.param == "tempdir" and save_type == "file":
-        pytest.skip("tempdir is not supported for file")
-    else:
+        pytest.skip("cannot save tempdir as a file")
+    elif request.param == "tempfile" and save_type == "folder":
+        pytest.skip("cannot save tempfile as a folder")
+    elif request.param == "tempdir":
         d = tempfile.TemporaryDirectory()
         copytree(path, d.name, dirs_exist_ok=True)
         return d
+    elif request.param == "tempfile":
+        f = tempfile.NamedTemporaryFile()
+        copy(path, f.name)
+        f.flush()
+        return f
+
 
 
 @pytest.fixture()
@@ -86,6 +94,6 @@ def test_path_dataset(asset_path, storage_path, pathlib_path):
         captured_path.append(str(p.resolve()))
 
     node()
-    if save_type == "folder":
-        # validate directory is cleaned-up upon garbage collection of the path object
+    if save_type == "folder" or save_type == "file":
+        # validate directory / file is cleaned-up upon garbage collection of the path object
         assert not Path(captured_path[0]).exists()
