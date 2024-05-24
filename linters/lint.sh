@@ -2,6 +2,7 @@
 
 RED='\033[0;31m' # red Color
 GREEN='\033[0;32m' # Green Color
+YELLOW="\033[38;5;226m"
 NC='\033[0m' # No Color
 
 # Define a function to capture and log linter errors
@@ -12,6 +13,12 @@ log_error() {
 
 # Extract file list from the first argument
 file_list="$1"
+
+if [ ! -f "${file_list}" ]; then
+    echo -e "${YELLOW}🤷  File list empty. Provide files to lint. Exiting...${NC}"
+    exit 0
+fi
+
 # Separate files based on their type
 IFS=$'\n' read -d '' -r -a py_files < <(grep '\.py$' "${file_list}" && printf '\0')
 IFS=$'\n' read -d '' -r -a yaml_files < <(grep '\.yaml$' "${file_list}" && printf '\0')
