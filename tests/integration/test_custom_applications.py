@@ -193,26 +193,6 @@ def test_get_or_create_from_env(
         )
 
 
-#
-# Copyright 2024 DataRobot, Inc. and its affiliates.
-#
-# All rights reserved.
-#
-# DataRobot, Inc.
-#
-# This is proprietary source code of DataRobot, Inc. and its
-# affiliates.
-#
-# Released under the terms of DataRobot Tool and Utility Agreement.
-# https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
-
-
-
-
-# @pytest.fixture()
-# def custom_app_name(dr_token_hash: str) -> str:
-#     return "pytest custom app #{i} " + dr_token_hash
-
 
 @pytest.fixture()
 def custom_application_source(
@@ -233,13 +213,6 @@ def base_environment_id() -> str:
     return "6542cd582a9d3d51bf4ac71e"
 
 
-# @pytest.fixture
-# def requirements() -> str:
-#     return """\
-# streamlit==1.29.0
-# """
-
-
 @pytest.fixture
 def start_script() -> str:
     return """\
@@ -255,15 +228,6 @@ echo "Starting App"
 
 streamlit run app.py
 """
-
-
-# @pytest.fixture
-# def app_py() -> str:
-#     return """\
-# import streamlit as st
-
-# st.write('Hello World!')
-# """
 
 
 @pytest.fixture
@@ -315,12 +279,6 @@ def custom_application_source_version(
             folder_path=app_context_path,
             base_environment_id=base_environment_id,
         )
-
-
-# @pytest.fixture()
-# def cleanup_apps(cleanup_dr: Any) -> Generator[None, None, None]:
-#     with cleanup_dr("customApplications/"):
-#         yield
 
 
 def test_get_or_create_from_app_source(
