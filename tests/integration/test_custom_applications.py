@@ -17,7 +17,7 @@ import pytest
 
 from datarobotx.idp.custom_applications import (
     _find_existing_custom_app,
-    get_replace_or_create_custom_app_from_env,
+    get_replace_or_create_custom_app,
 )
 from datarobotx.idp.execution_environment_versions import (
     get_or_create_execution_environment_version,
@@ -134,7 +134,7 @@ def test_get_or_create(
     custom_app_name,
     cleanup_apps,
 ):
-    custom_app_id_1 = get_replace_or_create_custom_app_from_env(
+    custom_app_id_1 = get_replace_or_create_custom_app(
         dr_endpoint,
         dr_token,
         custom_app_name.format(i=1),
@@ -143,7 +143,7 @@ def test_get_or_create(
     )
     assert len(custom_app_id_1)
 
-    custom_app_id_2 = get_replace_or_create_custom_app_from_env(
+    custom_app_id_2 = get_replace_or_create_custom_app(
         dr_endpoint,
         dr_token,
         custom_app_name.format(i=1),
@@ -152,7 +152,7 @@ def test_get_or_create(
     )
     assert custom_app_id_1 == custom_app_id_2
 
-    custom_app_id_3 = get_replace_or_create_custom_app_from_env(
+    custom_app_id_3 = get_replace_or_create_custom_app(
         dr_endpoint,
         dr_token,
         custom_app_name.format(i=2),
@@ -168,7 +168,7 @@ def test_get_or_create(
         custom_app_exec_env,
         docker_context_path_mod,
     )
-    custom_app_id_4 = get_replace_or_create_custom_app_from_env(
+    custom_app_id_4 = get_replace_or_create_custom_app(
         dr_endpoint,
         dr_token,
         custom_app_name.format(i=2),
