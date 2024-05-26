@@ -70,7 +70,7 @@ def get_or_create_llm_blueprint(
     dr.Client(token=token, endpoint=endpoint)  # type: ignore
 
     if isinstance(playground, Playground):
-        playground = str(Playground.id)
+        playground = str(playground.id)
     vdb_settings = kwargs.pop("vector_database_settings", None)
     if isinstance(vdb_settings, dict):
         vdb_settings = VectorDatabaseSettings(**vdb_settings)
