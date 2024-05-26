@@ -18,7 +18,6 @@ import contextlib
 import json
 import os
 from pathlib import Path
-import time
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from requests_toolbelt import MultipartEncoder
@@ -319,29 +318,3 @@ def get_or_create_qanda_app(
     )
 
     return str(quanda_app_response["id"])
-
-
-def wait_for_app_ready(
-    endpoint: str, token: str, custom_application_id: str, max_wait: int
-) -> None:
-    """Wait for the custom application to be ready.
-
-    Parameters
-    ----------
-    client : dr.Client
-        DataRobot client
-    custom_application_id : str
-        DataRobot id of the custom application
-    max_wait : int
-        Maximum time to wait in seconds
-    """
-    client = dr.Client(endpoint=endpoint, token=token)  # type: ignore
-
-    start_time = time.time()
-    while time.time() - start_time < max_wait:
-        app = client.get(f"customApplications/{custom_application_id}")
-        if app.json()["status"] == "running":
-            break
-        time.sleep(5)
-    else:
-        raise TimeoutError("Application did not become ready in time")

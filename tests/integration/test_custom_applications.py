@@ -193,7 +193,6 @@ def test_get_or_create_from_env(
         )
 
 
-
 @pytest.fixture()
 def custom_application_source(
     dr_endpoint: str,
