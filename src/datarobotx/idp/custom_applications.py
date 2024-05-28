@@ -16,8 +16,6 @@
 import posixpath
 from typing import Any, Optional
 
-import requests
-
 import datarobot as dr
 from datarobot.rest import handle_http_error
 from datarobot.utils import camelize
@@ -25,19 +23,24 @@ from datarobot.utils.pagination import unpaginate
 from datarobot.utils.waiters import wait_for_async_resolution
 
 
-def _create_custom_app_from_env(
+def _create_custom_app(
     endpoint: str,
     token: str,
     name: str,
-    environment_id: str,
+    environment_id: Optional[str],
+    custom_application_source_version_id: Optional[str],
     **kwargs: Any,
 ) -> str:
-    url = posixpath.join(endpoint, "customApplications/")
-    body = {"name": name, "environment_id": environment_id}
+    client = dr.Client(endpoint=endpoint, token=token)
+    body = {"name": name}
+    if environment_id is not None:
+        body["environmentId"] = environment_id
+    if custom_application_source_version_id is not None:
+        body["application_source_version_id"] = custom_application_source_version_id
     body.update(kwargs)
     body = {camelize(k): v for k, v in body.items()}
 
-    initial_resp = requests.post(url, headers={"Authorization": f"Bearer {token}"}, json=body)
+    initial_resp = client.post("customApplications/", json=body)
     if not initial_resp:
         handle_http_error(initial_resp)
 
@@ -68,17 +71,18 @@ def _list_custom_apps(endpoint: str, token: str, name: Optional[str] = None) -> 
 
 def _find_existing_custom_app(endpoint: str, token: str, **kwargs: Any) -> str:
     for app in _list_custom_apps(endpoint, token):
-        if all([app[camelize(key)] == kwargs[key] for key in kwargs]):
+        if all([app[camelize(key)] == kwargs[key] for key in kwargs if kwargs[key] is not None]):
             return str(app["id"])
     raise KeyError("No matching custom app found")
 
 
-def get_replace_or_create_custom_app_from_env(
+def get_replace_or_create_custom_app(
     endpoint: str,
     token: str,
     name: str,
-    environment_id: str,
-    env_version_id: str,
+    environment_id: Optional[str] = None,
+    env_version_id: Optional[str] = None,
+    custom_application_source_version_id: Optional[str] = None,
     **kwargs: Any,
 ) -> str:
     """Get, replace, or create a custom application from a custom environment with requested parameters.
@@ -86,6 +90,12 @@ def get_replace_or_create_custom_app_from_env(
     If a custom app with the desired name already exists but with different parameters, the existing
     app will be deleted and a new one created.
     """
+    # test if env_version_id xor custom_application_source_version_id is provided
+    if bool(env_version_id) == bool(custom_application_source_version_id):
+        raise ValueError(
+            "Exactly one of env_version_id or custom_application_source_version_id is required"
+        )
+
     try:
         custom_app_id = _find_existing_custom_app(endpoint, token, name=name)
         try:
@@ -94,6 +104,7 @@ def get_replace_or_create_custom_app_from_env(
                 token,
                 name=name,
                 env_version_id=env_version_id,
+                custom_application_source_version_id=custom_application_source_version_id,
                 **kwargs,
             )
         except KeyError:
@@ -101,4 +112,11 @@ def get_replace_or_create_custom_app_from_env(
     except KeyError:
         pass
 
-    return _create_custom_app_from_env(endpoint, token, name, environment_id, **kwargs)
+    return _create_custom_app(
+        endpoint=endpoint,
+        token=token,
+        name=name,
+        environment_id=environment_id,
+        custom_application_source_version_id=custom_application_source_version_id,
+        **kwargs,
+    )
