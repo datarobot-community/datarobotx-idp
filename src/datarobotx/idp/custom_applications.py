@@ -89,6 +89,21 @@ def get_replace_or_create_custom_app(
 
     If a custom app with the desired name already exists but with different parameters, the existing
     app will be deleted and a new one created.
+
+    Exactly one of env_version_id or custom_application_source_version_id is required.
+
+    Args:
+        endpoint: The DataRobot endpoint.
+        token: The DataRobot token.
+        name: The name of the custom application.
+        environment_id: The environment ID.
+        env_version_id: The environment version ID.
+        custom_application_source_version_id: The custom application source version ID.
+        **kwargs: Additional keyword arguments to pass to the custom application creation endpoint.
+
+    Returns
+    -------
+        The ID of the custom application.
     """
     # test if env_version_id xor custom_application_source_version_id is provided
     if bool(env_version_id) == bool(custom_application_source_version_id):
@@ -118,5 +133,40 @@ def get_replace_or_create_custom_app(
         name=name,
         environment_id=environment_id,
         custom_application_source_version_id=custom_application_source_version_id,
+        **kwargs,
+    )
+
+
+def get_replace_or_create_custom_app_from_env(
+    endpoint: str,
+    token: str,
+    name: str,
+    environment_id: str,
+    env_version_id: str,
+    **kwargs: Any,
+) -> str:
+    """Get, replace, or create a custom application from a custom environment with requested parameters.
+
+    If a custom app with the desired name already exists but with different parameters, the existing
+    app will be deleted and a new one created.
+
+    Args:
+        endpoint: The DataRobot endpoint.
+        token: The DataRobot token.
+        name: The name of the custom application.
+        environment_id: The environment ID.
+        env_version_id: The environment version ID.
+        **kwargs: Additional keyword arguments to pass to the custom application creation endpoint.
+
+    Returns
+    -------
+        The ID of the custom application.
+    """
+    return get_replace_or_create_custom_app(
+        endpoint=endpoint,
+        token=token,
+        name=name,
+        environment_id=environment_id,
+        env_version_id=env_version_id,
         **kwargs,
     )
