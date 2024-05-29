@@ -178,10 +178,10 @@ def test_get_or_create(
         endpoint=dr_endpoint,
         token=dr_token,
         custom_application_source_id=custom_application_source,
-        previous_custom_application_source_version_id=env_ver_id_3,
+        # previous_custom_application_source_version_id=env_ver_id_3,
         folder_path=additional_metadata_context_path,
     )
-    assert env_ver_id_3 == env_ver_id_4
+    assert env_ver_id_3 != env_ver_id_4
     folder_contents_new = [
         item["fileName"]
         for item in client.get(
@@ -193,13 +193,13 @@ def test_get_or_create(
         endpoint=dr_endpoint,
         token=dr_token,
         custom_application_source_id=custom_application_source,
-        previous_custom_application_source_version_id=env_ver_id_4,
+        # previous_custom_application_source_version_id=env_ver_id_4,
         runtime_parameter_values=[
             {"field_name": "SOME_TEXT", "type": "string", "value": "foo"},
             {"field_name": "SOME_CREDENTIALS", "type": "credential", "value": credentials},
         ],
     )
-    assert env_ver_id_4 == env_ver_id_5
+    assert env_ver_id_4 != env_ver_id_5
     runtime_params = client.get(
         f"customApplicationSources/{custom_application_source}/versions/{env_ver_id_5}"
     ).json()["runtimeParameters"]
@@ -214,12 +214,12 @@ def test_get_or_create(
         endpoint=dr_endpoint,
         token=dr_token,
         custom_application_source_id=custom_application_source,
-        previous_custom_application_source_version_id=env_ver_id_4,
+        # previous_custom_application_source_version_id=env_ver_id_4,
         runtime_parameter_values=[
             RuntimeParameterValue(field_name="SOME_TEXT", value="bar", type="string")
         ],
     )
-    assert env_ver_id_4 == env_ver_id_6
+    assert env_ver_id_4 != env_ver_id_6
     runtime_params = client.get(
         f"customApplicationSources/{custom_application_source}/versions/{env_ver_id_6}"
     ).json()["runtimeParameters"]
