@@ -181,7 +181,6 @@ def get_or_create_custom_application_source_version(
     token: str,
     custom_application_source_id: str,
     runtime_parameter_values: Optional[List[Union[RuntimeParameterValue, Dict[str, str]]]] = None,
-    previous_custom_application_source_version_id: Optional[str] = None,
     **kwargs: Any,
 ) -> str:
     """
@@ -193,9 +192,6 @@ def get_or_create_custom_application_source_version(
         The ID of the custom application source.
     runtime_parameter_values : Optional[List[Union[RuntimeParameterValue, Dict[str, str]]]], optional
         A list of runtime parameter values. Each value can be either a `RuntimeParameterValue` object or a dictionary
-    previous_custom_application_source_version_id : Optional[str], optional
-        The ID of the previous custom application source version. (default: None) If provided,
-        the version will be changed in place, no new version will be created
     **kwargs : Any
         Additional keyword arguments.
 
@@ -209,53 +205,87 @@ def get_or_create_custom_application_source_version(
         token=token,
         custom_application_source_id=custom_application_source_id,
         runtime_parameter_values=runtime_parameter_values,
-        previous_custom_application_source_version_id=previous_custom_application_source_version_id,
         **kwargs,
     )
 
 
-# def get_or_create_custom_application_source_version_from_previous(
-#     endpoint: str,
-#     token: str,
-#     custom_application_source_id: str,
-#     previous_custom_application_source_version_id: str,
-#     runtime_parameter_values: Optional[List[Union[RuntimeParameterValue, Dict[str, str]]]] = None,
-#     **kwargs: Any,
-# ) -> str:
-#     """
-#     Get or create a custom application source version from a previous version.
+def get_or_create_custom_application_source_version_from_previous(
+    endpoint: str,
+    token: str,
+    custom_application_source_id: str,
+    runtime_parameter_values: Optional[List[Union[RuntimeParameterValue, Dict[str, str]]]] = None,
+    **kwargs: Any,
+) -> str:
+    """
+    Get or create a custom application source version from a previous version.
 
-#     Parameters
-#     ----------
-#     custom_application_source_id : str
-#         The ID of the custom application source.
-#     previous_custom_application_source_version_id : str
-#         The ID of the previous custom application source version.
-#     runtime_parameter_values : Optional[List[Union[RuntimeParameterValue, Dict[str, str]]]], optional
-#         A list of runtime parameter values. Each value can be either a `RuntimeParameterValue` object or a dictionary
-#         with parameter names as keys and parameter values as values. (default: None)
-#     **kwargs : Any
-#         Additional keyword arguments.
+    Parameters
+    ----------
+    custom_application_source_id : str
+        The ID of the custom application source.
+    runtime_parameter_values : Optional[List[Union[RuntimeParameterValue, Dict[str, str]]]], optional
+        A list of runtime parameter values. Each value can be either a `RuntimeParameterValue` object or a dictionary
+        with parameter names as keys and parameter values as values. (default: None)
+    **kwargs : Any
+        Additional keyword arguments.
 
-#     Returns
-#     -------
-#     str
-#         The ID of the custom application source version.
-#     """
-#     return _get_or_create_custom_application_source_version(
-#         from_previous=True,
-#         endpoint=endpoint,
-#         token=token,
-#         custom_application_source_id=custom_application_source_id,
-#         previous_custom_application_source_version_id=previous_custom_application_source_version_id,
-#         runtime_parameter_values=runtime_parameter_values,
-#         **kwargs,
-#     )
+    Returns
+    -------
+    str
+        The ID of the custom application source version.
+    """
+    if runtime_parameter_values is not None:
+        runtime_parameter_values_objs = [
+            RuntimeParameterValue(**d) for d in runtime_parameter_values if isinstance(d, dict)
+        ]
+    else:
+        runtime_parameter_values_objs = None
+
+    client = dr.Client(token=token, endpoint=endpoint)  # type: ignore
+    app_version_token = get_hash(
+        custom_application_source_id,
+        runtime_parameter_values=runtime_parameter_values_objs,
+        **kwargs,
+    )
+    try:
+        previous_custom_application_source_version_id = (
+            _find_existing_custom_application_source_version(
+                endpoint=endpoint,
+                token=token,
+                custom_application_source_id=custom_application_source_id,
+                version_token=app_version_token,
+            )
+        )
+        return previous_custom_application_source_version_id
+    except KeyError:
+        try:
+            all_versions = client.get(
+                f"customApplicationSources/{custom_application_source_id}/versions/"
+            ).json()["data"]
+            all_versions.sort(key=lambda x: x["createdAt"], reverse=True)
+            previous_custom_application_source_version_id = all_versions[0]["id"]
+            new_version = client.post(
+                f"customApplicationSources/{custom_application_source_id}/versions/",
+                json={
+                    "baseVersion": previous_custom_application_source_version_id,
+                    "label": f"{kwargs.get('label', '')}{' - ' if kwargs.get('label') else ''}[{app_version_token}]",
+                },
+            ).json()["id"]
+            return _get_or_create_custom_application_source_version(
+                endpoint=endpoint,
+                token=token,
+                custom_application_source_id=custom_application_source_id,
+                previous_custom_application_source_version_id=new_version,
+                runtime_parameter_values=runtime_parameter_values,
+                **kwargs,
+            )
+        except:
+            raise ValueError("No previous version found")
 
 
 def get_or_create_qanda_app(
-    endpoint: Optional[str],
-    token: Optional[str],
+    endpoint: str,
+    token: str,
     deployment_id: str,
     environment_id: str,
     name: str,
@@ -264,9 +294,9 @@ def get_or_create_qanda_app(
 
     Parameters
     ----------
-    endpoint : Optional[str]
+    endpoint : str
         The DataRobot endpoint.
-    token : Optional[str]
+    token : str
         The DataRobot API token.
     deployment_id : str
         The ID of the deployment.
@@ -282,10 +312,7 @@ def get_or_create_qanda_app(
     """
     app_token = get_hash(name, deployment_id, environment_id)
 
-    if endpoint is not None and token is not None:
-        client = dr.Client(endpoint=endpoint, token=token)  # type: ignore
-    else:
-        client = dr.client.get_client()
+    client = dr.Client(endpoint=endpoint, token=token)  # type: ignore
 
     try:
         apps = client.get("customApplications/").json()["data"]

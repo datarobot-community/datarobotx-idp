@@ -23,6 +23,7 @@ from datarobotx.idp.credentials import get_replace_or_create_credential  # type:
 from datarobotx.idp.custom_application_source import (  # type: ignore
     get_or_create_custom_application_source,
     get_or_create_custom_application_source_version,
+    get_or_create_custom_application_source_version_from_previous,
 )
 
 
@@ -174,7 +175,7 @@ def test_get_or_create(
             f"customApplicationSources/{custom_application_source}/versions/{env_ver_id_3}"
         ).json()["items"]
     ]
-    env_ver_id_4 = get_or_create_custom_application_source_version(
+    env_ver_id_4 = get_or_create_custom_application_source_version_from_previous(
         endpoint=dr_endpoint,
         token=dr_token,
         custom_application_source_id=custom_application_source,
@@ -189,7 +190,7 @@ def test_get_or_create(
         ).json()["items"]
     ]
     assert set(folder_contents + ["metadata.yaml"]) == set(folder_contents_new)
-    env_ver_id_5 = get_or_create_custom_application_source_version(
+    env_ver_id_5 = get_or_create_custom_application_source_version_from_previous(
         endpoint=dr_endpoint,
         token=dr_token,
         custom_application_source_id=custom_application_source,
@@ -210,7 +211,7 @@ def test_get_or_create(
     )
     assert some_creds_metadata["currentValue"] == credentials
 
-    env_ver_id_6 = get_or_create_custom_application_source_version(
+    env_ver_id_6 = get_or_create_custom_application_source_version_from_previous(
         endpoint=dr_endpoint,
         token=dr_token,
         custom_application_source_id=custom_application_source,
