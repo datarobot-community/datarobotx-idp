@@ -208,7 +208,7 @@ def _ensure_guard_config_from_template(  # noqa: PLR0913
     return str(res.json()["customModelVersionId"])
 
 
-def add_guard_config_to_custom_model_version(  # noqa: PLR0913
+def get_or_create_guard_config_to_custom_model_version(  # noqa: PLR0913
     endpoint: str,
     token: str,
     custom_model_id: str,
@@ -261,7 +261,7 @@ def add_guard_config_to_custom_model_version(  # noqa: PLR0913
     )
 
 
-def add_or_replace_guard_config_to_custom_model_version(  # noqa: PLR0913
+def get_update_or_create_guard_config_to_custom_model_version(  # noqa: PLR0913
     endpoint: str,
     token: str,
     custom_model_id: str,
