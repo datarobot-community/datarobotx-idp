@@ -75,10 +75,8 @@ def get_or_create_llm_blueprint(
     if isinstance(vdb_settings, dict):
         vdb_settings = VectorDatabaseSettings(**vdb_settings)
     bp_token = get_hash(
-        playground, 
-        name, 
-        vdb_settings.to_dict() if vdb_settings is not None else None, 
-        **kwargs)
+        playground, name, vdb_settings.to_dict() if vdb_settings is not None else None, **kwargs
+    )
 
     try:
         return _find_existing_llm_blueprint(playground, bp_token)
