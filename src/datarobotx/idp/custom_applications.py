@@ -22,6 +22,8 @@ from datarobot.utils import camelize
 from datarobot.utils.pagination import unpaginate
 from datarobot.utils.waiters import wait_for_async_resolution
 
+from datarobotx.idp.common.hashing import get_hash
+
 
 def _create_custom_app(
     endpoint: str,
@@ -91,7 +93,7 @@ def get_replace_or_create_custom_app(
     If a custom app with the desired name already exists but with different parameters, the existing
     app will be deleted and a new one created.
 
-    Exactly one of env_version_id or custom_application_source_version_id is required.
+    Exactly one of environment_id or custom_application_source_version_id is required.
 
     Parameters
     ----------
@@ -184,3 +186,63 @@ def get_replace_or_create_custom_app_from_env(
         env_version_id=env_version_id,
         **kwargs,
     )
+
+
+def get_or_create_qanda_app(
+    endpoint: str,
+    token: str,
+    deployment_id: str,
+    environment_id: str,
+    name: str,
+) -> str:
+    """Get or create a Q&A app.
+
+    Parameters
+    ----------
+    endpoint : str
+        The DataRobot endpoint.
+    token : str
+        The DataRobot API token.
+    deployment_id : str
+        The ID of the deployment.
+    environment_id : str
+        The ID of the environment.
+    name : str
+        The name of the Q&A app.
+
+    Returns
+    -------
+    str
+        The ID of the Q&A app.
+    """
+    app_token = get_hash(name, deployment_id, environment_id)
+
+    client = dr.Client(endpoint=endpoint, token=token)  # type: ignore
+
+    try:
+        apps = client.get("customApplications/").json()["data"]
+        for app in apps:
+            if app_token in app["name"]:
+                return str(app["id"])
+    except:
+        pass
+
+    quanda_app_response = client.post(
+        "customApplications/qanda/",
+        json={"deploymentId": deployment_id, "environmentId": environment_id},
+    ).json()
+
+    client.patch(
+        f"customApplications/{quanda_app_response['id']}",
+        json={
+            "name": f"{name} [{app_token}]",
+        },
+    )
+    client.patch(
+        f"customApplicationSources/{quanda_app_response['customApplicationSourceId']}/",
+        json={
+            "name": f"{name} [{app_token}]",
+        },
+    )
+
+    return str(quanda_app_response["id"])
