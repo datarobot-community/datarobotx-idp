@@ -104,11 +104,14 @@ def _get_or_create_custom_application_source_version(
             if "replicas" in kwargs:
                 upload_data.append(("replicas", str(kwargs["replicas"])))
 
-            if base_environment_id := kwargs.get("base_environment_id"):
-                upload_data.append(("baseEnvironmentId", base_environment_id))
+            if "base_environment_id" in kwargs:
+                upload_data.append(("baseEnvironmentId", kwargs["base_environment_id"]))
 
-            if base_environment_version_id := kwargs.get("base_environment_version_id"):
-                upload_data.append(("baseEnvironmentVersionId", base_environment_version_id))
+            if "base_environment_version_id" in kwargs:
+                upload_data.append(
+                    ("baseEnvironmentVersionId", kwargs["base_environment_version_id"])
+                )
+
             upload_data.append(
                 (
                     "label",

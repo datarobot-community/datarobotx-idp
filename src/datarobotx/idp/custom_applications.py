@@ -72,8 +72,12 @@ def _list_custom_apps(endpoint: str, token: str, name: Optional[str] = None) -> 
 
 
 def _find_existing_custom_app(endpoint: str, token: str, **kwargs: Any) -> str:
+    env_version_id = kwargs.pop("env_version_id", None)
     for app in _list_custom_apps(endpoint, token):
-        if all([app[camelize(key)] == kwargs[key] for key in kwargs if kwargs[key] is not None]):
+        if all([app[camelize(key)] == kwargs[key] for key in kwargs]) and (
+            # handling env_version_id separately, since this value is being set inside DR if asked for or not
+            env_version_id is None or env_version_id == app[camelize("env_version_id")]
+        ):
             return str(app["id"])
     raise KeyError("No matching custom app found")
 
