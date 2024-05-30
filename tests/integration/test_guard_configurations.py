@@ -10,9 +10,6 @@
 # Released under the terms of DataRobot Tool and Utility Agreement.
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
-# mypy: disable-error-code="attr-defined"
-# pyright: reportPrivateImportUsage=false
-
 from typing import Any, Generator
 
 import pytest

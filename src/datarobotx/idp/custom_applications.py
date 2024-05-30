@@ -11,8 +11,6 @@
 # Released under the terms of DataRobot Tool and Utility Agreement.
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
-# mypy: disable-error-code="attr-defined"
-# pyright: reportPrivateImportUsage=false
 import posixpath
 from typing import Any, Optional
 
@@ -43,7 +41,7 @@ def _create_custom_app_from_env(
 
     status_location = initial_resp.headers["location"]
     app_url = wait_for_async_resolution(
-        dr.Client(token=token, endpoint=endpoint),
+        dr.Client(token=token, endpoint=endpoint),  # type: ignore[attr-defined]
         status_location,
         max_wait=30 * 60,
     )
@@ -52,12 +50,12 @@ def _create_custom_app_from_env(
 
 def _delete_custom_app(endpoint: str, token: str, custom_app_id: str) -> None:
     url = posixpath.join(endpoint, f"customApplications/{custom_app_id}/")
-    dr.Client(endpoint=endpoint, token=token).delete(url)
+    dr.Client(endpoint=endpoint, token=token).delete(url)  # type: ignore[attr-defined]
 
 
 def _list_custom_apps(endpoint: str, token: str, name: Optional[str] = None) -> Any:
     url = posixpath.join(endpoint, "customApplications/")
-    client = dr.Client(endpoint=endpoint, token=token)
+    client = dr.Client(endpoint=endpoint, token=token)  # type: ignore[attr-defined]
     params = {"name": name} if name is not None else None
     try:
         for app in unpaginate(initial_url=url, initial_params=params, client=client):
