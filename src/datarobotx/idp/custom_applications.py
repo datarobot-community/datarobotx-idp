@@ -31,7 +31,7 @@ def _create_custom_app(
     custom_application_source_version_id: Optional[str],
     **kwargs: Any,
 ) -> str:
-    client = dr.Client(endpoint=endpoint, token=token)
+    client = dr.Client(endpoint=endpoint, token=token)  # type: ignore[attr-defined]
     body = {"name": name}
     if environment_id is not None:
         body["environmentId"] = environment_id
