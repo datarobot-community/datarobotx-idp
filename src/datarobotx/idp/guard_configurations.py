@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Literal, Optional, TypedDict, Union
 
 import datarobot as dr
 from datarobot.errors import ClientError
-from datarobot.utils import from_api, to_api
+from datarobot.utils import from_api, to_api, underscorize
 
 from datarobotx.idp.common.hashing import get_hash
 from datarobotx.idp.custom_model_versions import (
@@ -26,6 +26,8 @@ from datarobotx.idp.custom_model_versions import (
 
 
 class Condition(TypedDict):
+    """A condition for a guard configuration."""
+
     comparand: float
     comparator: Literal[
         "greaterThan",
@@ -42,6 +44,8 @@ class Condition(TypedDict):
 
 
 class Intervention(TypedDict):
+    """An intervention for a guard configuration."""
+
     action: Literal["report", "block"]
     conditions: List[Condition]
     message: str
@@ -51,24 +55,17 @@ class Intervention(TypedDict):
 keys_to_remove = [
     "createdAt",
     "creatorId",
+    "entityId",
+    "entityType",
     "orgId",
     "allowedStages",
-    "modelInfo",
-    "id",
-    "productionOnly",
-    "type",
     "additionalConfig",
-    "ootbType",
-    "isValid",
-    "errorMessage",
-    "nemoInfo",
-    "intervention",
-    "updatedAt",
+    "productionOnly",
+    "id",
     "isDeployed",
-    "faasUrl",
 ]
 
-from datarobot.utils import underscorize
+
 
 def _clean_guard_configurations(guard_config: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     cleaned_config = []
@@ -89,8 +86,8 @@ def _ensure_guard_config_from_template(  # noqa: PLR0913
     custom_model_id: str,
     guard_config_template_name: str,
     guard_config_template_settings: Dict[str, Any],
-    stages: List[str],
-    intervention: Dict[str, Any],
+    stages: List[Union[Literal["prompt"], Literal["response"]]],
+    intervention: Intervention,
     name: Optional[str] = None,
     description: Optional[str] = None,
     replace: bool = False,
@@ -162,10 +159,10 @@ def _ensure_guard_config_from_template(  # noqa: PLR0913
     cleaned_guard_config = _clean_guard_configurations(guard_config)
 
     if replace:
-        # delete the existing guard configuration
+        # delete the existing guard configuration if it exists
         cleaned_guard_config = [
-            config["id"] for config in cleaned_guard_config if config["name"] == guard_name
-        ][0]
+            config for config in cleaned_guard_config if guard_name != config["name"]
+        ]
 
     # get the guard templates
     guard_templates = client.get("guardTemplates/").json()["data"]
@@ -279,8 +276,8 @@ def get_update_or_create_guard_config_to_custom_model_version(  # noqa: PLR0913
     custom_model_id: str,
     guard_config_template_name: str,
     guard_config_template_settings: Dict[str, Any],
-    stages: List[str],
-    intervention: Dict[str, Any],
+    stages: List[Union[Literal["prompt"], Literal["response"]]],
+    intervention: Intervention,
     name: Optional[str] = None,
     description: Optional[str] = None,
 ) -> str:
