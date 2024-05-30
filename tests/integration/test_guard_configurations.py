@@ -83,6 +83,7 @@ def guard_deployment_toxicity(
 def guard_template_name_toxicity() -> str:
     return "Toxicity"
 
+
 @pytest.fixture
 def intervention() -> dict[str, Any]:
     return {
@@ -92,6 +93,7 @@ def intervention() -> dict[str, Any]:
         "send_notification": True,
     }
 
+
 @pytest.fixture
 def intervention_2() -> dict[str, Any]:
     return {
@@ -100,6 +102,7 @@ def intervention_2() -> dict[str, Any]:
         "conditions": [{"comparand": 0.5, "comparator": "greaterThan"}],
         "send_notification": True,
     }
+
 
 @pytest.fixture
 def guard_deployment_prompt_injection(
@@ -128,12 +131,14 @@ def guard_deployment_prompt_injection(
 def guard_template_name_prompt_injection() -> str:
     return "Prompt Injection"
 
-def _get_guard_configs(custom_model_version_id: str)-> Any:
+
+def _get_guard_configs(custom_model_version_id: str) -> Any:
     client = dr.client.get_client()
     return client.get(
         "guardConfigurations/",
         params={"entityId": custom_model_version_id, "entityType": "customModelVersion"},
     ).json()["data"]
+
 
 def test_get_or_create_guard_config_to_custom_model_version(
     dr_endpoint: str,

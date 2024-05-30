@@ -66,7 +66,6 @@ keys_to_remove = [
 ]
 
 
-
 def _clean_guard_configurations(guard_config: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     cleaned_config = []
     for config in guard_config:
@@ -153,7 +152,7 @@ def _ensure_guard_config_from_template(  # noqa: PLR0913
     # check if the guard configuration already exists
     if guard_config:
         for config in guard_config:
-            if guard_token in config.get("description", ""):  # type: ignore
+            if guard_token in config.get("description", ""):
                 return str(latest_version_id)
 
     cleaned_guard_config = _clean_guard_configurations(guard_config)
