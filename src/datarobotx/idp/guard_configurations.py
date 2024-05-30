@@ -249,6 +249,7 @@ def _ensure_guard_config_from_template(  # noqa: PLR0913
         "guardConfigurations/toNewCustomModelVersion/",
         json={
             "data": [to_api(config) for config in cleaned_guard_config],
+            "customModelId": custom_model_id,
         },
     )
 
