@@ -15,10 +15,10 @@
 # pyright: reportPrivateImportUsage=false
 
 import contextlib
-import json
+from json import dumps
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Literal, Optional, Tuple
 
 from requests_toolbelt import MultipartEncoder
 
@@ -30,57 +30,36 @@ from datarobotx.idp.common.hashing import get_hash
 
 
 def _find_existing_custom_application_source_version(
-    endpoint: str, token: str, custom_application_source_id: str, version_token: str
+    client: dr.Client,  # type: ignore
+    custom_application_source_id: str,
+    version_token: str,
+    from_previous: bool,
 ) -> str:
-    client = dr.Client(endpoint=endpoint, token=token)  # type: ignore
     versions = client.get(
         f"customApplicationSources/{custom_application_source_id}/versions/"
     ).json()["data"]
+
+    if from_previous:
+        versions.sort(key=lambda x: x["createdAt"], reverse=True)
+        versions = [versions[0]] if len(versions) else []
     for version in versions:
-        if version_token in version.get("label", ""):
+        if version["label"] is not None and version_token in version["label"]:
             return str(version["id"])
     raise KeyError("No matching application source version found")
 
 
-def _get_or_create_custom_application_source_version(
-    endpoint: str,
-    token: str,
-    custom_application_source_id: str,
-    runtime_parameter_values: Optional[List[Union[RuntimeParameterValue, Dict[str, str]]]] = None,
-    previous_custom_application_source_version_id: Optional[str] = None,
+def _make_request(
+    client: dr.Client,  # type: ignore
+    method: Literal["POST", "PATCH", "GET"],
+    partial_url: str,
+    json: Optional[Dict[str, Any]] = None,
     **kwargs: Any,
-) -> str:
-    client = dr.Client(token=token, endpoint=endpoint)  # type: ignore
-
-    if runtime_parameter_values is not None:
-        runtime_parameter_values_objs = [
-            RuntimeParameterValue(**param) if isinstance(param, dict) else param
-            for param in runtime_parameter_values
-        ]
-    else:
-        runtime_parameter_values_objs = []
-
-    folder_path = kwargs.pop("folder_path", None)
-
-    version_token = get_hash(
-        Path(folder_path) if folder_path else None,
-        custom_application_source_id,
-        runtime_parameter_values=runtime_parameter_values_objs,
-        **kwargs,
-    )
-
-    try:
-        existing_version_id = _find_existing_custom_application_source_version(
-            endpoint=endpoint,
-            token=token,
-            custom_application_source_id=custom_application_source_id,
-            version_token=version_token,
-        )
-        return existing_version_id
-    except KeyError:
+) -> Any:
+    if method != "GET" and json is None:
         upload_data: List[Tuple[str, Any]] = []
         with contextlib.ExitStack() as stack:
-            if folder_path:
+            if "folder_path" in kwargs:
+                folder_path = kwargs["folder_path"]
                 for root_path, _, file_paths in os.walk(folder_path):
                     for path in file_paths:
                         file_path = os.path.join(root_path, path)
@@ -88,14 +67,14 @@ def _get_or_create_custom_application_source_version(
                         upload_data.append(("file", (os.path.basename(file_path), file)))
                         upload_data.append(("filePath", os.path.relpath(file_path, folder_path)))
 
-            if runtime_parameter_values_objs:
+            if "runtime_parameter_values" in kwargs:
                 upload_data.append(
                     (
                         "runtimeParameterValues",
-                        json.dumps(
+                        dumps(
                             [
                                 {camelize(k): v for k, v in param.to_dict().items()}
-                                for param in runtime_parameter_values_objs
+                                for param in kwargs["runtime_parameter_values"]
                             ]
                         ),
                     )
@@ -111,37 +90,121 @@ def _get_or_create_custom_application_source_version(
                 upload_data.append(
                     ("baseEnvironmentVersionId", kwargs["base_environment_version_id"])
                 )
-
-            upload_data.append(
-                (
-                    "label",
-                    f"{kwargs.get('label', '')}{' - ' if kwargs.get('label') else ''}[{version_token}]",
-                )
-            )
+            if "label" in kwargs:
+                upload_data.append(("label", kwargs["label"]))
 
             encoder = MultipartEncoder(fields=upload_data)
             headers = {"Content-Type": encoder.content_type}
-
-            if previous_custom_application_source_version_id is not None:
-                response = client.request(
-                    method="PATCH",
-                    url=f"customApplicationSources/{custom_application_source_id}/versions/{previous_custom_application_source_version_id}/",
-                    data=encoder,
-                    headers=headers,
-                )
-            else:
-                response = client.request(
-                    method="POST",
-                    url=f"customApplicationSources/{custom_application_source_id}/versions/",
-                    data=encoder,
-                    headers=headers,
-                )
-            new_version = response.json()["id"]
-
-        return str(new_version)
+            response = client.request(
+                method=method,
+                url=partial_url,
+                data=encoder,
+                headers=headers,
+            )
+    else:
+        response = client.request(
+            method=method,
+            url=partial_url,
+            json=json,
+        )
+    return response.json()
 
 
-# Public functions
+def _get_or_create_custom_application_source_version(
+    from_previous: bool,
+    endpoint: str,
+    token: str,
+    custom_application_source_id: str,
+    **kwargs: Any,
+) -> str:
+    client = dr.Client(token=token, endpoint=endpoint)  # type: ignore
+
+    version_token = get_hash(
+        Path(kwargs["folder_path"]) if "folder_path" in kwargs else None,
+        custom_application_source_id,
+        **kwargs,
+    )
+
+    runtime_parameter_values_objs = []
+    if "runtime_parameter_values" in kwargs:
+        runtime_parameter_values_objs = [
+            RuntimeParameterValue(**param) if isinstance(param, dict) else param
+            for param in kwargs.pop("runtime_parameter_values")
+        ]
+
+    label = kwargs.pop("label", "")
+    if len(label):
+        label += " - "
+    label += f"[{version_token}]"
+
+    try:
+        existing_version_id = _find_existing_custom_application_source_version(
+            client=client,
+            custom_application_source_id=custom_application_source_id,
+            version_token=version_token,
+            from_previous=from_previous,
+        )
+        return existing_version_id
+    except KeyError:
+        pass
+
+    if from_previous:
+        all_versions = _make_request(
+            client=client,
+            method="GET",
+            partial_url=f"customApplicationSources/{custom_application_source_id}/versions/",
+        )["data"]
+        all_versions.sort(key=lambda x: x["createdAt"], reverse=True)
+        if len(all_versions) == 0:
+            raise ValueError(
+                "Creating from a previous version is not possible: no previous version exists"
+            )
+        previous_custom_application_source_version_id = all_versions[0]["id"]
+        new_version_id = str(
+            _make_request(
+                client=client,
+                method="POST",
+                partial_url=f"customApplicationSources/{custom_application_source_id}/versions/",
+                json={
+                    "baseVersion": previous_custom_application_source_version_id,
+                    "label": label,
+                },
+            )["id"]
+        )
+        _make_request(
+            client=client,
+            method="PATCH",
+            partial_url=(
+                f"customApplicationSources/{custom_application_source_id}/"
+                f"versions/{new_version_id}/"
+            ),
+            **kwargs,
+        )
+    else:
+        new_version_id = str(
+            _make_request(
+                client=client,
+                method="POST",
+                partial_url=f"customApplicationSources/{custom_application_source_id}/versions/",
+                label=label,
+                **kwargs,
+            )["id"]
+        )
+
+    # runtime parameter values must be patched subsequent to any possible file uploads/patching
+    if len(runtime_parameter_values_objs):
+        _make_request(
+            client=client,
+            method="PATCH",
+            partial_url=(
+                f"customApplicationSources/{custom_application_source_id}/"
+                f"versions/{new_version_id}/"
+            ),
+            runtime_parameter_values=runtime_parameter_values_objs,
+        )
+    return new_version_id
+
+
 def get_or_create_custom_application_source_version(
     endpoint: str,
     token: str,
@@ -162,57 +225,19 @@ def get_or_create_custom_application_source_version(
     str
         The ID of the custom application source version.
     """
-    runtime_parameter_values = kwargs.pop("runtime_parameter_values", None)
-
-    app_source_version_id = _get_or_create_custom_application_source_version(
+    return _get_or_create_custom_application_source_version(
+        from_previous=False,
         endpoint=endpoint,
         token=token,
         custom_application_source_id=custom_application_source_id,
-        runtime_parameter_values=runtime_parameter_values,
         **kwargs,
     )
-    if runtime_parameter_values is not None:
-        app_source_version_id = _get_or_create_custom_application_source_version(
-            endpoint=endpoint,
-            token=token,
-            custom_application_source_id=custom_application_source_id,
-            previous_custom_application_source_version_id=app_source_version_id,
-            runtime_parameter_values=runtime_parameter_values,
-        )
-    return app_source_version_id
-
-
-def _copy_latest_version_to_new_version(
-    endpoint: str,
-    token: str,
-    custom_application_source_id: str,
-    app_version_token: str,
-    **kwargs: Any,
-) -> str:
-    client = dr.Client(token=token, endpoint=endpoint)  # type: ignore
-
-    all_versions = client.get(
-        f"customApplicationSources/{custom_application_source_id}/versions/"
-    ).json()["data"]
-    all_versions.sort(key=lambda x: x["createdAt"], reverse=True)
-    previous_custom_application_source_version_id = all_versions[0]["id"]
-
-    new_version = client.post(
-        f"customApplicationSources/{custom_application_source_id}/versions/",
-        json={
-            "baseVersion": previous_custom_application_source_version_id,
-            "label": f"{kwargs.get('label', '')}{' - ' if kwargs.get('label') else ''}[{app_version_token}]",
-        },
-    ).json()["id"]
-
-    return str(new_version)
 
 
 def get_or_create_custom_application_source_version_from_previous(
     endpoint: str,
     token: str,
     custom_application_source_id: str,
-    runtime_parameter_values: Optional[List[Union[RuntimeParameterValue, Dict[str, str]]]] = None,
     **kwargs: Any,
 ) -> str:
     """Get or create a custom application source version from a previous version.
@@ -221,9 +246,6 @@ def get_or_create_custom_application_source_version_from_previous(
     ----------
     custom_application_source_id : str
         The ID of the custom application source.
-    runtime_parameter_values : Optional[List[Union[RuntimeParameterValue, Dict[str, str]]]], optional
-        A list of runtime parameter values. Each value can be either a `RuntimeParameterValue` object or a dictionary
-        with parameter names as keys and parameter values as values. (default: None)
     **kwargs : Any
         Additional keyword arguments.
 
@@ -232,40 +254,10 @@ def get_or_create_custom_application_source_version_from_previous(
     str
         The ID of the custom application source version.
     """
-    if runtime_parameter_values is not None:
-        runtime_parameter_values_objs = [
-            RuntimeParameterValue(**d) for d in runtime_parameter_values if isinstance(d, dict)
-        ]
-    else:
-        runtime_parameter_values_objs = None
-
-    app_version_token = get_hash(
-        custom_application_source_id,
-        runtime_parameter_values=runtime_parameter_values_objs,
+    return _get_or_create_custom_application_source_version(
+        from_previous=True,
+        endpoint=endpoint,
+        token=token,
+        custom_application_source_id=custom_application_source_id,
         **kwargs,
     )
-    try:
-        previous_custom_application_source_version_id = (
-            _find_existing_custom_application_source_version(
-                endpoint=endpoint,
-                token=token,
-                custom_application_source_id=custom_application_source_id,
-                version_token=app_version_token,
-            )
-        )
-        return previous_custom_application_source_version_id
-    except KeyError:
-        try:
-            new_version = _copy_latest_version_to_new_version(
-                endpoint, token, custom_application_source_id, app_version_token, **kwargs
-            )
-            return _get_or_create_custom_application_source_version(
-                endpoint=endpoint,
-                token=token,
-                custom_application_source_id=custom_application_source_id,
-                previous_custom_application_source_version_id=new_version,
-                runtime_parameter_values=runtime_parameter_values,
-                **kwargs,
-            )
-        except:
-            raise ValueError("No previous version found")

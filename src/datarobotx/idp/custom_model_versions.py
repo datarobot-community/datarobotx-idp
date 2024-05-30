@@ -31,10 +31,13 @@ def _find_existing_custom_model_version(
     custom_model_id: str, model_version_token: str, from_previous: bool
 ) -> str:
     if from_previous:
-        versions = [dr.CustomInferenceModel.get(custom_model_id).latest_version]
+        versions = []
+        latest = dr.CustomInferenceModel.get(custom_model_id).latest_version  # type: ignore
+        if latest is not None:
+            versions.append(latest)
     else:
-        versions = dr.CustomModelVersion.list(custom_model_id)
-    for version in versions:  # type: ignore
+        versions = dr.CustomModelVersion.list(custom_model_id)  # type: ignore
+    for version in versions:
         if version.description is not None and model_version_token in version.description:
             return str(version.id)
     raise KeyError("No matching model version found")
