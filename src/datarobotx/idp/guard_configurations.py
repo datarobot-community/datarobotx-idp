@@ -13,7 +13,6 @@
 from typing import Any, Dict, List, Literal, Optional, TypedDict, Union
 
 import datarobot as dr
-from datarobot.errors import ClientError
 from datarobot.utils import from_api, to_api, underscorize
 
 from datarobotx.idp.common.hashing import get_hash
@@ -76,6 +75,82 @@ def _clean_guard_configurations(guard_config: List[Dict[str, Any]]) -> List[Dict
     return cleaned_config
 
 
+def _get_unfrozen_model_version_id(endpoint: str, token: str, custom_model_id: str) -> str:
+    custom_model = dr.CustomInferenceModel.get(custom_model_id)  # type: ignore
+    if not custom_model.latest_version:
+        raise ValueError("Custom model has no versions")
+
+    latest_version = custom_model.latest_version
+    base_environment_id = latest_version.base_environment_id
+    if custom_model.latest_version.is_frozen:
+        latest_version_id = get_or_create_custom_model_version_from_previous(
+            endpoint=endpoint,
+            token=token,
+            custom_model_id=custom_model_id,
+            base_environment_id=base_environment_id,
+        )
+    else:
+        latest_version_id = latest_version.id
+    return latest_version_id
+
+
+def _get_current_guard_configurations(
+    endpoint: str, token: str, latest_version_id: str
+) -> List[Dict[str, Any]]:
+    client = dr.Client(endpoint=endpoint, token=token)  # type: ignore
+    guard_config = client.get(
+        "guardConfigurations/",
+        params={"entityId": latest_version_id, "entityType": "customModelVersion"},
+    ).json()["data"]
+
+    guard_config = [from_api(config) for config in guard_config]
+    return guard_config  # type: ignore[no-any-return]
+
+
+def _get_selected_guard_template(
+    endpoint: str, token: str, guard_config_template_name: str
+) -> Dict[str, Any]:
+    client = dr.Client(endpoint=endpoint, token=token)  # type: ignore
+    # get all guard templates
+    guard_templates = client.get("guardTemplates/").json()["data"]
+    guard_templates = [
+        from_api(gt) for gt in guard_templates if gt["name"] == guard_config_template_name
+    ]
+
+    if not guard_templates:
+        raise ValueError(f"Guard template {guard_config_template_name} not found")
+
+    selected_template = guard_templates[0]
+    return selected_template  # type: ignore[no-any-return]
+
+
+def _assemble_guard_config(
+    guard_name: str,
+    guard_token: str,
+    selected_template: Dict[str, Any],
+    guard_config_template_settings: Dict[str, Any],
+    stages: List[Union[Literal["prompt"], Literal["response"]]],
+    intervention: Intervention,
+    description: Optional[str] = None,
+) -> Dict[str, Any]:
+    # Check if the selected guard template supports the given stages
+    if not all([stage in selected_template["allowed_stages"] for stage in stages]):
+        raise ValueError(
+            f"Guard template {selected_template['name']} does not support stages {stages}"
+        )
+    # Assemble the guard configuration with all expected fields
+    cleaned_guard_template = _clean_guard_configurations([selected_template])[0]
+
+    cleaned_guard_template[
+        "description"
+    ] = f"{description or cleaned_guard_template['description']} [{guard_token}]"
+    cleaned_guard_template["stages"] = [stage for stage in stages]
+    cleaned_guard_template["intervention"] = intervention
+    cleaned_guard_template.update(guard_config_template_settings)
+    cleaned_guard_template["name"] = guard_name
+    return cleaned_guard_template
+
+
 def _ensure_guard_config_from_template(  # noqa: PLR0913
     endpoint: str,
     token: str,
@@ -114,10 +189,7 @@ def _ensure_guard_config_from_template(  # noqa: PLR0913
     str
         The ID of the custom model version with the guard configuration.
     """
-    if endpoint is not None and token is not None:
-        client = dr.Client(endpoint=endpoint, token=token)  # type: ignore
-    else:
-        client = dr.client.get_client()
+    client = dr.Client(endpoint=endpoint, token=token)  # type: ignore
 
     guard_token = get_hash(
         custom_model_id,
@@ -130,29 +202,17 @@ def _ensure_guard_config_from_template(  # noqa: PLR0913
 
     guard_name = f"{name or guard_config_template_name}"
 
-    custom_model = dr.CustomInferenceModel.get(custom_model_id)  # type: ignore
-    if not custom_model.latest_version:
-        raise ValueError("Custom model has no versions")
-    latest_version_id = custom_model.latest_version.id
+    latest_version_id = _get_unfrozen_model_version_id(endpoint, token, custom_model_id)
 
-    # we extract the base environment id from the latest version to be reused later
-    base_environment_id = custom_model.latest_version.base_environment_id
+    current_guard_config = _get_current_guard_configurations(endpoint, token, latest_version_id)
 
-    # get the current guard configurations
-    guard_config = client.get(
-        "guardConfigurations/",
-        params={"entityId": latest_version_id, "entityType": "customModelVersion"},
-    ).json()["data"]
-
-    guard_config = [from_api(config) for config in guard_config]
-
-    # check if the guard configuration already exists
-    if guard_config:
-        for config in guard_config:
+    # check if the guard configuration already exists and return early
+    if current_guard_config:
+        for config in current_guard_config:
             if guard_token in config.get("description", ""):
                 return str(latest_version_id)
 
-    cleaned_guard_config = _clean_guard_configurations(guard_config)
+    cleaned_guard_config = _clean_guard_configurations(current_guard_config)
 
     if replace:
         # delete the existing guard configuration if it exists
@@ -160,60 +220,34 @@ def _ensure_guard_config_from_template(  # noqa: PLR0913
             config for config in cleaned_guard_config if guard_name != config["name"]
         ]
 
-    # get the guard templates
-    guard_templates = client.get("guardTemplates/").json()["data"]
-    guard_templates = [
-        from_api(gt) for gt in guard_templates if gt["name"] == guard_config_template_name
-    ]
-
-    if not guard_templates:
-        raise ValueError(f"Guard template {guard_config_template_name} not found")
-
-    selected_template = guard_templates[0]
-    if not all([stage in selected_template["allowed_stages"] for stage in stages]):
-        raise ValueError(
-            f"Guard template {guard_config_template_name} does not support stages {stages}"
-        )
+    selected_template = _get_selected_guard_template(endpoint, token, guard_config_template_name)
 
     # Assemble the guard configuration with all expected fields
-    cleaned_guard_template = _clean_guard_configurations([selected_template])[0]
-
-    cleaned_guard_template[
-        "description"
-    ] = f"{description or cleaned_guard_template['description']} [{guard_token}]"
-    cleaned_guard_template["stages"] = [stage for stage in stages]
-    cleaned_guard_template["intervention"] = intervention
-    cleaned_guard_template.update(guard_config_template_settings)
-    cleaned_guard_template["name"] = guard_name
+    assembled_guard_template = _assemble_guard_config(
+        guard_name=guard_name,
+        guard_token=guard_token,
+        selected_template=selected_template,
+        guard_config_template_settings=guard_config_template_settings,
+        stages=stages,
+        intervention=intervention,
+        description=description,
+    )
 
     # append previous guard configurations
-    cleaned_guard_config.append(cleaned_guard_template)
-    try:
-        res = client.post(
-            "guardConfigurations/toNewCustomModelVersion/",
-            json={
-                "data": [to_api(config) for config in cleaned_guard_config],
-                "customModelId": custom_model_id,
-            },
-        )
-    except ClientError:
-        _ = get_or_create_custom_model_version_from_previous(
-            endpoint=endpoint,
-            token=token,
-            custom_model_id=custom_model_id,
-            base_environment_id=base_environment_id,
-        )
-        res = client.post(
-            "guardConfigurations/toNewCustomModelVersion/",
-            json={
-                "data": [to_api(config) for config in cleaned_guard_config],
-                "customModelId": custom_model_id,
-            },
-        )
+    cleaned_guard_config.append(assembled_guard_template)
+
+    res = client.post(
+        "guardConfigurations/toNewCustomModelVersion/",
+        json={
+            "data": [to_api(config) for config in cleaned_guard_config],
+            "customModelId": custom_model_id,
+        },
+    )
+
     return str(res.json()["customModelVersionId"])
 
 
-def get_or_create_guard_config_to_custom_model_version(  # noqa: PLR0913
+def get_or_create_custom_model_version_with_guard_config(  # noqa: PLR0913
     endpoint: str,
     token: str,
     custom_model_id: str,
@@ -266,7 +300,7 @@ def get_or_create_guard_config_to_custom_model_version(  # noqa: PLR0913
     )
 
 
-def get_update_or_create_guard_config_to_custom_model_version(  # noqa: PLR0913
+def get_update_or_create_custom_model_version_with_guard_config(  # noqa: PLR0913
     endpoint: str,
     token: str,
     custom_model_id: str,
