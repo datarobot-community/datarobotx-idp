@@ -48,22 +48,34 @@ class Intervention(TypedDict):
     send_notification: bool
 
 
+keys_to_remove = [
+    "createdAt",
+    "creatorId",
+    "orgId",
+    "allowedStages",
+    "modelInfo",
+    "id",
+    "productionOnly",
+    "type",
+    "additionalConfig",
+    "ootbType",
+    "isValid",
+    "errorMessage",
+    "nemoInfo",
+    "intervention",
+    "updatedAt",
+    "isDeployed",
+    "faasUrl",
+]
+
+from datarobot.utils import underscorize
+
 def _clean_guard_configurations(guard_config: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     cleaned_config = []
     for config in guard_config:
         new_config = {}
         for k, v in config.items():
-            if k in [
-                "created_at",
-                "creator_id",
-                "entity_id",
-                "entity_type",
-                "org_id",
-                "allowed_stages",
-                "additional_config",
-                "production_only",
-                "id",
-            ]:
+            if k in [underscorize(key) for key in keys_to_remove]:
                 continue
             if v is not None:
                 new_config[k] = v
