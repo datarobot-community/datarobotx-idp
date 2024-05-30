@@ -17,18 +17,23 @@ from typing import Any, Generator
 
 import pytest
 
-from datarobotx.idp.custom_application_source import (
+from datarobotx.idp.custom_application_source import (  # type: ignore
     get_or_create_custom_application_source,
+)
+from datarobotx.idp.custom_application_source_version import (  # type: ignore
     get_or_create_custom_application_source_version,
 )
-from datarobotx.idp.custom_applications import (
+from datarobotx.idp.custom_applications import (  # type: ignore
     _find_existing_custom_app,
     get_replace_or_create_custom_app,
+    get_replace_or_create_custom_app_from_env,
 )
-from datarobotx.idp.execution_environment_versions import (
+from datarobotx.idp.execution_environment_versions import (  # type: ignore
     get_or_create_execution_environment_version,
 )
-from datarobotx.idp.execution_environments import get_or_create_execution_environment
+from datarobotx.idp.execution_environments import (  # type: ignore
+    get_or_create_execution_environment,
+)
 
 
 @pytest.fixture()
@@ -140,7 +145,7 @@ def test_get_or_create_from_env(
     custom_app_name,
     cleanup_apps,
 ):
-    custom_app_id_1 = get_replace_or_create_custom_app(
+    custom_app_id_1 = get_replace_or_create_custom_app_from_env(
         dr_endpoint,
         dr_token,
         custom_app_name.format(i=1),
@@ -149,7 +154,7 @@ def test_get_or_create_from_env(
     )
     assert len(custom_app_id_1)
 
-    custom_app_id_2 = get_replace_or_create_custom_app(
+    custom_app_id_2 = get_replace_or_create_custom_app_from_env(
         dr_endpoint,
         dr_token,
         custom_app_name.format(i=1),
@@ -158,7 +163,7 @@ def test_get_or_create_from_env(
     )
     assert custom_app_id_1 == custom_app_id_2
 
-    custom_app_id_3 = get_replace_or_create_custom_app(
+    custom_app_id_3 = get_replace_or_create_custom_app_from_env(
         dr_endpoint,
         dr_token,
         custom_app_name.format(i=2),
@@ -174,7 +179,7 @@ def test_get_or_create_from_env(
         custom_app_exec_env,
         docker_context_path_mod,
     )
-    custom_app_id_4 = get_replace_or_create_custom_app(
+    custom_app_id_4 = get_replace_or_create_custom_app_from_env(
         dr_endpoint,
         dr_token,
         custom_app_name.format(i=2),

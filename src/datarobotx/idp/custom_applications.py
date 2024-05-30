@@ -22,6 +22,8 @@ from datarobot.utils import camelize
 from datarobot.utils.pagination import unpaginate
 from datarobot.utils.waiters import wait_for_async_resolution
 
+from datarobotx.idp.common.hashing import get_hash
+
 
 def _create_custom_app(
     endpoint: str,
@@ -70,8 +72,12 @@ def _list_custom_apps(endpoint: str, token: str, name: Optional[str] = None) -> 
 
 
 def _find_existing_custom_app(endpoint: str, token: str, **kwargs: Any) -> str:
+    env_version_id = kwargs.pop("env_version_id", None)
     for app in _list_custom_apps(endpoint, token):
-        if all([app[camelize(key)] == kwargs[key] for key in kwargs if kwargs[key] is not None]):
+        if all([app[camelize(key)] == kwargs[key] for key in kwargs]) and (
+            # handling env_version_id separately, since this value is being set inside DR if asked for or not
+            env_version_id is None or env_version_id == app[camelize("env_version_id")]
+        ):
             return str(app["id"])
     raise KeyError("No matching custom app found")
 
@@ -85,13 +91,40 @@ def get_replace_or_create_custom_app(
     custom_application_source_version_id: Optional[str] = None,
     **kwargs: Any,
 ) -> str:
-    """Get, replace, or create a custom application from a custom environment with requested parameters.
+    """
+    Get, replace, or create a custom application from a custom environment with requested parameters.
 
     If a custom app with the desired name already exists but with different parameters, the existing
     app will be deleted and a new one created.
+
+    Exactly one of environment_id or custom_application_source_version_id is required.
+
+    Parameters
+    ----------
+    name : str
+        The name of the custom application.
+    environment_id : str, optional
+        The environment ID.
+    env_version_id : str, optional
+        The environment version ID.
+    custom_application_source_version_id : str, optional
+        The custom application source version ID.
+    **kwargs : Any
+        Additional keyword arguments to pass to the custom application creation endpoint.
+
+    Returns
+    -------
+    str
+        The ID of the custom application.
+
+    Raises
+    ------
+    ValueError
+        If both environment_id and custom_application_source_version_id are provided or if neither is provided.
+
     """
-    # test if env_version_id xor custom_application_source_version_id is provided
-    if bool(env_version_id) == bool(custom_application_source_version_id):
+    # test if environment_id xor custom_application_source_version_id is provided
+    if bool(environment_id) == bool(custom_application_source_version_id):
         raise ValueError(
             "Exactly one of env_version_id or custom_application_source_version_id is required"
         )
@@ -120,3 +153,100 @@ def get_replace_or_create_custom_app(
         custom_application_source_version_id=custom_application_source_version_id,
         **kwargs,
     )
+
+
+def get_replace_or_create_custom_app_from_env(
+    endpoint: str,
+    token: str,
+    name: str,
+    environment_id: str,
+    env_version_id: str,
+    **kwargs: Any,
+) -> str:
+    """
+    Get, replace, or create a custom application from a custom environment with requested parameters.
+
+    Parameters
+    ----------
+    name : str
+        The name of the custom application.
+    environment_id : str
+        The environment ID.
+    env_version_id : str
+        The environment version ID.
+    **kwargs : Any
+        Additional keyword arguments to pass to the custom application creation endpoint.
+
+    Returns
+    -------
+    str
+        The ID of the custom application.
+    """
+    return get_replace_or_create_custom_app(
+        endpoint=endpoint,
+        token=token,
+        name=name,
+        environment_id=environment_id,
+        env_version_id=env_version_id,
+        **kwargs,
+    )
+
+
+def get_or_create_qanda_app(
+    endpoint: str,
+    token: str,
+    deployment_id: str,
+    environment_id: str,
+    name: str,
+) -> str:
+    """Get or create a Q&A app.
+
+    Parameters
+    ----------
+    endpoint : str
+        The DataRobot endpoint.
+    token : str
+        The DataRobot API token.
+    deployment_id : str
+        The ID of the deployment.
+    environment_id : str
+        The ID of the environment.
+    name : str
+        The name of the Q&A app.
+
+    Returns
+    -------
+    str
+        The ID of the Q&A app.
+    """
+    app_token = get_hash(name, deployment_id, environment_id)
+
+    client = dr.Client(endpoint=endpoint, token=token)  # type: ignore
+
+    try:
+        apps = client.get("customApplications/").json()["data"]
+        for app in apps:
+            if app_token in app["name"]:
+                return str(app["id"])
+    except:
+        pass
+
+    quanda_app_response = client.post(
+        "customApplications/qanda/",
+        json={"deploymentId": deployment_id, "environmentId": environment_id},
+    ).json()
+
+    client.patch(
+        f"customApplications/{quanda_app_response['id']}",
+        json={
+            "name": f"{name} [{app_token}]",
+        },
+    )
+    client.patch(
+        f"customApplicationSources/{quanda_app_response['customApplicationSourceId']}/",
+        json={
+            "name": f"{name} [{app_token}]",
+        },
+    )
+
+    return str(quanda_app_response["id"])
