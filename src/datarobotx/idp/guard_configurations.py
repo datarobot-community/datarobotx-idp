@@ -48,7 +48,7 @@ class Intervention(TypedDict):
     send_notification: bool
 
 
-keys_to_remove = [
+_keys_to_remove = [
     "createdAt",
     "creatorId",
     "entityId",
@@ -67,7 +67,7 @@ def _clean_guard_configurations(guard_config: List[Dict[str, Any]]) -> List[Dict
     for config in guard_config:
         new_config = {}
         for k, v in config.items():
-            if k in [underscorize(key) for key in keys_to_remove]:
+            if k in [underscorize(key) for key in _keys_to_remove]:
                 continue
             if v is not None:
                 new_config[k] = v
@@ -159,9 +159,8 @@ def _ensure_guard_config_from_template(  # noqa: PLR0913
     guard_config_template_settings: Dict[str, Any],
     stages: List[Union[Literal["prompt"], Literal["response"]]],
     intervention: Intervention,
-    name: Optional[str] = None,
-    description: Optional[str] = None,
     replace: bool = False,
+    **kwargs: Any,
 ) -> str:
     """Ensure a guard configuration exists for a custom model version.
 
@@ -197,10 +196,10 @@ def _ensure_guard_config_from_template(  # noqa: PLR0913
         stages,
         intervention,
         guard_config_template_settings,
-        name,
+        **kwargs,
     )
 
-    guard_name = f"{name or guard_config_template_name}"
+    guard_name = f"{kwargs.get('name') or guard_config_template_name}"
 
     latest_version_id = _get_unfrozen_model_version_id(endpoint, token, custom_model_id)
 
@@ -230,7 +229,7 @@ def _ensure_guard_config_from_template(  # noqa: PLR0913
         guard_config_template_settings=guard_config_template_settings,
         stages=stages,
         intervention=intervention,
-        description=description,
+        description=kwargs.get("description"),
     )
 
     # append previous guard configurations
@@ -255,8 +254,7 @@ def get_or_create_custom_model_version_with_guard_config(  # noqa: PLR0913
     guard_config_template_settings: Dict[str, Any],
     stages: List[Union[Literal["prompt"], Literal["response"]]],
     intervention: Intervention,
-    name: Optional[str] = None,
-    description: Optional[str] = None,
+    **kwargs: Any,
 ) -> str:
     """Add a guard configuration to a custom model version.
 
@@ -294,9 +292,8 @@ def get_or_create_custom_model_version_with_guard_config(  # noqa: PLR0913
         guard_config_template_settings=guard_config_template_settings,
         stages=stages,
         intervention=intervention,
-        name=name,
-        description=description,
         replace=False,
+        **kwargs,
     )
 
 
@@ -308,8 +305,7 @@ def get_update_or_create_custom_model_version_with_guard_config(  # noqa: PLR091
     guard_config_template_settings: Dict[str, Any],
     stages: List[Union[Literal["prompt"], Literal["response"]]],
     intervention: Intervention,
-    name: Optional[str] = None,
-    description: Optional[str] = None,
+    **kwargs: Any,
 ) -> str:
     """Add or replace a guard configuration to a custom model version.
 
@@ -349,7 +345,6 @@ def get_update_or_create_custom_model_version_with_guard_config(  # noqa: PLR091
         guard_config_template_settings=guard_config_template_settings,
         stages=stages,
         intervention=intervention,
-        name=name,
-        description=description,
         replace=True,
+        **kwargs,
     )
