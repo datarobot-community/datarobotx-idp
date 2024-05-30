@@ -10,9 +10,6 @@
 # Released under the terms of DataRobot Tool and Utility Agreement.
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
-# mypy: disable-error-code="attr-defined"
-# pyright: reportPrivateImportUsage=false
-
 from typing import Any, Generator
 
 import pytest
@@ -24,8 +21,8 @@ from datarobotx.idp.deployments import (  # type: ignore
     get_or_create_deployment_from_registered_model_version,
 )
 from datarobotx.idp.guard_configurations import (  # type: ignore
-    get_or_create_guard_config_to_custom_model_version,
-    get_update_or_create_guard_config_to_custom_model_version,
+    get_or_create_custom_model_version_with_guard_config,
+    get_update_or_create_custom_model_version_with_guard_config,
 )
 
 
@@ -153,7 +150,7 @@ def test_get_or_create_guard_config_to_custom_model_version(
 ) -> None:
     # Call the function
     assert custom_model_version_id
-    latest_version = get_or_create_guard_config_to_custom_model_version(
+    latest_version = get_or_create_custom_model_version_with_guard_config(
         endpoint=dr_endpoint,
         token=dr_token,
         custom_model_id=custom_model_id,
@@ -171,7 +168,7 @@ def test_get_or_create_guard_config_to_custom_model_version(
     assert guard_config
     assert any(["Toxicity" in gc["name"] for gc in guard_config])
 
-    latest_version_2 = get_or_create_guard_config_to_custom_model_version(
+    latest_version_2 = get_or_create_custom_model_version_with_guard_config(
         endpoint=dr_endpoint,
         token=dr_token,
         custom_model_id=custom_model_id,
@@ -186,7 +183,7 @@ def test_get_or_create_guard_config_to_custom_model_version(
 
     assert latest_version == latest_version_2
 
-    latest_version_3 = get_or_create_guard_config_to_custom_model_version(
+    latest_version_3 = get_or_create_custom_model_version_with_guard_config(
         endpoint=dr_endpoint,
         token=dr_token,
         custom_model_id=custom_model_id,
@@ -223,7 +220,7 @@ def test_get_update_or_create_guard_config_to_custom_model_version(
 ) -> None:
     # Call the function
     assert custom_model_version_id
-    latest_version = get_update_or_create_guard_config_to_custom_model_version(
+    latest_version = get_update_or_create_custom_model_version_with_guard_config(
         endpoint=dr_endpoint,
         token=dr_token,
         custom_model_id=custom_model_id,
@@ -241,7 +238,7 @@ def test_get_update_or_create_guard_config_to_custom_model_version(
     assert guard_config
     assert any([guard_template_name_toxicity in gc["name"] for gc in guard_config])
 
-    latest_version_2 = get_update_or_create_guard_config_to_custom_model_version(
+    latest_version_2 = get_update_or_create_custom_model_version_with_guard_config(
         endpoint=dr_endpoint,
         token=dr_token,
         custom_model_id=custom_model_id,
@@ -260,7 +257,7 @@ def test_get_update_or_create_guard_config_to_custom_model_version(
     guard_config = _get_guard_configs(latest_version_2)
     assert len([gc for gc in guard_config if guard_template_name_toxicity in gc["name"]]) == 1
 
-    latest_version_3 = get_update_or_create_guard_config_to_custom_model_version(
+    latest_version_3 = get_update_or_create_custom_model_version_with_guard_config(
         endpoint=dr_endpoint,
         token=dr_token,
         custom_model_id=custom_model_id,
@@ -282,7 +279,7 @@ def test_get_update_or_create_guard_config_to_custom_model_version(
 
     assert latest_version != latest_version_3
 
-    latest_version_4 = get_update_or_create_guard_config_to_custom_model_version(
+    latest_version_4 = get_update_or_create_custom_model_version_with_guard_config(
         endpoint=dr_endpoint,
         token=dr_token,
         custom_model_id=custom_model_id,
@@ -300,7 +297,7 @@ def test_get_update_or_create_guard_config_to_custom_model_version(
     guard_config = _get_guard_configs(latest_version_4)
     assert len([gc for gc in guard_config if guard_template_name_toxicity in gc["name"]]) == 1
 
-    latest_version_5 = get_update_or_create_guard_config_to_custom_model_version(
+    latest_version_5 = get_update_or_create_custom_model_version_with_guard_config(
         endpoint=dr_endpoint,
         token=dr_token,
         custom_model_id=custom_model_id,
@@ -317,3 +314,9 @@ def test_get_update_or_create_guard_config_to_custom_model_version(
     # ensure guard_template_name_toxicity appears only once
     guard_config = _get_guard_configs(latest_version_5)
     assert len([gc for gc in guard_config if guard_template_name_toxicity in gc["name"]]) == 1
+
+    # get toxicity guard config
+    toxicity_guard_config = [
+        gc for gc in guard_config if guard_template_name_toxicity in gc["name"]
+    ][0]
+    assert toxicity_guard_config["intervention"]["message"] == intervention_2["message"]

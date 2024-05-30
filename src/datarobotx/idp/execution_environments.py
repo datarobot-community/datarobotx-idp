@@ -11,9 +11,6 @@
 # Released under the terms of DataRobot Tool and Utility Agreement.
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
-# mypy: disable-error-code="attr-defined"
-# pyright: reportPrivateImportUsage=false
-
 import posixpath
 from typing import Any
 
@@ -43,7 +40,7 @@ def _create_execution_environment(
 
 def _list_execution_environments(endpoint: str, token: str) -> Any:
     url = posixpath.join(endpoint, "executionEnvironments/")
-    client = dr.Client(endpoint=endpoint, token=token)
+    client = dr.Client(endpoint=endpoint, token=token)  # type: ignore[attr-defined]
     for env in unpaginate(initial_url=url, initial_params=None, client=client):
         yield env
 

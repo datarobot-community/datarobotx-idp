@@ -10,9 +10,6 @@
 # Released under the terms of DataRobot Tool and Utility Agreement.
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
-# mypy: disable-error-code="attr-defined"
-# pyright: reportPrivateImportUsage=false
-
 import posixpath
 from typing import Any, Literal
 
@@ -41,7 +38,7 @@ def _create_credential(
 def _get_or_update_or_delete_existing_credential(
     name: str, credential_type: str, credential_token: str, **kwargs: Any
 ) -> str:
-    for credential in dr.Credential.list():
+    for credential in dr.Credential.list():  # type: ignore[attr-defined]
         if credential.name == name:
             if credential.description is not None and credential_token in credential.description:
                 return str(credential.credential_id)
@@ -84,7 +81,7 @@ def get_replace_or_create_credential(
     the deleted one, but it will have a different credential id, which allows downstream processes
     to detect that the credential value may have changed and act appropriately.
     """
-    dr.Client(token=token, endpoint=endpoint)
+    dr.Client(token=token, endpoint=endpoint)  # type: ignore[attr-defined]
     credential_token = get_hash(name, credential_type, **kwargs)
     try:
         return _get_or_update_or_delete_existing_credential(
@@ -92,6 +89,6 @@ def get_replace_or_create_credential(
         )
     except KeyError:
         credential_id = _create_credential(endpoint, token, name, credential_type, **kwargs)
-        credential = dr.Credential.get(credential_id)
+        credential = dr.Credential.get(credential_id)  # type: ignore[attr-defined]
         credential.update(description=f"Checksum: {credential_token}")
         return credential_id
