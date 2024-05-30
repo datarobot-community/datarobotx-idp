@@ -75,14 +75,22 @@ def _clean_guard_configurations(guard_config: List[Dict[str, Any]]) -> List[Dict
     return cleaned_config
 
 
-def _get_unfrozen_model_version_id(endpoint: str, token: str, custom_model_id: str) -> str:
+def _get_latest_model_version_id(endpoint: str, token: str, custom_model_id: str) -> str:
     custom_model = dr.CustomInferenceModel.get(custom_model_id)  # type: ignore
     if not custom_model.latest_version:
         raise ValueError("Custom model has no versions")
 
     latest_version = custom_model.latest_version
-    base_environment_id = latest_version.base_environment_id
-    if custom_model.latest_version.is_frozen:
+    return str(latest_version.id)
+
+
+def _get_unfrozen_model_version_id(
+    endpoint: str, token: str, custom_model_id: str, latest_version_id: str
+) -> str:
+    latest_version = dr.CustomModelVersion.get(custom_model_id, latest_version_id)  # type: ignore
+
+    if latest_version.is_frozen:
+        base_environment_id = latest_version.base_environment_id
         latest_version_id = get_or_create_custom_model_version_from_previous(
             endpoint=endpoint,
             token=token,
@@ -201,7 +209,7 @@ def _ensure_guard_config_from_template(  # noqa: PLR0913
 
     guard_name = f"{kwargs.get('name') or guard_config_template_name}"
 
-    latest_version_id = _get_unfrozen_model_version_id(endpoint, token, custom_model_id)
+    latest_version_id = _get_latest_model_version_id(endpoint, token, custom_model_id)
 
     current_guard_config = _get_current_guard_configurations(endpoint, token, latest_version_id)
 
@@ -234,6 +242,8 @@ def _ensure_guard_config_from_template(  # noqa: PLR0913
 
     # append previous guard configurations
     cleaned_guard_config.append(assembled_guard_template)
+
+    _ = _get_unfrozen_model_version_id(endpoint, token, custom_model_id, latest_version_id)
 
     res = client.post(
         "guardConfigurations/toNewCustomModelVersion/",
