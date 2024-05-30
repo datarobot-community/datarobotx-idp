@@ -178,9 +178,34 @@ def get_or_create_custom_application_source_version(
             custom_application_source_id=custom_application_source_id,
             previous_custom_application_source_version_id=app_source_version_id,
             runtime_parameter_values=runtime_parameter_values,
-            **kwargs,
         )
     return app_source_version_id
+
+
+def _copy_latest_version_to_new_version(
+    endpoint: str,
+    token: str,
+    custom_application_source_id: str,
+    app_version_token: str,
+    **kwargs: Any,
+) -> str:
+    client = dr.Client(token=token, endpoint=endpoint)  # type: ignore
+
+    all_versions = client.get(
+        f"customApplicationSources/{custom_application_source_id}/versions/"
+    ).json()["data"]
+    all_versions.sort(key=lambda x: x["createdAt"], reverse=True)
+    previous_custom_application_source_version_id = all_versions[0]["id"]
+
+    new_version = client.post(
+        f"customApplicationSources/{custom_application_source_id}/versions/",
+        json={
+            "baseVersion": previous_custom_application_source_version_id,
+            "label": f"{kwargs.get('label', '')}{' - ' if kwargs.get('label') else ''}[{app_version_token}]",
+        },
+    ).json()["id"]
+
+    return str(new_version)
 
 
 def get_or_create_custom_application_source_version_from_previous(
@@ -214,7 +239,6 @@ def get_or_create_custom_application_source_version_from_previous(
     else:
         runtime_parameter_values_objs = None
 
-    client = dr.Client(token=token, endpoint=endpoint)  # type: ignore
     app_version_token = get_hash(
         custom_application_source_id,
         runtime_parameter_values=runtime_parameter_values_objs,
@@ -232,18 +256,9 @@ def get_or_create_custom_application_source_version_from_previous(
         return previous_custom_application_source_version_id
     except KeyError:
         try:
-            all_versions = client.get(
-                f"customApplicationSources/{custom_application_source_id}/versions/"
-            ).json()["data"]
-            all_versions.sort(key=lambda x: x["createdAt"], reverse=True)
-            previous_custom_application_source_version_id = all_versions[0]["id"]
-            new_version = client.post(
-                f"customApplicationSources/{custom_application_source_id}/versions/",
-                json={
-                    "baseVersion": previous_custom_application_source_version_id,
-                    "label": f"{kwargs.get('label', '')}{' - ' if kwargs.get('label') else ''}[{app_version_token}]",
-                },
-            ).json()["id"]
+            new_version = _copy_latest_version_to_new_version(
+                endpoint, token, custom_application_source_id, app_version_token, **kwargs
+            )
             return _get_or_create_custom_application_source_version(
                 endpoint=endpoint,
                 token=token,
