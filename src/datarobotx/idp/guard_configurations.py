@@ -10,8 +10,6 @@
 # Released under the terms of DataRobot Tool and Utility Agreement.
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
-# mypy: disable-error-code="attr-defined"
-# pyright: reportPrivateImportUsage=false
 
 from typing import Any, Dict, List, Optional
 
@@ -39,6 +37,7 @@ def _clean_guard_configurations(guard_config: List[Dict[str, Any]]) -> List[Dict
                 "allowed_stages",
                 "additional_config",
                 "production_only",
+                "is_deployed",
                 "id",
             ]:
                 continue
