@@ -221,3 +221,23 @@ def test_get_or_create(
         assert "requirements.txt" in zip_ref.namelist()
         assert zip_ref.read("files/file1") == b"foo"
         assert zip_ref.read("requirements.txt") == b"scikit-learn==1.4.2"
+
+    # create a new clean version
+    get_or_create_custom_model_version(
+        dr_endpoint,
+        dr_token,
+        custom_model,
+        base_environment_id=sklearn_drop_in_env,
+        maximum_memory=2048 * 1024 * 1024,
+    )
+    updated_version_3 = get_or_create_custom_model_version_from_previous(
+        endpoint=dr_endpoint,
+        token=dr_token,
+        custom_model_id=custom_model,
+        base_environment_id=sklearn_drop_in_env,
+        folder_path=updated_folder_path_with_metadata_and_reqs,
+        runtime_parameter_values=pythonic_runtime_parameters,
+        maximum_memory=4096 * 1024 * 1024,
+    )
+    # ensure we are not attempting to return the already existing, previously patched version
+    assert updated_version_2 != updated_version_3

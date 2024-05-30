@@ -27,8 +27,14 @@ except ImportError as e:
     ) from e
 
 
-def _find_existing_custom_model_version(custom_model_id: str, model_version_token: str) -> str:
-    for version in dr.CustomModelVersion.list(custom_model_id):  # type: ignore
+def _find_existing_custom_model_version(
+    custom_model_id: str, model_version_token: str, from_previous: bool
+) -> str:
+    if from_previous:
+        versions = [dr.CustomInferenceModel.get(custom_model_id).latest_version]
+    else:
+        versions = dr.CustomModelVersion.list(custom_model_id)
+    for version in versions:  # type: ignore
         if version.description is not None and model_version_token in version.description:
             return str(version.id)
     raise KeyError("No matching model version found")
@@ -75,7 +81,7 @@ def _get_or_create(
 
     try:
         existing_version_id = _find_existing_custom_model_version(
-            custom_model_id, model_version_token
+            custom_model_id, model_version_token, from_previous
         )
         if folder_path is not None and (pathlib.Path(folder_path) / "requirements.txt").exists():
             _ensure_dependency_build(custom_model_id, existing_version_id)
