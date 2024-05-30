@@ -23,7 +23,10 @@ from datarobotx.idp.custom_models import get_or_create_custom_model  # type: ign
 from datarobotx.idp.deployments import (  # type: ignore
     get_or_create_deployment_from_registered_model_version,
 )
-from datarobotx.idp.guard_configurations import ensure_guard_config_from_template  # type: ignore
+from datarobotx.idp.guard_configurations import (  # type: ignore
+    get_or_create_guard_config_to_custom_model_version,
+    get_update_or_create_guard_config_to_custom_model_version,
+)
 
 
 @pytest.fixture
@@ -82,6 +85,26 @@ def guard_template_name_toxicity() -> str:
 
 
 @pytest.fixture
+def intervention() -> dict[str, Any]:
+    return {
+        "action": "block",
+        "message": "This is a block message.",
+        "conditions": [{"comparand": 0.5, "comparator": "greaterThan"}],
+        "send_notification": True,
+    }
+
+
+@pytest.fixture
+def intervention_2() -> dict[str, Any]:
+    return {
+        "action": "block",
+        "message": "This is a different block message.",
+        "conditions": [{"comparand": 0.5, "comparator": "greaterThan"}],
+        "send_notification": True,
+    }
+
+
+@pytest.fixture
 def guard_deployment_prompt_injection(
     dr_endpoint: str, dr_token: str, default_prediction_server_id: str, cleanup_dr: Any
 ) -> Generator[str, None, None]:
@@ -109,7 +132,15 @@ def guard_template_name_prompt_injection() -> str:
     return "Prompt Injection"
 
 
-def test_ensure_guard_config_from_template(
+def _get_guard_configs(custom_model_version_id: str) -> Any:
+    client = dr.client.get_client()
+    return client.get(
+        "guardConfigurations/",
+        params={"entityId": custom_model_version_id, "entityType": "customModelVersion"},
+    ).json()["data"]
+
+
+def test_get_or_create_guard_config_to_custom_model_version(
     dr_endpoint: str,
     dr_token: str,
     custom_model_id: str,
@@ -118,10 +149,11 @@ def test_ensure_guard_config_from_template(
     guard_template_name_prompt_injection: str,
     guard_deployment_prompt_injection: str,
     custom_model_version_id: str,
+    intervention: dict[str, Any],
 ) -> None:
     # Call the function
     assert custom_model_version_id
-    latest_version = ensure_guard_config_from_template(
+    latest_version = get_or_create_guard_config_to_custom_model_version(
         endpoint=dr_endpoint,
         token=dr_token,
         custom_model_id=custom_model_id,
@@ -130,25 +162,16 @@ def test_ensure_guard_config_from_template(
             "deploymentId": guard_deployment_toxicity,
         },
         stages=["prompt"],
-        intervention={
-            "action": "block",
-            "message": "This is a toxic message.",
-            "conditions": [{"comparand": 0.5, "comparator": "greaterThan"}],
-            "send_notification": True,
-        },
+        intervention=intervention,
         name="pytest Toxicity Guard Configuration",
     )
 
     # Check the result
-    client = dr.Client(endpoint=dr_endpoint, token=dr_token)  # type: ignore
-    guard_config = client.get(
-        "guardConfigurations/",
-        params={"entityId": latest_version, "entityType": "customModelVersion"},
-    ).json()["data"]
+    guard_config = _get_guard_configs(latest_version)
     assert guard_config
     assert any(["Toxicity" in gc["name"] for gc in guard_config])
 
-    latest_version_2 = ensure_guard_config_from_template(
+    latest_version_2 = get_or_create_guard_config_to_custom_model_version(
         endpoint=dr_endpoint,
         token=dr_token,
         custom_model_id=custom_model_id,
@@ -157,18 +180,13 @@ def test_ensure_guard_config_from_template(
             "deploymentId": guard_deployment_toxicity,
         },
         stages=["prompt"],
-        intervention={
-            "action": "block",
-            "message": "This is a toxic message.",
-            "conditions": [{"comparand": 0.5, "comparator": "greaterThan"}],
-            "send_notification": True,
-        },
+        intervention=intervention,
         name="pytest Toxicity Guard Configuration",
     )
 
     assert latest_version == latest_version_2
 
-    latest_version_3 = ensure_guard_config_from_template(
+    latest_version_3 = get_or_create_guard_config_to_custom_model_version(
         endpoint=dr_endpoint,
         token=dr_token,
         custom_model_id=custom_model_id,
@@ -177,24 +195,125 @@ def test_ensure_guard_config_from_template(
             "deploymentId": guard_deployment_prompt_injection,
         },
         stages=["prompt"],
-        intervention={
-            "action": "block",
-            "message": "This is a prompt injection message.",
-            "conditions": [{"comparand": 0.5, "comparator": "greaterThan"}],
-            "send_notification": True,
-        },
+        intervention=intervention,
         name="pytest Prompt Injection Guard Configuration",
     )
 
     # Check the result
-    client = dr.Client(endpoint=dr_endpoint, token=dr_token)  # type: ignore
-    guard_config = client.get(
-        "guardConfigurations/",
-        params={"entityId": latest_version_3, "entityType": "customModelVersion"},
-    ).json()["data"]
+    guard_config = _get_guard_configs(latest_version_3)
     assert guard_config
     assert any(["Prompt Injection" in gc["name"] for gc in guard_config]) and any(
         ["Toxicity" in gc["name"] for gc in guard_config]
     )
 
     assert latest_version != latest_version_3
+
+
+def test_get_update_or_create_guard_config_to_custom_model_version(
+    dr_endpoint: str,
+    dr_token: str,
+    custom_model_id: str,
+    guard_template_name_toxicity: str,
+    guard_deployment_toxicity: str,
+    guard_template_name_prompt_injection: str,
+    guard_deployment_prompt_injection: str,
+    custom_model_version_id: str,
+    intervention: dict[str, Any],
+    intervention_2: dict[str, Any],
+) -> None:
+    # Call the function
+    assert custom_model_version_id
+    latest_version = get_update_or_create_guard_config_to_custom_model_version(
+        endpoint=dr_endpoint,
+        token=dr_token,
+        custom_model_id=custom_model_id,
+        guard_config_template_name=guard_template_name_toxicity,
+        guard_config_template_settings={
+            "deploymentId": guard_deployment_toxicity,
+        },
+        stages=["prompt"],
+        intervention=intervention,
+        name="pytest Toxicity Guard Configuration",
+    )
+
+    # Check the result
+    guard_config = _get_guard_configs(latest_version)
+    assert guard_config
+    assert any([guard_template_name_toxicity in gc["name"] for gc in guard_config])
+
+    latest_version_2 = get_update_or_create_guard_config_to_custom_model_version(
+        endpoint=dr_endpoint,
+        token=dr_token,
+        custom_model_id=custom_model_id,
+        guard_config_template_name=guard_template_name_toxicity,
+        guard_config_template_settings={
+            "deploymentId": guard_deployment_toxicity,
+        },
+        stages=["prompt"],
+        intervention=intervention,
+        name="pytest Toxicity Guard Configuration",
+    )
+
+    assert latest_version == latest_version_2
+
+    # ensure guard_template_name_toxicity appears only once
+    guard_config = _get_guard_configs(latest_version_2)
+    assert len([gc for gc in guard_config if guard_template_name_toxicity in gc["name"]]) == 1
+
+    latest_version_3 = get_update_or_create_guard_config_to_custom_model_version(
+        endpoint=dr_endpoint,
+        token=dr_token,
+        custom_model_id=custom_model_id,
+        guard_config_template_name=guard_template_name_prompt_injection,
+        guard_config_template_settings={
+            "deploymentId": guard_deployment_prompt_injection,
+        },
+        stages=["prompt"],
+        intervention=intervention,
+        name="pytest Prompt Injection Guard Configuration",
+    )
+
+    # Check the result
+    guard_config = _get_guard_configs(latest_version_3)
+    assert guard_config
+    assert any([guard_template_name_prompt_injection in gc["name"] for gc in guard_config]) and any(
+        [guard_template_name_toxicity in gc["name"] for gc in guard_config]
+    )
+
+    assert latest_version != latest_version_3
+
+    latest_version_4 = get_update_or_create_guard_config_to_custom_model_version(
+        endpoint=dr_endpoint,
+        token=dr_token,
+        custom_model_id=custom_model_id,
+        guard_config_template_name=guard_template_name_toxicity,
+        guard_config_template_settings={
+            "deploymentId": guard_deployment_toxicity,
+        },
+        stages=["prompt"],
+        intervention=intervention,
+        name="pytest Toxicity Guard Configuration",
+    )
+
+    assert latest_version_3 == latest_version_4
+    # ensure guard_template_name_toxicity appears only once
+    guard_config = _get_guard_configs(latest_version_4)
+    assert len([gc for gc in guard_config if guard_template_name_toxicity in gc["name"]]) == 1
+
+    latest_version_5 = get_update_or_create_guard_config_to_custom_model_version(
+        endpoint=dr_endpoint,
+        token=dr_token,
+        custom_model_id=custom_model_id,
+        guard_config_template_name=guard_template_name_toxicity,
+        guard_config_template_settings={
+            "deploymentId": guard_deployment_toxicity,
+        },
+        stages=["prompt"],
+        intervention=intervention_2,
+        name="pytest Toxicity Guard Configuration",
+    )
+
+    assert latest_version_4 != latest_version_5
+    # ensure guard_template_name_toxicity appears only once
+    guard_config = _get_guard_configs(latest_version_5)
+    assert len([gc for gc in guard_config if guard_template_name_toxicity in gc["name"]]) == 1

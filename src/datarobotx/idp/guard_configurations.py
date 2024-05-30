@@ -11,11 +11,11 @@
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional, TypedDict, Union
 
 import datarobot as dr
 from datarobot.errors import ClientError
-from datarobot.utils import from_api, to_api
+from datarobot.utils import from_api, to_api, underscorize
 
 from datarobotx.idp.common.hashing import get_hash
 from datarobotx.idp.custom_model_versions import (
@@ -23,23 +23,53 @@ from datarobotx.idp.custom_model_versions import (
 )
 
 
+class Condition(TypedDict):
+    """A condition for a guard configuration."""
+
+    comparand: float
+    comparator: Literal[
+        "greaterThan",
+        "lessThan",
+        "equals",
+        "notEquals",
+        "is",
+        "isNot",
+        "matches",
+        "doesNotMatch",
+        "contains",
+        "doesNotContain",
+    ]
+
+
+class Intervention(TypedDict):
+    """An intervention for a guard configuration."""
+
+    action: Literal["report", "block"]
+    conditions: List[Condition]
+    message: str
+    send_notification: bool
+
+
+keys_to_remove = [
+    "createdAt",
+    "creatorId",
+    "entityId",
+    "entityType",
+    "orgId",
+    "allowedStages",
+    "additionalConfig",
+    "productionOnly",
+    "id",
+    "isDeployed",
+]
+
+
 def _clean_guard_configurations(guard_config: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     cleaned_config = []
     for config in guard_config:
         new_config = {}
         for k, v in config.items():
-            if k in [
-                "created_at",
-                "creator_id",
-                "entity_id",
-                "entity_type",
-                "org_id",
-                "allowed_stages",
-                "additional_config",
-                "production_only",
-                "is_deployed",
-                "id",
-            ]:
+            if k in [underscorize(key) for key in keys_to_remove]:
                 continue
             if v is not None:
                 new_config[k] = v
@@ -47,15 +77,17 @@ def _clean_guard_configurations(guard_config: List[Dict[str, Any]]) -> List[Dict
     return cleaned_config
 
 
-def ensure_guard_config_from_template(  # noqa: PLR0913
+def _ensure_guard_config_from_template(  # noqa: PLR0913
     endpoint: str,
     token: str,
     custom_model_id: str,
     guard_config_template_name: str,
     guard_config_template_settings: Dict[str, Any],
-    stages: List[str],
-    intervention: Dict[str, Any],
+    stages: List[Union[Literal["prompt"], Literal["response"]]],
+    intervention: Intervention,
     name: Optional[str] = None,
+    description: Optional[str] = None,
+    replace: bool = False,
 ) -> str:
     """Ensure a guard configuration exists for a custom model version.
 
@@ -97,7 +129,7 @@ def ensure_guard_config_from_template(  # noqa: PLR0913
         name,
     )
 
-    guard_name = f"{name or guard_config_template_name} - [{guard_token}]"
+    guard_name = f"{name or guard_config_template_name}"
 
     custom_model = dr.CustomInferenceModel.get(custom_model_id)  # type: ignore
     if not custom_model.latest_version:
@@ -118,10 +150,16 @@ def ensure_guard_config_from_template(  # noqa: PLR0913
     # check if the guard configuration already exists
     if guard_config:
         for config in guard_config:
-            if config["name"] == guard_name:
+            if guard_token in config.get("description", ""):
                 return str(latest_version_id)
 
     cleaned_guard_config = _clean_guard_configurations(guard_config)
+
+    if replace:
+        # delete the existing guard configuration if it exists
+        cleaned_guard_config = [
+            config for config in cleaned_guard_config if guard_name != config["name"]
+        ]
 
     # get the guard templates
     guard_templates = client.get("guardTemplates/").json()["data"]
@@ -140,6 +178,10 @@ def ensure_guard_config_from_template(  # noqa: PLR0913
 
     # Assemble the guard configuration with all expected fields
     cleaned_guard_template = _clean_guard_configurations([selected_template])[0]
+
+    cleaned_guard_template[
+        "description"
+    ] = f"{description or cleaned_guard_template['description']} [{guard_token}]"
     cleaned_guard_template["stages"] = [stage for stage in stages]
     cleaned_guard_template["intervention"] = intervention
     cleaned_guard_template.update(guard_config_template_settings)
@@ -170,3 +212,111 @@ def ensure_guard_config_from_template(  # noqa: PLR0913
             },
         )
     return str(res.json()["customModelVersionId"])
+
+
+def get_or_create_guard_config_to_custom_model_version(  # noqa: PLR0913
+    endpoint: str,
+    token: str,
+    custom_model_id: str,
+    guard_config_template_name: str,
+    guard_config_template_settings: Dict[str, Any],
+    stages: List[Union[Literal["prompt"], Literal["response"]]],
+    intervention: Intervention,
+    name: Optional[str] = None,
+    description: Optional[str] = None,
+) -> str:
+    """Add a guard configuration to a custom model version.
+
+        If a guard configuration with the same settings already exists, it will not be created.
+
+    Parameters
+    ----------
+    endpoint : str
+        The DataRobot endpoint to connect to.
+    token : str
+        The DataRobot API token to use.
+    custom_model_id : str
+        The ID of the custom model to create the guard configuration for.
+    guard_config_template_name : str
+        The name of the guard configuration template to use.
+    guard_config_template_settings : dict
+        The settings for the guard configuration template.
+    stages : Union[List[GuardStage], List[str]]
+        The stages to apply the guard configuration to.
+    intervention : Union[Intervention, Dict[str, Any]]
+        The intervention to apply when the guard conditions are met.
+    name : Optional[str], optional
+        The name of the guard configuration, by default None
+
+    Returns
+    -------
+    str
+        The ID of the custom model version with the guard configuration.
+    """
+    return _ensure_guard_config_from_template(
+        endpoint=endpoint,
+        token=token,
+        custom_model_id=custom_model_id,
+        guard_config_template_name=guard_config_template_name,
+        guard_config_template_settings=guard_config_template_settings,
+        stages=stages,
+        intervention=intervention,
+        name=name,
+        description=description,
+        replace=False,
+    )
+
+
+def get_update_or_create_guard_config_to_custom_model_version(  # noqa: PLR0913
+    endpoint: str,
+    token: str,
+    custom_model_id: str,
+    guard_config_template_name: str,
+    guard_config_template_settings: Dict[str, Any],
+    stages: List[Union[Literal["prompt"], Literal["response"]]],
+    intervention: Intervention,
+    name: Optional[str] = None,
+    description: Optional[str] = None,
+) -> str:
+    """Add or replace a guard configuration to a custom model version.
+
+        If a guard configuration with the same settings already exists, no new guard configuration will be created.
+        Replacement is based on the name of the guard configuration or the given name.
+        If the guard configuration with the same name but different settings exists, it will be replaced.
+
+    Parameters
+    ----------
+    endpoint : str
+        The DataRobot endpoint to connect to.
+    token : str
+        The DataRobot API token to use.
+    custom_model_id : str
+        The ID of the custom model to create the guard configuration for.
+    guard_config_template_name : str
+        The name of the guard configuration template to use.
+    guard_config_template_settings : dict
+        The settings for the guard configuration template.
+    stages : Union[List[GuardStage], List[str]]
+        The stages to apply the guard configuration to.
+    intervention : Union[Intervention, Dict[str, Any]]
+        The intervention to apply when the guard conditions are met.
+    name : Optional[str], optional
+        The name of the guard configuration, by default None
+
+    Returns
+    -------
+    str
+        The ID of the custom model version with the guard configuration.
+    """
+    return _ensure_guard_config_from_template(
+        endpoint=endpoint,
+        token=token,
+        custom_model_id=custom_model_id,
+        guard_config_template_name=guard_config_template_name,
+        guard_config_template_settings=guard_config_template_settings,
+        stages=stages,
+        intervention=intervention,
+        name=name,
+        description=description,
+        replace=True,
+    )
