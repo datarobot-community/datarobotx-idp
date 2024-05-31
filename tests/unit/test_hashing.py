@@ -92,6 +92,10 @@ class TestHasher:
         token = get_hash(52.0)
         assert all(c in string.hexdigits for c in token)
 
+    def test_date(self):
+        token = get_hash(pd.Timestamp("20240531"))
+        assert all(c in string.hexdigits for c in token)
+
     def test_seq(self):
         token = get_hash([1, "hi", 5.0], ("foo", 3))
         assert all(c in string.hexdigits for c in token)
