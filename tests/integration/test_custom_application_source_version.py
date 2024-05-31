@@ -268,3 +268,19 @@ def test_get_or_create_with_runtime_params(
     )
 
     assert env_ver_id_3 == env_ver_id_4
+    # make new clean app source version
+    get_or_create_custom_application_source_version(
+        endpoint=dr_endpoint,
+        token=dr_token,
+        custom_application_source_id=custom_application_source_2,
+        folder_path=app_context_path,
+        label="pytest app source version alt",
+    )
+    env_ver_id_5 = get_or_create_custom_application_source_version_from_previous(
+        endpoint=dr_endpoint,
+        token=dr_token,
+        custom_application_source_id=custom_application_source_2,
+        folder_path=additional_metadata_context_path,
+    )
+    # confirm we have not returned the previously patched (wrong) app source version
+    assert env_ver_id_5 != env_ver_id_4
