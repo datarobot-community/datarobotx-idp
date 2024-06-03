@@ -12,14 +12,17 @@
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
 
-from typing import Any, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import datarobot as dr
 
 from datarobotx.idp.common.hashing import get_hash
+from datarobotx.idp.guard_configurations import (
+    unsafe_get_or_create_custom_model_version_with_guard_config,
+)
 
 try:
-    from datarobot.models.genai import Playground
+    from datarobot.models.genai import Playground  # type: ignore[attr-defined]
     from datarobot.models.genai.llm_blueprint import (
         LLMBlueprint,
         VectorDatabaseSettings,
@@ -70,7 +73,7 @@ def get_or_create_llm_blueprint(
     dr.Client(token=token, endpoint=endpoint)  # type: ignore
 
     if isinstance(playground, Playground):
-        playground = str(Playground.id)
+        playground = str(playground.id)
     vdb_settings = kwargs.pop("vector_database_settings", None)
     if isinstance(vdb_settings, dict):
         vdb_settings = VectorDatabaseSettings(**vdb_settings)
@@ -86,7 +89,11 @@ def get_or_create_llm_blueprint(
 
 
 def get_or_register_llm_blueprint_custom_model_version(
-    endpoint: str, token: str, llm_blueprint_id: str, **kwargs: Any
+    endpoint: str,
+    token: str,
+    llm_blueprint_id: str,
+    register_kwargs: Optional[Dict[str, Any]] = None,
+    guard_configs: Optional[List[Dict[str, Any]]] = None,
 ) -> Tuple[str, str]:
     """Get or register a custom model version from an LLM blueprint.
 
@@ -103,9 +110,11 @@ def get_or_register_llm_blueprint_custom_model_version(
         The DataRobot API token to use.
     llm_blueprint_id : str
         The ID of the LLM blueprint to use.
-    **kwargs : Any
+    register_kwargs : Dict[str, Any]
         Additional keyword arguments to pass to the custom model registration.
         check datarobot.models.genai.llm_blueprint.LLMBlueprint.register_custom_model for more details.
+    guard_kwargs : Dict[str, Any]
+        Additional keyword arguments to pass to the custom model guard configuration
 
     Returns
     -------
@@ -113,6 +122,11 @@ def get_or_register_llm_blueprint_custom_model_version(
         The ID of the custom model and the ID of the custom model version.
     """
     dr.Client(token=token, endpoint=endpoint)  # type: ignore
+
+    if register_kwargs is None:
+        register_kwargs = {}
+    if guard_configs is None:
+        guard_configs = []
     bp = LLMBlueprint.get(llm_blueprint_id)
     bp_token = get_hash(
         llm_blueprint_id,
@@ -128,13 +142,24 @@ def get_or_register_llm_blueprint_custom_model_version(
             if bp.vector_database_settings is not None
             else None
         ),
+        guard_configs,
+        **register_kwargs,
     )
     for cm in dr.CustomInferenceModel.list(search_for=bp_token):  # type: ignore
         if cm.description is not None and bp_token in cm.description:
             if cm.latest_version is not None:
                 return str(cm.id), str(cm.latest_version.id)
     else:
-        cm_version = bp.register_custom_model(**kwargs)
+        cm_version = bp.register_custom_model(**register_kwargs)
         cm = dr.CustomInferenceModel.get(cm_version.custom_model_id)  # type: ignore
         cm.update(description=f"Checksum: {bp_token}")
+
+        for guard_config in guard_configs:
+            new_version = unsafe_get_or_create_custom_model_version_with_guard_config(
+                endpoint=endpoint, token=token, custom_model_id=cm.id, **guard_config
+            )
+            cm_version = dr.CustomModelVersion.get(  # type: ignore[attr-defined]
+                custom_model_id=cm.id, custom_model_version_id=new_version
+            )
+
         return str(cm.id), str(cm_version.id)

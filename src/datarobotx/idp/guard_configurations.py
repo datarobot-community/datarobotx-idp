@@ -16,9 +16,6 @@ import datarobot as dr
 from datarobot.utils import from_api, to_api, underscorize
 
 from datarobotx.idp.common.hashing import get_hash
-from datarobotx.idp.custom_model_versions import (
-    get_or_create_custom_model_version_from_previous,
-)
 
 
 class Condition(TypedDict):
@@ -87,11 +84,16 @@ def _get_latest_model_version_id(endpoint: str, token: str, custom_model_id: str
 def _get_unfrozen_model_version_id(
     endpoint: str, token: str, custom_model_id: str, latest_version_id: str
 ) -> str:
+    # avoiding circular import
+    from datarobotx.idp.custom_model_versions import (
+        unsafe_get_or_create_custom_model_version_from_previous,
+    )
+
     latest_version = dr.CustomModelVersion.get(custom_model_id, latest_version_id)  # type: ignore
 
     if latest_version.is_frozen:
         base_environment_id = latest_version.base_environment_id
-        latest_version_id = get_or_create_custom_model_version_from_previous(
+        latest_version_id = unsafe_get_or_create_custom_model_version_from_previous(
             endpoint=endpoint,
             token=token,
             custom_model_id=custom_model_id,
@@ -256,7 +258,7 @@ def _ensure_guard_config_from_template(  # noqa: PLR0913
     return str(res.json()["customModelVersionId"])
 
 
-def get_or_create_custom_model_version_with_guard_config(  # noqa: PLR0913
+def unsafe_get_or_create_custom_model_version_with_guard_config(  # noqa: PLR0913
     endpoint: str,
     token: str,
     custom_model_id: str,
@@ -307,7 +309,7 @@ def get_or_create_custom_model_version_with_guard_config(  # noqa: PLR0913
     )
 
 
-def get_update_or_create_custom_model_version_with_guard_config(  # noqa: PLR0913
+def unsafe_get_update_or_create_custom_model_version_with_guard_config(  # noqa: PLR0913
     endpoint: str,
     token: str,
     custom_model_id: str,
