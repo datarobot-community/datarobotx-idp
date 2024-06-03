@@ -59,7 +59,9 @@ _keys_to_remove = [
 ]
 
 
-def _clean_guard_configurations(guard_config: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def _clean_guard_configurations(
+    guard_config: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
     cleaned_config = []
     for config in guard_config:
         new_config = {}
@@ -82,7 +84,11 @@ def _get_latest_model_version_id(endpoint: str, token: str, custom_model_id: str
 
 
 def _get_unfrozen_model_version_id(
-    endpoint: str, token: str, custom_model_id: str, latest_version_id: str
+    endpoint: str,
+    token: str,
+    custom_model_id: str,
+    latest_version_id: str,
+    **kwargs: Any,
 ) -> str:
     # avoiding circular import
     from datarobotx.idp.custom_model_versions import (
@@ -98,6 +104,7 @@ def _get_unfrozen_model_version_id(
             token=token,
             custom_model_id=custom_model_id,
             base_environment_id=base_environment_id,
+            **kwargs,
         )
     else:
         latest_version_id = latest_version.id
@@ -245,7 +252,9 @@ def _ensure_guard_config_from_template(  # noqa: PLR0913
     # append previous guard configurations
     cleaned_guard_config.append(assembled_guard_template)
 
-    _ = _get_unfrozen_model_version_id(endpoint, token, custom_model_id, latest_version_id)
+    _ = _get_unfrozen_model_version_id(
+        endpoint, token, custom_model_id, latest_version_id, **kwargs
+    )
 
     res = client.post(
         "guardConfigurations/toNewCustomModelVersion/",

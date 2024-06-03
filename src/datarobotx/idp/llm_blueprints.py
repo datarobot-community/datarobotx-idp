@@ -17,6 +17,9 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import datarobot as dr
 
 from datarobotx.idp.common.hashing import get_hash
+from datarobotx.idp.custom_model_versions import (
+    unsafe_get_or_create_custom_model_version_from_previous,
+)
 from datarobotx.idp.guard_configurations import (
     unsafe_get_or_create_custom_model_version_with_guard_config,
 )
@@ -148,13 +151,37 @@ def get_or_register_llm_blueprint_custom_model_version(
             if cm.latest_version is not None:
                 return str(cm.id), str(cm.latest_version.id)
     else:
-        cm_version = bp.register_custom_model(**kwargs)
+        prompt_column_name = kwargs.pop("prompt_column_name", None)
+        target_column_name = kwargs.pop("target_column_name", None)
+        cm_version = bp.register_custom_model(
+            prompt_column_name=prompt_column_name, target_column_name=target_column_name
+        )
         cm = dr.CustomInferenceModel.get(cm_version.custom_model_id)  # type: ignore
         cm.update(description=f"Checksum: {bp_token}")
 
+        if kwargs:
+            cm_version_id = unsafe_get_or_create_custom_model_version_from_previous(
+                endpoint=endpoint, token=token, custom_model_id=cm.id, **kwargs
+            )
+            cm_version = dr.CustomModelVersion.get(
+                custom_model_id=cm.id, custom_model_version_id=cm_version_id
+            )
+
         for guard_config in guard_configs:
+            guard_config_template_name = guard_config.pop("guard_config_template_name", None)
+            guard_config_template_settings = guard_config.pop(
+                "guard_config_template_settings", None
+            )
+            stages = guard_config.pop("stages", None)
+            intervention = guard_config.pop("intervention", None)
             new_version = unsafe_get_or_create_custom_model_version_with_guard_config(
-                endpoint=endpoint, token=token, custom_model_id=cm.id, **guard_config
+                endpoint=endpoint,
+                token=token,
+                custom_model_id=cm.id,
+                guard_config_template_name=guard_config_template_name,
+                guard_config_template_settings=guard_config_template_settings,
+                stages=stages,
+                intervention=intervention,
             )
             cm_version = dr.CustomModelVersion.get(  # type: ignore[attr-defined]
                 custom_model_id=cm.id, custom_model_version_id=new_version
