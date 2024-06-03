@@ -234,7 +234,7 @@ def get_or_create_custom_application_source_version(
     )
 
 
-def get_or_create_custom_application_source_version_from_previous(
+def unsafe_get_or_create_custom_application_source_version_from_previous(
     endpoint: str,
     token: str,
     custom_application_source_id: str,

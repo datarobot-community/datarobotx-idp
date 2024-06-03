@@ -24,7 +24,7 @@ from datarobotx.idp.custom_application_source import (  # type: ignore
 )
 from datarobotx.idp.custom_application_source_version import (  # type: ignore
     get_or_create_custom_application_source_version,
-    get_or_create_custom_application_source_version_from_previous,
+    unsafe_get_or_create_custom_application_source_version_from_previous,
 )
 
 
@@ -243,7 +243,7 @@ def test_get_or_create_with_runtime_params(
         ).json()["items"]
     ]
 
-    env_ver_id_3 = get_or_create_custom_application_source_version_from_previous(
+    env_ver_id_3 = unsafe_get_or_create_custom_application_source_version_from_previous(
         endpoint=dr_endpoint,
         token=dr_token,
         custom_application_source_id=custom_application_source_2,
@@ -260,7 +260,7 @@ def test_get_or_create_with_runtime_params(
 
     assert folder_contents_old + ["foo.txt"] == folder_contents_new
 
-    env_ver_id_4 = get_or_create_custom_application_source_version_from_previous(
+    env_ver_id_4 = unsafe_get_or_create_custom_application_source_version_from_previous(
         endpoint=dr_endpoint,
         token=dr_token,
         custom_application_source_id=custom_application_source_2,
@@ -276,7 +276,7 @@ def test_get_or_create_with_runtime_params(
         folder_path=app_context_path,
         label="pytest app source version alt",
     )
-    env_ver_id_5 = get_or_create_custom_application_source_version_from_previous(
+    env_ver_id_5 = unsafe_get_or_create_custom_application_source_version_from_previous(
         endpoint=dr_endpoint,
         token=dr_token,
         custom_application_source_id=custom_application_source_2,

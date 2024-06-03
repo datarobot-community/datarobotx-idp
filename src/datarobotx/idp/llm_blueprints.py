@@ -113,11 +113,28 @@ def get_or_register_llm_blueprint_custom_model_version(
         The DataRobot API token to use.
     llm_blueprint_id : str
         The ID of the LLM blueprint to use.
-    register_kwargs : Dict[str, Any]
-        Additional keyword arguments to pass to the custom model registration.
-        check datarobot.models.genai.llm_blueprint.LLMBlueprint.register_custom_model for more details.
-    guard_kwargs : Dict[str, Any]
-        Additional keyword arguments to pass to the custom model guard configuration
+    guard_kwargs : Optional[List[Dict[str, Any]]
+        Additional arguments to configure LLM guards.
+        An example format of a guard is:
+        {
+            "guard_config_template_name": "Prompt Injection",
+            "guard_config_template_settings": {
+                "deploymentId": "some_deployment_id",
+            },
+            "stages": ["prompt", "response"],
+            "intervention": {
+                "action": "block",
+                "conditions": [
+                    {
+                        "comparand": 0.5,
+                        "comparator": "greaterThan",
+                    }
+                ],
+            },
+        }
+    **kwargs : Any
+        Additional keyword arguments to pass to the custom model version registration (see dr.LLMBlueprint.register_custom_model)
+        and to update the custom model version (see dr.CustomModelVersion.create_from_previous)
 
     Returns
     -------
@@ -163,7 +180,7 @@ def get_or_register_llm_blueprint_custom_model_version(
             cm_version_id = unsafe_get_or_create_custom_model_version_from_previous(
                 endpoint=endpoint, token=token, custom_model_id=cm.id, **kwargs
             )
-            cm_version = dr.CustomModelVersion.get(
+            cm_version = dr.CustomModelVersion.get(  # type: ignore[attr-defined]
                 custom_model_id=cm.id, custom_model_version_id=cm_version_id
             )
 
