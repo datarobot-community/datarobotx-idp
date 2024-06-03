@@ -11,8 +11,6 @@
 # Released under the terms of DataRobot Tool and Utility Agreement.
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
-# mypy: disable-error-code="attr-defined"
-# pyright: reportPrivateImportUsage=false
 from typing import Any, Dict, List, Literal, Tuple
 
 import datarobot as dr
@@ -24,7 +22,7 @@ def _find_existing_custom_metric(
     endpoint: str, token: str, deployment_id: str, **kwargs: Any
 ) -> Tuple[str, str]:
     url = f"deployments/{deployment_id}/customMetrics/"
-    client = dr.Client(token, endpoint)
+    client = dr.Client(token, endpoint)  # type: ignore[attr-defined]
     for metric in unpaginate(initial_url=url, initial_params=None, client=client):
         if all([metric[camelize(key)] == kwargs[key] for key in kwargs]):
             return str(metric["id"]), "get"
@@ -48,7 +46,7 @@ def _patch_metric(
     """Update an existing custom metric on a deployment."""
     url = f"deployments/{deployment_id}/customMetrics/{metric_id}"
     camelize_kwargs = {camelize(k): v for k, v in kwargs.items()}
-    response = dr.Client(token, endpoint).patch(url=url, json=camelize_kwargs).json()
+    response = dr.Client(token, endpoint).patch(url=url, json=camelize_kwargs).json()  # type: ignore[attr-defined]
     return str(response["id"])
 
 
@@ -56,7 +54,7 @@ def _make_metric(endpoint: str, token: str, deployment_id: str, **kwargs: Any) -
     """Post a new metric to a deployment."""
     route = f"deployments/{deployment_id}/customMetrics/"
     camelize_kwargs = {camelize(k): v for k, v in kwargs.items()}
-    response = dr.Client(token, endpoint).post(url=route, json=camelize_kwargs).json()
+    response = dr.Client(token, endpoint).post(url=route, json=camelize_kwargs).json()  # type: ignore[attr-defined]
     return str(response["id"])
 
 
