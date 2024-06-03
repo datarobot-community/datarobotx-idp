@@ -92,8 +92,8 @@ def get_or_register_llm_blueprint_custom_model_version(
     endpoint: str,
     token: str,
     llm_blueprint_id: str,
-    register_kwargs: Optional[Dict[str, Any]] = None,
     guard_configs: Optional[List[Dict[str, Any]]] = None,
+    **kwargs: Any,
 ) -> Tuple[str, str]:
     """Get or register a custom model version from an LLM blueprint.
 
@@ -123,8 +123,6 @@ def get_or_register_llm_blueprint_custom_model_version(
     """
     dr.Client(token=token, endpoint=endpoint)  # type: ignore
 
-    if register_kwargs is None:
-        register_kwargs = {}
     if guard_configs is None:
         guard_configs = []
     bp = LLMBlueprint.get(llm_blueprint_id)
@@ -143,14 +141,14 @@ def get_or_register_llm_blueprint_custom_model_version(
             else None
         ),
         guard_configs,
-        **register_kwargs,
+        **kwargs,
     )
     for cm in dr.CustomInferenceModel.list(search_for=bp_token):  # type: ignore
         if cm.description is not None and bp_token in cm.description:
             if cm.latest_version is not None:
                 return str(cm.id), str(cm.latest_version.id)
     else:
-        cm_version = bp.register_custom_model(**register_kwargs)
+        cm_version = bp.register_custom_model(**kwargs)
         cm = dr.CustomInferenceModel.get(cm_version.custom_model_id)  # type: ignore
         cm.update(description=f"Checksum: {bp_token}")
 
