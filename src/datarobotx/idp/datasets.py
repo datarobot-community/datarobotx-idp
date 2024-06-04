@@ -45,12 +45,7 @@ def _find_existing_dataset(
 
 
 def get_or_create_dataset_from_file(
-    endpoint: str,
-    token: str,
-    name: str,
-    file_path: str,
-    use_cases: Optional[UseCaseLike] = None,
-    **kwargs: Any,
+    endpoint: str, token: str, name: str, file_path: str, use_cases: Optional[UseCaseLike] = None
 ) -> str:
     """Get or create a DR dataset from a file with requested parameters.
 
@@ -60,7 +55,7 @@ def get_or_create_dataset_from_file(
     function to validate whether a desired dataset already exists
     """
     dr.Client(token=token, endpoint=endpoint)  # type: ignore
-    dataset_token = get_hash(name, Path(file_path), use_cases, **kwargs)
+    dataset_token = get_hash(name, Path(file_path), use_cases)
 
     try:
         return _find_existing_dataset(
@@ -79,7 +74,6 @@ def get_or_create_dataset_from_df(
     name: str,
     data_frame: pd.DataFrame,
     use_cases: Optional[UseCaseLike] = None,
-    **kwargs: Any,
 ) -> str:
     """Get or create a DR dataset from a dataframe with requested parameters.
 
@@ -89,7 +83,7 @@ def get_or_create_dataset_from_df(
     function to validate whether a desired dataset already exists
     """
     dr.Client(token=token, endpoint=endpoint)  # type: ignore
-    dataset_token = get_hash(name, data_frame, use_cases, **kwargs)
+    dataset_token = get_hash(name, data_frame, use_cases)
 
     try:
         return _find_existing_dataset(
