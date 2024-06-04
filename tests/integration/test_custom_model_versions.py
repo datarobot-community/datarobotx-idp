@@ -13,7 +13,6 @@
 
 import pathlib
 import tempfile
-import time
 from typing import Any, Generator
 import zipfile
 
@@ -27,7 +26,6 @@ from datarobotx.idp.custom_model_versions import (
     unsafe_get_or_create_custom_model_version_from_previous,
 )
 from datarobotx.idp.custom_models import get_or_create_custom_model
-from datarobotx.idp.registered_model_versions import get_or_create_registered_custom_model_version
 
 
 @pytest.fixture()
