@@ -27,7 +27,7 @@ check-dependencies:
 
 check-linter-image:
 	@echo "🎱 Checking if linter image exists..."
-	@if DOCKER_CLI_EXPERIMENTAL=enabled docker manifest inspect $(IMAGE) > /dev/null; then \
+	@if docker inspect $(IMAGE) > /dev/null; then \
 		echo "🪕 image $(IMAGE) already exists. Build has been skipped "; \
 	else \
 		echo "🪇 image $(IMAGE) does not exist. Building..."; \
