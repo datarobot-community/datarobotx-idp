@@ -179,7 +179,6 @@ def get_or_register_llm_blueprint_custom_model_version(
     else:
         cm_version = bp.register_custom_model(**kwargs)
         cm = dr.CustomInferenceModel.get(cm_version.custom_model_id)  # type: ignore
-        cm.update(description=f"Checksum: {bp_token}")
 
         cm_version_id = cm_version.id
 
@@ -207,5 +206,5 @@ def get_or_register_llm_blueprint_custom_model_version(
                 stages=stages,
                 intervention=intervention,
             )
-
+        cm.update(description=f"Checksum: {bp_token}")
         return str(cm.id), cm_version_id
