@@ -17,11 +17,13 @@ import pytest
 import datarobot as dr
 from datarobotx.idp.custom_model_versions import (  # type: ignore
     get_or_create_custom_model_version,
-    get_or_create_custom_model_version_with_guard_config,
 )
 from datarobotx.idp.custom_models import get_or_create_custom_model  # type: ignore
 from datarobotx.idp.deployments import (  # type: ignore
     get_or_create_deployment_from_registered_model_version,
+)
+from datarobotx.idp.guard_configurations import (  # type: ignore
+    get_or_create_custom_model_version_with_guard_config,
 )
 from datarobotx.idp.llm_blueprints import (  # type: ignore
     get_or_create_llm_blueprint,

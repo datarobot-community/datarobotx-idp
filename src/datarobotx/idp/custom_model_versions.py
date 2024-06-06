@@ -18,9 +18,6 @@ from typing import Any, Dict, List, Optional, Union
 import datarobot as dr
 
 from datarobotx.idp.common.hashing import get_hash
-from datarobotx.idp.guard_configurations import (
-    unsafe_get_update_or_create_custom_model_version_with_guard_config,
-)
 
 try:
     from datarobot.models.runtime_parameters import RuntimeParameterValue
@@ -115,6 +112,32 @@ def _get_or_create(
         return str(env_version.id)
 
 
+def _unsafe_get_or_create_custom_model_version_from_previous(
+    endpoint: str,
+    token: str,
+    custom_model_id: str,
+    runtime_parameter_values: Optional[List[Union[RuntimeParameterValue, Dict[str, Any]]]] = None,
+    **kwargs: Any,
+) -> str:
+    """Get or create a custom model version from a previous version with requested parameters.
+
+    Unsafe here means that idempotency is not guaranteed! Running this function multiple times with different arguments can lead to undefined behaviour.
+
+    Notes
+    -----
+    Records a checksum in the model version description field to allow future calls to this
+    function to validate whether a desired model version already exists
+    """
+    return _get_or_create(
+        from_previous=True,
+        endpoint=endpoint,
+        token=token,
+        custom_model_id=custom_model_id,
+        runtime_parameter_values=runtime_parameter_values,
+        **kwargs,
+    )
+
+
 def get_or_create_custom_model_version(
     endpoint: str,
     token: str,
@@ -124,60 +147,25 @@ def get_or_create_custom_model_version(
 ) -> str:
     """Get or create a custom model version with requested parameters.
 
-    Notes
-    -----
-    Records a checksum in the model version description field to allow future calls to this
-    function to validate whether a desired model version already exists
-    """
-    return _get_or_create(
-        from_previous=False,
-        endpoint=endpoint,
-        token=token,
-        custom_model_id=custom_model_id,
-        runtime_parameter_values=runtime_parameter_values,
-        **kwargs,
-    )
+    For a complete list of supported arguments, please refer to datarobot.CustomModelVersion.create_clean
 
-
-def get_or_create_custom_model_version_with_guard_config(
-    endpoint: str,
-    token: str,
-    custom_model_id: str,
-    guard_configs: List[Dict[str, Any]],
-    runtime_parameter_values: Optional[List[Union[RuntimeParameterValue, Dict[str, Any]]]] = None,
-    **kwargs: Any,
-) -> str:
-    """Get or create a custom model version with requested parameters.
-
-    Notes
-    -----
-    Records a checksum in the model version description field to allow future calls to this
-    function to validate whether a desired model version already exists
-    """
-    _ = _get_or_create(
-        from_previous=False,
-        endpoint=endpoint,
-        token=token,
-        custom_model_id=custom_model_id,
-        runtime_parameter_values=runtime_parameter_values,
-        args_to_hash=guard_configs,
-        **kwargs,
-    )
-    for guard_config in guard_configs:
-        new_version = unsafe_get_update_or_create_custom_model_version_with_guard_config(
-            endpoint=endpoint, token=token, custom_model_id=custom_model_id, **guard_config
-        )
-    return new_version
-
-
-def unsafe_get_or_create_custom_model_version_from_previous(
-    endpoint: str,
-    token: str,
-    custom_model_id: str,
-    runtime_parameter_values: Optional[List[Union[RuntimeParameterValue, Dict[str, Any]]]] = None,
-    **kwargs: Any,
-) -> str:
-    """Get or create a custom model version from a previous version with requested parameters.
+    Parameters
+    ----------
+    custom_model_id : str
+        The ID of the custom model to create a version for.
+    runtime_parameter_values : Optional[List[Union[RuntimeParameterValue, Dict[str, Any]]]], optional
+        The values for the runtime parameters. See datarobot.models.runtime_parameters.RuntimParameterValue for more information.
+        Example runtime parameter values:
+        [
+            {
+                "field_name": "OPENAI_API_KEY",
+                "type": "credential",
+                "value": <CREDENTIAL_ID>,
+            },
+            ...
+        ]
+     kwargs : Any, optional
+        Additional arguments to pass to the model version creation call.
 
     Notes
     -----
@@ -185,7 +173,7 @@ def unsafe_get_or_create_custom_model_version_from_previous(
     function to validate whether a desired model version already exists
     """
     return _get_or_create(
-        from_previous=True,
+        from_previous=False,
         endpoint=endpoint,
         token=token,
         custom_model_id=custom_model_id,

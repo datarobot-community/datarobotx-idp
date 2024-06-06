@@ -18,10 +18,10 @@ import datarobot as dr
 
 from datarobotx.idp.common.hashing import get_hash
 from datarobotx.idp.custom_model_versions import (
-    unsafe_get_or_create_custom_model_version_from_previous,
+    _unsafe_get_or_create_custom_model_version_from_previous,
 )
 from datarobotx.idp.guard_configurations import (
-    unsafe_get_or_create_custom_model_version_with_guard_config,
+    _unsafe_get_or_create_custom_model_version_with_guard_config,
 )
 
 try:
@@ -95,10 +95,15 @@ def get_or_register_llm_blueprint_custom_model_version(
     endpoint: str,
     token: str,
     llm_blueprint_id: str,
+    create_custom_model_version_from_previous_args: Optional[Dict[str, Any]] = None,
     guard_configs: Optional[List[Dict[str, Any]]] = None,
     **kwargs: Any,
 ) -> Tuple[str, str]:
     """Get or register a custom model version from an LLM blueprint.
+
+    This will create a custom model version from the LLM Blueprint, and can optionally
+    be patched with updates to the version (through create_custom_model_version_from_previous_args)
+    or guard configurations (through guard_configs).
 
     Notes
     -----
@@ -107,31 +112,35 @@ def get_or_register_llm_blueprint_custom_model_version(
 
     Parameters
     ----------
-    endpoint : str
-        The DataRobot endpoint to connect to.
-    token : str
-        The DataRobot API token to use.
     llm_blueprint_id : str
         The ID of the LLM blueprint to use.
-    guard_kwargs : Optional[List[Dict[str, Any]]
-        Additional arguments to configure LLM guards.
-        An example format of a guard is:
-        {
-            "guard_config_template_name": "Prompt Injection",
-            "guard_config_template_settings": {
-                "deploymentId": "some_deployment_id",
+    create_custom_model_version_from_previous_args : Optional[Dict[str, Any]] = None
+        A dictionary of arguments to pass to the custom model version creation.
+        If provided, an additional version with be created on top of the output of LLMBlueprint.register_custom_model
+        (see datarobot.CustomModelVersion.create_from_previous for more information).
+    guard_configs : Optional[List[Dict[str, Any]]
+        A list of configuration dictionaries for each guard template to add.
+        Example:
+        [
+            {
+                "guard_config_template_name": "Prompt Injection",
+                "guard_config_template_settings": {
+                    "deploymentId": "some_deployment_id",
+                },
+                "stages": ["prompt", "response"],
+                "intervention": {
+                    "action": "block",
+                    "conditions": [
+                        {
+                            "comparand": 0.5,
+                            "comparator": "greaterThan",
+                        }
+                    ],
+                },
             },
-            "stages": ["prompt", "response"],
-            "intervention": {
-                "action": "block",
-                "conditions": [
-                    {
-                        "comparand": 0.5,
-                        "comparator": "greaterThan",
-                    }
-                ],
-            },
-        }
+        ...
+        ]
+
     **kwargs : Any
         Additional keyword arguments to pass to the custom model version registration (see dr.LLMBlueprint.register_custom_model)
         and to update the custom model version (see dr.CustomModelVersion.create_from_previous)
@@ -168,20 +177,18 @@ def get_or_register_llm_blueprint_custom_model_version(
             if cm.latest_version is not None:
                 return str(cm.id), str(cm.latest_version.id)
     else:
-        prompt_column_name = kwargs.pop("prompt_column_name", None)
-        target_column_name = kwargs.pop("target_column_name", None)
-        cm_version = bp.register_custom_model(
-            prompt_column_name=prompt_column_name, target_column_name=target_column_name
-        )
+        cm_version = bp.register_custom_model(**kwargs)
         cm = dr.CustomInferenceModel.get(cm_version.custom_model_id)  # type: ignore
         cm.update(description=f"Checksum: {bp_token}")
 
-        if kwargs:
-            cm_version_id = unsafe_get_or_create_custom_model_version_from_previous(
-                endpoint=endpoint, token=token, custom_model_id=cm.id, **kwargs
-            )
-            cm_version = dr.CustomModelVersion.get(  # type: ignore[attr-defined]
-                custom_model_id=cm.id, custom_model_version_id=cm_version_id
+        cm_version_id = cm_version.id
+
+        if create_custom_model_version_from_previous_args:
+            cm_version_id = _unsafe_get_or_create_custom_model_version_from_previous(
+                endpoint=endpoint,
+                token=token,
+                custom_model_id=cm.id,
+                **create_custom_model_version_from_previous_args,
             )
 
         for guard_config in guard_configs:
@@ -191,7 +198,7 @@ def get_or_register_llm_blueprint_custom_model_version(
             )
             stages = guard_config.pop("stages", None)
             intervention = guard_config.pop("intervention", None)
-            new_version = unsafe_get_or_create_custom_model_version_with_guard_config(
+            cm_version_id = _unsafe_get_or_create_custom_model_version_with_guard_config(
                 endpoint=endpoint,
                 token=token,
                 custom_model_id=cm.id,
@@ -200,8 +207,5 @@ def get_or_register_llm_blueprint_custom_model_version(
                 stages=stages,
                 intervention=intervention,
             )
-            cm_version = dr.CustomModelVersion.get(  # type: ignore[attr-defined]
-                custom_model_id=cm.id, custom_model_version_id=new_version
-            )
 
-        return str(cm.id), str(cm_version.id)
+        return str(cm.id), cm_version_id

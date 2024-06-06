@@ -234,13 +234,15 @@ def get_or_create_custom_application_source_version(
     )
 
 
-def unsafe_get_or_create_custom_application_source_version_from_previous(
+def _unsafe_get_or_create_custom_application_source_version_from_previous(
     endpoint: str,
     token: str,
     custom_application_source_id: str,
     **kwargs: Any,
 ) -> str:
     """Get or create a custom application source version from a previous version.
+
+    Unsafe here means that idempotency is not guaranteed! Running this function multiple times with different arguments can lead to undefined behaviour.
 
     Parameters
     ----------

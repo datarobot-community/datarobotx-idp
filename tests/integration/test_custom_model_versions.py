@@ -22,8 +22,8 @@ import yaml
 import datarobot as dr
 from datarobotx.idp.credentials import get_replace_or_create_credential
 from datarobotx.idp.custom_model_versions import (
+    _unsafe_get_or_create_custom_model_version_from_previous,
     get_or_create_custom_model_version,
-    unsafe_get_or_create_custom_model_version_from_previous,
 )
 from datarobotx.idp.custom_models import get_or_create_custom_model
 
@@ -193,7 +193,7 @@ def test_get_or_create(
         ).build_status
         == "success"
     )
-    updated_version_1 = unsafe_get_or_create_custom_model_version_from_previous(
+    updated_version_1 = _unsafe_get_or_create_custom_model_version_from_previous(
         endpoint=dr_endpoint,
         token=dr_token,
         custom_model_id=custom_model,
@@ -204,7 +204,7 @@ def test_get_or_create(
     )
     assert updated_version_1 != model_ver_id_5
 
-    updated_version_2 = unsafe_get_or_create_custom_model_version_from_previous(
+    updated_version_2 = _unsafe_get_or_create_custom_model_version_from_previous(
         endpoint=dr_endpoint,
         token=dr_token,
         custom_model_id=custom_model,
@@ -237,7 +237,7 @@ def test_get_or_create(
         base_environment_id=sklearn_drop_in_env,
         maximum_memory=2048 * 1024 * 1024,
     )
-    updated_version_3 = unsafe_get_or_create_custom_model_version_from_previous(
+    updated_version_3 = _unsafe_get_or_create_custom_model_version_from_previous(
         endpoint=dr_endpoint,
         token=dr_token,
         custom_model_id=custom_model,

@@ -13,9 +13,16 @@
 from typing import Any, Dict, List, Literal, Optional, TypedDict, Union
 
 import datarobot as dr
+from datarobot.models.runtime_parameters import RuntimeParameterValue
 from datarobot.utils import from_api, to_api, underscorize
 
 from datarobotx.idp.common.hashing import get_hash
+from datarobotx.idp.custom_model_versions import (
+    _get_or_create as _get_or_create_custom_model_version,
+)
+from datarobotx.idp.custom_model_versions import (
+    _unsafe_get_or_create_custom_model_version_from_previous,
+)
 
 
 class Condition(TypedDict):
@@ -90,16 +97,11 @@ def _get_unfrozen_model_version_id(
     latest_version_id: str,
     **kwargs: Any,
 ) -> str:
-    # avoiding circular import
-    from datarobotx.idp.custom_model_versions import (
-        unsafe_get_or_create_custom_model_version_from_previous,
-    )
-
     latest_version = dr.CustomModelVersion.get(custom_model_id, latest_version_id)  # type: ignore
 
     if latest_version.is_frozen:
         base_environment_id = latest_version.base_environment_id
-        latest_version_id = unsafe_get_or_create_custom_model_version_from_previous(
+        latest_version_id = _unsafe_get_or_create_custom_model_version_from_previous(
             endpoint=endpoint,
             token=token,
             custom_model_id=custom_model_id,
@@ -267,7 +269,7 @@ def _ensure_guard_config_from_template(  # noqa: PLR0913
     return str(res.json()["customModelVersionId"])
 
 
-def unsafe_get_or_create_custom_model_version_with_guard_config(  # noqa: PLR0913
+def _unsafe_get_or_create_custom_model_version_with_guard_config(  # noqa: PLR0913
     endpoint: str,
     token: str,
     custom_model_id: str,
@@ -278,6 +280,8 @@ def unsafe_get_or_create_custom_model_version_with_guard_config(  # noqa: PLR091
     **kwargs: Any,
 ) -> str:
     """Add a guard configuration to a custom model version.
+
+    Unsafe here means that idempotency is not guaranteed! Running this function multiple times with different arguments can lead to undefined behaviour.
 
         If a guard configuration with the same settings already exists, it will not be created.
 
@@ -318,7 +322,7 @@ def unsafe_get_or_create_custom_model_version_with_guard_config(  # noqa: PLR091
     )
 
 
-def unsafe_get_update_or_create_custom_model_version_with_guard_config(  # noqa: PLR0913
+def _unsafe_get_update_or_create_custom_model_version_with_guard_config(  # noqa: PLR0913
     endpoint: str,
     token: str,
     custom_model_id: str,
@@ -328,7 +332,9 @@ def unsafe_get_update_or_create_custom_model_version_with_guard_config(  # noqa:
     intervention: Intervention,
     **kwargs: Any,
 ) -> str:
-    """Add or replace a guard configuration to a custom model version.
+    """Add or replace a guard configuration to a custom model version, reusing the previous version.
+
+        Unsafe here means that idempotency is not guaranteed! Running this function multiple times with different arguments can lead to undefined behaviour.
 
         If a guard configuration with the same settings already exists, no new guard configuration will be created.
         Replacement is based on the name of the guard configuration or the given name.
@@ -369,3 +375,70 @@ def unsafe_get_update_or_create_custom_model_version_with_guard_config(  # noqa:
         replace=True,
         **kwargs,
     )
+
+
+def get_or_create_custom_model_version_with_guard_config(
+    endpoint: str,
+    token: str,
+    custom_model_id: str,
+    guard_configs: List[Dict[str, Any]],
+    runtime_parameter_values: Optional[List[Union[RuntimeParameterValue, Dict[str, Any]]]] = None,
+    **kwargs: Any,
+) -> str:
+    """Get or create a custom model version with requested parameters.
+
+    Creates a new custom model version from scratch, and optionally adds guard templates.
+
+    Parameters
+    ----------
+    custom_model_id : str
+        The ID of the custom model to create the guard configuration for.
+    guard_configs : Optional[List[Dict[str, Any]]
+        A list of configuration dictionaries for each guard template to add.
+        Example:
+        [
+            {
+                "guard_config_template_name": "Prompt Injection",
+                "guard_config_template_settings": {
+                    "deploymentId": "some_deployment_id",
+                },
+                "stages": ["prompt", "response"],
+                "intervention": {
+                    "action": "block",
+                    "conditions": [
+                        {
+                            "comparand": 0.5,
+                            "comparator": "greaterThan",
+                        }
+                    ],
+                },
+            },
+        ...
+        ]
+    runtime_parameter_values : Optional[List[Union[RuntimeParameterValue, Dict[str, Any]]]], optional
+        The values for the runtime parameters, by default None
+
+    Returns
+    -------
+    str
+        The ID of the custom model version with the requested parameters.
+
+    Notes
+    -----
+    Records a checksum in the model version description field to allow future calls to this function
+    to validate whether a desired model version already exists
+    """
+    _ = _get_or_create_custom_model_version(
+        from_previous=False,
+        endpoint=endpoint,
+        token=token,
+        custom_model_id=custom_model_id,
+        runtime_parameter_values=runtime_parameter_values,
+        args_to_hash=guard_configs,
+        **kwargs,
+    )
+    for guard_config in guard_configs:
+        new_version = _unsafe_get_update_or_create_custom_model_version_with_guard_config(
+            endpoint=endpoint, token=token, custom_model_id=custom_model_id, **guard_config
+        )
+    return new_version
