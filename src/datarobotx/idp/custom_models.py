@@ -17,7 +17,7 @@ import datarobot as dr
 
 
 def _find_existing_custom_model(**kwargs: Any) -> str:
-    for model in dr.CustomInferenceModel.list():  # type: ignore[attr-defined]
+    for model in dr.CustomInferenceModel.list(search_for=kwargs.get("name", None)):  # type: ignore[attr-defined]
         if all(getattr(model, key) == kwargs[key] for key in kwargs):
             return str(model.id)
     raise KeyError("No matching custom model found")
