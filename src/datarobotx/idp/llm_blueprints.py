@@ -95,7 +95,7 @@ def get_or_register_llm_blueprint_custom_model_version(
     endpoint: str,
     token: str,
     llm_blueprint_id: str,
-    create_custom_model_version_from_previous_args: Optional[Dict[str, Any]] = None,
+    custom_model_version_kwargs: Optional[Dict[str, Any]] = None,
     guard_configs: Optional[List[Dict[str, Any]]] = None,
     **kwargs: Any,
 ) -> Tuple[str, str]:
@@ -114,9 +114,10 @@ def get_or_register_llm_blueprint_custom_model_version(
     ----------
     llm_blueprint_id : str
         The ID of the LLM blueprint to use.
-    create_custom_model_version_from_previous_args : Optional[Dict[str, Any]] = None
+    custom_model_version_kwargs : Optional[Dict[str, Any]] = None
         A dictionary of arguments to pass to the custom model version creation.
-        If provided, an additional version with be created on top of the output of LLMBlueprint.register_custom_model
+        If provided, an additional version with be created on top of the output of
+        LLMBlueprint.register_custom_model
         (see datarobot.CustomModelVersion.create_from_previous for more information).
     guard_configs : Optional[List[Dict[str, Any]]
         A list of configuration dictionaries for each guard template to add.
@@ -142,8 +143,8 @@ def get_or_register_llm_blueprint_custom_model_version(
         ]
 
     **kwargs : Any
-        Additional keyword arguments to pass to the custom model version registration (see dr.LLMBlueprint.register_custom_model)
-        and to update the custom model version (see dr.CustomModelVersion.create_from_previous)
+        Additional keyword arguments to pass to the custom model version registration
+        (see dr.LLMBlueprint.register_custom_model)
 
     Returns
     -------
@@ -182,12 +183,12 @@ def get_or_register_llm_blueprint_custom_model_version(
 
         cm_version_id = cm_version.id
 
-        if create_custom_model_version_from_previous_args:
+        if custom_model_version_kwargs:
             cm_version_id = _unsafe_get_or_create_custom_model_version_from_previous(
                 endpoint=endpoint,
                 token=token,
                 custom_model_id=cm.id,
-                **create_custom_model_version_from_previous_args,
+                **custom_model_version_kwargs,
             )
 
         for guard_config in guard_configs:

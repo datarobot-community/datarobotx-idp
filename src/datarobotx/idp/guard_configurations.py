@@ -281,9 +281,10 @@ def _unsafe_get_or_create_custom_model_version_with_guard_config(  # noqa: PLR09
 ) -> str:
     """Add a guard configuration to a custom model version.
 
-    Unsafe here means that idempotency is not guaranteed! Running this function multiple times with different arguments can lead to undefined behaviour.
+    Unsafe here means that idempotency is not guaranteed! Running this function multiple times with different
+    arguments can lead to undefined behaviour.
 
-        If a guard configuration with the same settings already exists, it will not be created.
+    If a guard configuration with the same settings already exists, it will not be created.
 
     Parameters
     ----------
@@ -334,11 +335,12 @@ def _unsafe_get_update_or_create_custom_model_version_with_guard_config(  # noqa
 ) -> str:
     """Add or replace a guard configuration to a custom model version, reusing the previous version.
 
-        Unsafe here means that idempotency is not guaranteed! Running this function multiple times with different arguments can lead to undefined behaviour.
+    Unsafe here means that idempotency is not guaranteed! Running this function multiple times with different
+    arguments can lead to undefined behaviour.
 
-        If a guard configuration with the same settings already exists, no new guard configuration will be created.
-        Replacement is based on the name of the guard configuration or the given name.
-        If the guard configuration with the same name but different settings exists, it will be replaced.
+    If a guard configuration with the same settings already exists, no new guard configuration will be created.
+    Replacement is based on the name of the guard configuration or the given name.
+    If the guard configuration with the same name but different settings exists, it will be replaced.
 
     Parameters
     ----------
