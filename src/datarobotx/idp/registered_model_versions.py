@@ -11,12 +11,10 @@
 # Released under the terms of DataRobot Tool and Utility Agreement.
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
-# mypy: disable-error-code="attr-defined"
-# pyright: reportPrivateImportUsage=false
 from typing import Any
 
 import datarobot as dr
-from datarobot import RegisteredModel
+from datarobot import RegisteredModel  # type: ignore[attr-defined]
 from datarobot.models.model_registry.registered_model_version import (
     ExternalTarget,
 )
@@ -25,7 +23,7 @@ from datarobotx.idp.common.hashing import get_hash
 
 
 def _find_existing_registered_model(registered_model_name: str) -> RegisteredModel:
-    for model in dr.RegisteredModel.list():
+    for model in dr.RegisteredModel.list():  # type: ignore[attr-defined]
         if model.name == registered_model_name:
             return model
     raise KeyError("No matching registered model found")
@@ -45,7 +43,7 @@ def get_or_create_registered_custom_model_version(
     Records a checksum in the registered model version description field to allow future calls to this
     function to validate whether a desired model version already exists
     """
-    dr.Client(token=token, endpoint=endpoint)
+    dr.Client(token=token, endpoint=endpoint)  # type: ignore[attr-defined]
     model_version_token = get_hash(custom_model_version_id, registered_model_name, **kwargs)
 
     try:
@@ -61,7 +59,7 @@ def get_or_create_registered_custom_model_version(
         kwargs["registered_model_name"] = registered_model_name
 
     kwargs["description"] = kwargs.get("description", "") + f"\nChecksum: {model_version_token}"
-    model_version = dr.RegisteredModelVersion.create_for_custom_model_version(
+    model_version = dr.RegisteredModelVersion.create_for_custom_model_version(  # type: ignore[attr-defined]
         custom_model_version_id,
         **kwargs,
     )
@@ -83,7 +81,7 @@ def get_or_create_registered_external_model_version(
     Records a checksum in the registered model version description field to allow future calls to this
     function to validate whether a desired model version already exists
     """
-    dr.Client(token=token, endpoint=endpoint)
+    dr.Client(token=token, endpoint=endpoint)  # type: ignore[attr-defined]
     model_version_token = get_hash(name, target, registered_model_name, **kwargs)
 
     try:
@@ -106,7 +104,7 @@ def get_or_create_registered_external_model_version(
     else:
         kwargs["model_description"] = {"description": f"Checksum: {model_version_token}"}
 
-    model_version = dr.RegisteredModelVersion.create_for_external(
+    model_version = dr.RegisteredModelVersion.create_for_external(  # type: ignore[attr-defined]
         name,
         target,
         **kwargs,
@@ -128,7 +126,7 @@ def get_or_create_registered_leaderboard_model_version(
     Records a checksum in the registered model version description field to allow future calls to this
     function to validate whether a desired model version already exists
     """
-    dr.Client(token=token, endpoint=endpoint)
+    dr.Client(token=token, endpoint=endpoint)  # type: ignore[attr-defined]
     model_version_token = get_hash(model_id, registered_model_name, **kwargs)
 
     try:
@@ -144,7 +142,7 @@ def get_or_create_registered_leaderboard_model_version(
         kwargs["registered_model_name"] = registered_model_name
 
     kwargs["description"] = kwargs.get("description", "") + f"\nChecksum: {model_version_token}"
-    model_version = dr.RegisteredModelVersion.create_for_leaderboard_item(
+    model_version = dr.RegisteredModelVersion.create_for_leaderboard_item(  # type: ignore[attr-defined]
         model_id,
         **kwargs,
     )

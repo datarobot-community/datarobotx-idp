@@ -11,8 +11,6 @@
 # Released under the terms of DataRobot Tool and Utility Agreement.
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
-# mypy: disable-error-code="attr-defined"
-# pyright: reportPrivateImportUsage=false
 
 from pathlib import Path
 from typing import Any
@@ -49,7 +47,7 @@ def get_or_create_execution_environment_version(
     Records a checksum in the environment version description field to allow future calls to this
     function to validate whether a desired environment version already exists
     """
-    dr.Client(token=token, endpoint=endpoint)
+    dr.Client(token=token, endpoint=endpoint)  # type: ignore[attr-defined]
     env_version_token = get_hash(Path(docker_context_path), execution_environment_id, **kwargs)
 
     try:
