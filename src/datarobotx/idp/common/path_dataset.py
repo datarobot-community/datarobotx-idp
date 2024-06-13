@@ -119,9 +119,9 @@ class PathDataset(AbstractVersionedDataset):  # type: ignore
 
     def _save(
         self,
-        data: Union[
+        data: Union[  # type: ignore
             Path, str, tempfile.TemporaryDirectory[Any], tempfile.NamedTemporaryFile, bytes
-        ],  # type: ignore
+        ],
     ) -> None:
         if isinstance(data, str):
             path = Path(data)
