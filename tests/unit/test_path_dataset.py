@@ -33,7 +33,7 @@ def pathlib_path(request, tmp_path):
         return p, request.param
 
 
-@pytest.fixture(params=["path", "str", "tempdir", "tempfile"])
+@pytest.fixture(params=["path", "str", "tempdir", "tempfile", "bytes"])
 def asset_path(request, pathlib_path):
     path, save_type = pathlib_path
     if request.param == "path":
@@ -53,6 +53,10 @@ def asset_path(request, pathlib_path):
         copy(path, f.name)
         f.flush()
         return f
+    elif request.param == "bytes" and save_type == "folder":
+        pytest.skip("cannot save bytes as a folder")
+    elif request.param == "bytes":
+        return path.read_bytes()
 
 
 @pytest.fixture()

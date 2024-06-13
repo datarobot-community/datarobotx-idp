@@ -119,12 +119,19 @@ class PathDataset(AbstractVersionedDataset):  # type: ignore
 
     def _save(
         self,
-        data: Union[Path, str, tempfile.TemporaryDirectory[Any], tempfile.NamedTemporaryFile],  # type: ignore
+        data: Union[
+            Path, str, tempfile.TemporaryDirectory[Any], tempfile.NamedTemporaryFile, bytes
+        ],  # type: ignore
     ) -> None:
         if isinstance(data, str):
             path = Path(data)
         elif isinstance(data, Path):
             path = data
+        elif isinstance(data, bytes):
+            f = tempfile.NamedTemporaryFile(delete=False)  # required on windows to be able to copy
+            f.write(data)
+            f.flush()
+            path = Path(f.name)
         elif hasattr(
             data, "name"
         ):  # tempfile does not support isinstance checks https://bugs.python.org/issue33762
@@ -140,6 +147,9 @@ class PathDataset(AbstractVersionedDataset):  # type: ignore
             self._fs.copy(str(path), save_path)
         else:
             self._fs.copy(str(path / "*"), save_path, recursive=True)
+        if hasattr(data, "close"):
+            # cleanup NamedTemporaryFile
+            data.close()
         self._invalidate_cache()
 
     def _exists(self) -> bool:
