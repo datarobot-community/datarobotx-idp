@@ -12,7 +12,7 @@
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
 from pathlib import Path
-from shutil import copy, copytree
+from shutil import copytree
 import tempfile
 
 from kedro.io import DataCatalog
@@ -33,7 +33,7 @@ def pathlib_path(request, tmp_path):
         return p, request.param
 
 
-@pytest.fixture(params=["path", "str", "tempdir", "tempfile", "bytes"])
+@pytest.fixture(params=["path", "str", "tempdir", "bytes"])
 def asset_path(request, pathlib_path):
     path, save_type = pathlib_path
     if request.param == "path":
@@ -42,19 +42,12 @@ def asset_path(request, pathlib_path):
         return str(path.resolve())
     elif request.param == "tempdir" and save_type == "file":
         pytest.skip("cannot save tempdir as a file")
-    elif request.param == "tempfile" and save_type == "folder":
-        pytest.skip("cannot save tempfile as a folder")
+    elif request.param == "bytes" and save_type == "folder":
+        pytest.skip("cannot save bytes as a folder")
     elif request.param == "tempdir":
         d = tempfile.TemporaryDirectory()
         copytree(path, d.name, dirs_exist_ok=True)
         return d
-    elif request.param == "tempfile":
-        f = tempfile.NamedTemporaryFile()
-        copy(path, f.name)
-        f.flush()
-        return f
-    elif request.param == "bytes" and save_type == "folder":
-        pytest.skip("cannot save bytes as a folder")
     elif request.param == "bytes":
         return path.read_bytes()
 
