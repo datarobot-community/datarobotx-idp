@@ -33,7 +33,7 @@ def _find_existing_registered_model(registered_model_name: str) -> RegisteredMod
 def _await_registered_model_build(
     registered_model_version: RegisteredModelVersion, timeout_secs: int = 600
 ) -> None:
-    """Wait for a complete registered model version uild status before returning.
+    """Wait for a complete registered model version build status before returning.
 
     Cannot deploy to serverless prediction environments without this step.
     """
