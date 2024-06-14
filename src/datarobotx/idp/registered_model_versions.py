@@ -55,7 +55,7 @@ def _await_registered_model_build(
             raise RuntimeError(msg)
         elif waited_secs > timeout_secs:
             msg = (
-                "Timed out waiting for build for"
+                "Timed out waiting for build for "
                 f"registered model version '{registered_model_version.id}' "
                 f"for registered model '{registered_model_version.registered_model_id}'"
             )
