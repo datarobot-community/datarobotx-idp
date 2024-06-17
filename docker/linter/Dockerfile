@@ -16,6 +16,6 @@ RUN pip install --no-cache-dir -r dev-requirements.txt -r project-requirements.t
 
 # Copy configs for linters
 COPY ./docker/linter/configs/ /root/.config/linter/
-
+RUN git config --global --add safe.directory '*'
 # Set PATH for linting script
 ENV PATH="${WORKDIR}:${PATH}"
