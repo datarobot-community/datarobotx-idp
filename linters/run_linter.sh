@@ -17,6 +17,24 @@ GREEN='\033[0;32m' # Green Color
 YELLOW="\033[38;5;226m"
 NC='\033[0m' # No Color
 
+# Create a temporary file for the ignored files list
+ignored_files=$(mktemp)
+
+# Function to clean up the temporary file
+cleanup() {
+  rm -f "$ignored_files"
+}
+
+# Ensure the temporary file is deleted on exit
+trap cleanup EXIT
+
+# Function to filter out ignored files
+filter_ignored_files() {
+  local files="$1"
+  git ls-files -o -i --exclude-standard > "$ignored_files"
+  grep -vFf "$ignored_files" <<< "$files"
+}
+
 # Determine the files to lint
 if [[ -n "${files_arg}" ]]; then
   # Use the provided files
@@ -33,12 +51,16 @@ else
   for ext in $(echo "${file_extensions}" | tr "," "\n"); do
     files_to_lint="${files_to_lint}$(find . -type f -name "*.${ext}")"$'\n'
   done
+
+  # Filter out ignored files
+  files_to_lint=$(filter_ignored_files "$files_to_lint")
 fi
+
 # Loop through the files to lint and run the linter
 IFS=$'\n'
 echo -e "🎢 Running: ${YELLOW}[${command}] ${NC}"
 for file in $(echo -e "${files_to_lint}"); do
-  #trim any trailing whitespace
+  # Trim any trailing whitespace
   path="${file%"${file##*[! ]}"}"
   # Capture the output of the linter command
   # Check if the output contains any errors
@@ -46,14 +68,13 @@ for file in $(echo -e "${files_to_lint}"); do
     # If there are errors, append the file name to the list of failed files
     failed_files="${failed_files}${file}\n"
   fi
-
 done
 
 # Print the list of failed files
 if [[ -n "${failed_files}" ]]; then
-  echo -e "🚨 ${RED} [${command}] ${NC} -  Some files failed linting:\n"
+  echo -e "🚨 ${RED} [${command}] ${NC} - Some files failed linting:\n"
   echo -e "${failed_files}"
   exit 1
 else
-  echo -e  "✅ ${GREEN} [${command}] ${NC} - All looks good.\n"
+  echo -e "✅ ${GREEN} [${command}] ${NC} - All looks good.\n"
 fi
