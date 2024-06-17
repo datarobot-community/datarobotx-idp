@@ -80,7 +80,10 @@ def expected_input_data(input_type, expected_parameter_values):
         l += list(expected_parameter_values.values())
         return tuple(l), {}
     elif input_type == "dict-input":
-        return (), {"foo_input_key": "foo_input_data", "bar_input_key": "bar_input_data"}
+        return (), {
+            "foo_input_key": "foo_input_data",
+            "bar_input_key": "bar_input_data",
+        }
 
 
 @pytest.fixture()
@@ -180,7 +183,12 @@ def checkpoint_path(tmp_path, checkpoint_file_status):
 @pytest.fixture
 def catalog_config_with_checkpoint(tmp_path, catalog_config, checkpoint_path):
     catalog_config.update(
-        {"checkpoint_ds": {"type": "text.TextDataSet", "filepath": str(checkpoint_path.resolve())}}
+        {
+            "checkpoint_ds": {
+                "type": "text.TextDataSet",
+                "filepath": str(checkpoint_path.resolve()),
+            }
+        }
     )
     return catalog_config
 
