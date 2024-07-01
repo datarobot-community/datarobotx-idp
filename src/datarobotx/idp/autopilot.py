@@ -11,9 +11,6 @@
 # Released under the terms of DataRobot Tool and Utility Agreement.
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
-# mypy: disable-error-code="attr-defined"
-# pyright: reportPrivateImportUsage=false
-
 from typing import Any, Dict, List, Optional, Tuple
 
 import datarobot as dr
@@ -25,19 +22,20 @@ from datarobotx.idp.projects import get_or_create_project_from_dataset
 def _find_existing_project(project_config_token: str) -> Optional[str]:
     """Return first project where token matches."""
     try:
-        project = dr.Project.list(search_params={"project_name": project_config_token})[0].id
+        project = dr.Project.list(search_params={"project_name": project_config_token})[0].id  # type: ignore[attr-defined]
         return project
     except IndexError as exc:
         raise KeyError("No matching project found") from exc
 
 
-def reconcile_config_dictionaries(
+def _reconcile_config_dictionaries(
     create_from_dataset_config: Optional[Dict[str, Any]] = None,
     analyze_and_model_config: Optional[Dict[str, Any]] = None,
     datetime_partitioning_config: Optional[Dict[str, Any]] = None,
     feature_settings_config: Optional[List[Dict[str, Any]]] = None,
     advanced_options_config: Optional[Dict[str, Any]] = None,
     use_case: Optional[str] = None,
+    calendar_id: Optional[str] = None,
 ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     """
     Reconcile the configuration dictionaries and return a list of them.
@@ -58,6 +56,8 @@ def reconcile_config_dictionaries(
     use_case : str, optional
         The use case to build the project under, by default None.
         If provided, the project will exist under the usecase
+    calendar_id : str, optional
+        The calendar id to use for the project, by default None
     """
     # Make sure the user does not modify the original dictionaries
     serverside_create_from_dataset_config = (
@@ -78,6 +78,9 @@ def reconcile_config_dictionaries(
             serverside_datetime_partitioning_config["feature_settings"] = [
                 dr.FeatureSettings(**config) for config in feature_settings_config
             ]
+        if calendar_id is not None:
+            serverside_datetime_partitioning_config["calendar_id"] = calendar_id
+
         serverside_analyze_and_model_config[
             "partitioning_method"
         ] = dr.DatetimePartitioningSpecification(**serverside_datetime_partitioning_config)
@@ -108,7 +111,7 @@ def create_segmentation_task_id(
         The column to use for segmented modeling (time series only).
         Must be a list of length 1.
     """
-    segmentation_task_results = dr.SegmentationTask.create(
+    segmentation_task_results = dr.SegmentationTask.create(  # type: ignore[attr-defined]
         project_id=project_id,
         target=analyze_and_model_config["target"],
         use_time_series=analyze_and_model_config["partitioning_method"].use_time_series,
@@ -136,6 +139,7 @@ def get_or_create_autopilot_run(
     advanced_options_config: Optional[Dict[str, Any]] = None,
     use_case: Optional[str] = None,
     user_defined_segment_id_columns: Optional[List[str]] = None,
+    calendar_id: Optional[str] = None,
 ) -> Optional[str]:
     """Get or create a new project with requested parameters.
 
@@ -163,8 +167,10 @@ def get_or_create_autopilot_run(
         If provided, the project will exist under the usecase
     user_defined_segment_id_columns : str, optional
         The column to use for segmented modeling (time series only), by default None
+    calendar_id : str, optional
+        The calendar id to use for the project, by default None
     """
-    dr.Client(token=token, endpoint=endpoint)
+    dr.Client(token=token, endpoint=endpoint)  # type: ignore[attr-defined]
 
     project_config_token = get_hash(
         name,
@@ -179,7 +185,7 @@ def get_or_create_autopilot_run(
     )
 
     try:
-        project = dr.Project.get(str(_find_existing_project(project_config_token)))
+        project = dr.Project.get(str(_find_existing_project(project_config_token)))  # type: ignore[attr-defined]
         if project.stage == "modeling":
             # Make sure project is done
             project.wait_for_autopilot()
@@ -187,18 +193,19 @@ def get_or_create_autopilot_run(
     except KeyError:
         pass
 
-    create_from_dataset_config, analyze_and_model_config = reconcile_config_dictionaries(
+    create_from_dataset_config, analyze_and_model_config = _reconcile_config_dictionaries(
         create_from_dataset_config,
         analyze_and_model_config,
         datetime_partitioning_config,
         feature_settings_config,
         advanced_options_config,
         use_case,
+        calendar_id,
     )
 
     project_name = f"{name} [{project_config_token}]"
 
-    project = dr.Project.get(
+    project = dr.Project.get(  # type: ignore[attr-defined]
         get_or_create_project_from_dataset(
             endpoint, token, project_name, dataset_id, **create_from_dataset_config
         )

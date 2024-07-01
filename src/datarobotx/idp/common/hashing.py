@@ -13,6 +13,7 @@
 
 """Hashing utilities."""
 
+from datetime import date
 from hashlib import sha256
 import inspect
 import os
@@ -61,6 +62,8 @@ def get_hash(*args: Any, **kwargs: Any) -> str:
             arg = get_hash(**d).encode("utf-8")
         elif isinstance(arg, Sequence):
             arg = get_hash(*arg).encode("utf-8")
+        elif isinstance(arg, date):
+            arg = arg.isoformat().encode("utf-8")
         elif isinstance(arg, Path) and arg.is_file():
             with open(arg, "rb") as f:
                 arg = ""

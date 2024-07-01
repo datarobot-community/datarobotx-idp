@@ -107,7 +107,11 @@ def custom_model_version(
 ):
     with cleanup_dr(f"customModels/{custom_model}/versions/"):
         yield get_or_create_custom_model_version(
-            dr_endpoint, dr_token, custom_model, sklearn_drop_in_env, folder_path
+            dr_endpoint,
+            dr_token,
+            custom_model,
+            base_environment_id=sklearn_drop_in_env,
+            folder_path=folder_path,
         )
 
 

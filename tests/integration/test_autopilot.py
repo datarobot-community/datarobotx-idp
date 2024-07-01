@@ -166,7 +166,6 @@ def test_get_or_create_autopilot_run(
     calendar_from_dataset,
     cleanup_projects,
 ):
-    datetime_partitioning_config["calendar_id"] = calendar_from_dataset
     project_id_1 = get_or_create_autopilot_run(
         dr_endpoint,
         dr_token,
@@ -177,6 +176,7 @@ def test_get_or_create_autopilot_run(
         feature_settings_config=feature_settings_config,
         advanced_options_config=advanced_options_config,
         use_case=use_case,
+        calendar_id=calendar_from_dataset,
     )
     assert len(project_id_1)
 
@@ -190,6 +190,7 @@ def test_get_or_create_autopilot_run(
         feature_settings_config=feature_settings_config,
         advanced_options_config=advanced_options_config,
         use_case=use_case,
+        calendar_id=calendar_from_dataset,
     )
 
     assert project_id_1 == project_id_2
@@ -206,6 +207,7 @@ def test_get_or_create_autopilot_run(
         feature_settings_config=feature_settings_config,
         advanced_options_config=advanced_options_config,
         use_case=use_case,
+        calendar_id=calendar_from_dataset,
     )
 
     assert project_id_1 != project_id_3

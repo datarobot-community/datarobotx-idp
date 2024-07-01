@@ -117,13 +117,24 @@ class PathDataset(AbstractVersionedDataset):  # type: ignore
 
         return local_path
 
-    def _save(self, data: Union[Path, str, tempfile.TemporaryDirectory[Any]]) -> None:
+    def _save(
+        self,
+        data: Union[Path, str, tempfile.TemporaryDirectory[Any], bytes],
+    ) -> None:
+        f = None
         if isinstance(data, str):
             path = Path(data)
+        elif isinstance(data, Path):
+            path = data
         elif isinstance(data, tempfile.TemporaryDirectory):
             path = Path(data.name)
-        else:
-            path = data
+        elif isinstance(data, bytes):
+            f = tempfile.NamedTemporaryFile(
+                delete=False
+            )  # delete must be False on windows to allow copying
+            f.write(data)
+            f.flush()
+            path = Path(f.name)
 
         assert path.is_file() or path.is_dir(), "Provided path must be a file or directory."
 
@@ -135,6 +146,10 @@ class PathDataset(AbstractVersionedDataset):  # type: ignore
             self._fs.copy(str(path), save_path)
         else:
             self._fs.copy(str(path / "*"), save_path, recursive=True)
+
+        if f is not None:
+            # cleanup NamedTemporaryFile
+            f.close()
         self._invalidate_cache()
 
     def _exists(self) -> bool:

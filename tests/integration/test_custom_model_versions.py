@@ -13,6 +13,7 @@
 
 import pathlib
 import tempfile
+from typing import Any, Generator
 import zipfile
 
 import pytest
@@ -21,8 +22,8 @@ import yaml
 import datarobot as dr
 from datarobotx.idp.credentials import get_replace_or_create_credential
 from datarobotx.idp.custom_model_versions import (
+    _unsafe_get_or_create_custom_model_version_from_previous,
     get_or_create_custom_model_version,
-    get_or_create_custom_model_version_from_previous,
 )
 from datarobotx.idp.custom_models import get_or_create_custom_model
 
@@ -119,6 +120,12 @@ def cleanup_model_ver(cleanup_dr, custom_model):
         yield
 
 
+@pytest.fixture
+def cleanup_reg_model_ver(cleanup_dr: Any) -> Generator[None, None, None]:
+    with cleanup_dr("registeredModels/"):
+        yield
+
+
 def test_get_or_create(
     dr_endpoint,
     dr_token,
@@ -186,7 +193,7 @@ def test_get_or_create(
         ).build_status
         == "success"
     )
-    updated_version_1 = get_or_create_custom_model_version_from_previous(
+    updated_version_1 = _unsafe_get_or_create_custom_model_version_from_previous(
         endpoint=dr_endpoint,
         token=dr_token,
         custom_model_id=custom_model,
@@ -197,7 +204,7 @@ def test_get_or_create(
     )
     assert updated_version_1 != model_ver_id_5
 
-    updated_version_2 = get_or_create_custom_model_version_from_previous(
+    updated_version_2 = _unsafe_get_or_create_custom_model_version_from_previous(
         endpoint=dr_endpoint,
         token=dr_token,
         custom_model_id=custom_model,
@@ -221,3 +228,23 @@ def test_get_or_create(
         assert "requirements.txt" in zip_ref.namelist()
         assert zip_ref.read("files/file1") == b"foo"
         assert zip_ref.read("requirements.txt") == b"scikit-learn==1.4.2"
+
+    # create a new clean version
+    get_or_create_custom_model_version(
+        dr_endpoint,
+        dr_token,
+        custom_model,
+        base_environment_id=sklearn_drop_in_env,
+        maximum_memory=2048 * 1024 * 1024,
+    )
+    updated_version_3 = _unsafe_get_or_create_custom_model_version_from_previous(
+        endpoint=dr_endpoint,
+        token=dr_token,
+        custom_model_id=custom_model,
+        base_environment_id=sklearn_drop_in_env,
+        folder_path=updated_folder_path_with_metadata_and_reqs,
+        runtime_parameter_values=pythonic_runtime_parameters,
+        maximum_memory=4096 * 1024 * 1024,
+    )
+    # ensure we are not attempting to return the already existing, previously patched version
+    assert updated_version_2 != updated_version_3

@@ -27,8 +27,17 @@ except ImportError as e:
     ) from e
 
 
-def _find_existing_custom_model_version(custom_model_id: str, model_version_token: str) -> str:
-    for version in dr.CustomModelVersion.list(custom_model_id):  # type: ignore
+def _find_existing_custom_model_version(
+    custom_model_id: str, model_version_token: str, from_previous: bool
+) -> str:
+    if from_previous:
+        versions = []
+        latest = dr.CustomInferenceModel.get(custom_model_id).latest_version  # type: ignore
+        if latest is not None:
+            versions.append(latest)
+    else:
+        versions = dr.CustomModelVersion.list(custom_model_id)  # type: ignore
+    for version in versions:
         if version.description is not None and model_version_token in version.description:
             return str(version.id)
     raise KeyError("No matching model version found")
@@ -54,6 +63,7 @@ def _get_or_create(
     token: str,
     custom_model_id: str,
     runtime_parameter_values: Optional[List[Union[RuntimeParameterValue, Dict[str, Any]]]] = None,
+    args_to_hash: Optional[Any] = None,
     **kwargs: Any,
 ) -> str:
     if runtime_parameter_values is not None:
@@ -69,13 +79,14 @@ def _get_or_create(
     model_version_token = get_hash(
         Path(folder_path) if folder_path is not None else None,
         custom_model_id,
+        args_to_hash,
         runtime_parameter_values=runtime_parameter_values_objs,
         **kwargs,
     )
 
     try:
         existing_version_id = _find_existing_custom_model_version(
-            custom_model_id, model_version_token
+            custom_model_id, model_version_token, from_previous
         )
         if folder_path is not None and (pathlib.Path(folder_path) / "requirements.txt").exists():
             _ensure_dependency_build(custom_model_id, existing_version_id)
@@ -101,6 +112,32 @@ def _get_or_create(
         return str(env_version.id)
 
 
+def _unsafe_get_or_create_custom_model_version_from_previous(
+    endpoint: str,
+    token: str,
+    custom_model_id: str,
+    runtime_parameter_values: Optional[List[Union[RuntimeParameterValue, Dict[str, Any]]]] = None,
+    **kwargs: Any,
+) -> str:
+    """Get or create a custom model version from a previous version with requested parameters.
+
+    Unsafe here means that idempotency is not guaranteed! Running this function multiple times with different arguments can lead to undefined behaviour.
+
+    Notes
+    -----
+    Records a checksum in the model version description field to allow future calls to this
+    function to validate whether a desired model version already exists
+    """
+    return _get_or_create(
+        from_previous=True,
+        endpoint=endpoint,
+        token=token,
+        custom_model_id=custom_model_id,
+        runtime_parameter_values=runtime_parameter_values,
+        **kwargs,
+    )
+
+
 def get_or_create_custom_model_version(
     endpoint: str,
     token: str,
@@ -110,6 +147,26 @@ def get_or_create_custom_model_version(
 ) -> str:
     """Get or create a custom model version with requested parameters.
 
+    For a complete list of supported arguments, please refer to datarobot.CustomModelVersion.create_clean
+
+    Parameters
+    ----------
+    custom_model_id : str
+        The ID of the custom model to create a version for.
+    runtime_parameter_values : Optional[List[Union[RuntimeParameterValue, Dict[str, Any]]]], optional
+        The values for the runtime parameters. See datarobot.models.runtime_parameters.RuntimParameterValue for more information.
+        Example runtime parameter values:
+        [
+            {
+                "field_name": "OPENAI_API_KEY",
+                "type": "credential",
+                "value": <CREDENTIAL_ID>,
+            },
+            ...
+        ]
+     kwargs : Any, optional
+        Additional arguments to pass to the model version creation call.
+
     Notes
     -----
     Records a checksum in the model version description field to allow future calls to this
@@ -117,30 +174,6 @@ def get_or_create_custom_model_version(
     """
     return _get_or_create(
         from_previous=False,
-        endpoint=endpoint,
-        token=token,
-        custom_model_id=custom_model_id,
-        runtime_parameter_values=runtime_parameter_values,
-        **kwargs,
-    )
-
-
-def get_or_create_custom_model_version_from_previous(
-    endpoint: str,
-    token: str,
-    custom_model_id: str,
-    runtime_parameter_values: Optional[List[Union[RuntimeParameterValue, Dict[str, Any]]]] = None,
-    **kwargs: Any,
-) -> str:
-    """Get or create a custom model version from a previous version with requested parameters.
-
-    Notes
-    -----
-    Records a checksum in the model version description field to allow future calls to this
-    function to validate whether a desired model version already exists
-    """
-    return _get_or_create(
-        from_previous=True,
         endpoint=endpoint,
         token=token,
         custom_model_id=custom_model_id,

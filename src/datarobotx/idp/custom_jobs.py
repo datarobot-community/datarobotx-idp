@@ -11,9 +11,6 @@
 # Released under the terms of DataRobot Tool and Utility Agreement.
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
-# mypy: disable-error-code="attr-defined"
-# pyright: reportPrivateImportUsage=false
-
 import contextlib
 import json
 import os
@@ -117,7 +114,7 @@ def _find_existing_custom_job(
     endpoint: str, token: str, name: str, custom_job_token: str
 ) -> Tuple[str, str]:
     url = posixpath.join(endpoint, "customJobs/")
-    client = dr.Client(endpoint=endpoint, token=token)
+    client = dr.Client(endpoint=endpoint, token=token)  # type: ignore[attr-defined]
     for job in unpaginate(initial_url=url, initial_params=None, client=client):
         if job["name"] == name:
             if custom_job_token in job["description"]:
