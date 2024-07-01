@@ -12,14 +12,14 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 if TYPE_CHECKING:
     import pathlib
     import tempfile
 
 
-def prepare_yaml_content(*args: Any, **kwargs: Any) -> Union[Dict[str, Any], List[Any]]:
+def prepare_yaml_content(*args: Any, **kwargs: Any) -> bytes:
     """Passthrough node for gathering content to be serialized to yaml from upstream node(s).
 
     Parameters
@@ -30,16 +30,16 @@ def prepare_yaml_content(*args: Any, **kwargs: Any) -> Union[Dict[str, Any], Lis
     kwargs : Any
         Keyword arguments to be passed as a dict to the yaml render. Ignored
         if any positional arguments are passed.
-
-    Returns
-    -------
-    list or dict :
-        The yaml-serializable python object to pass to the yaml renderer.
     """
+    import yaml
+
+    data: Any
     if len(args):
-        return list(args)
+        data = list(args)
     else:
-        return kwargs
+        data = kwargs
+
+    return yaml.dump(data).encode("utf-8")
 
 
 def render_jinja_template(
@@ -76,7 +76,7 @@ def render_jinja_template(
     return template.render(d).encode("utf-8")
 
 
-def merge_paths(
+def merge_asset_paths(
     *paths: pathlib.Path,
 ) -> tempfile.TemporaryDirectory[Any]:
     """Merge paths into a new temporary directory.
