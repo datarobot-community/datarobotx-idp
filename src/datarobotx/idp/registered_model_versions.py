@@ -76,9 +76,13 @@ def get_or_create_registered_custom_model_version(
     Notes
     -----
     Records a checksum in the registered model version description field to allow future calls to this
-    function to validate whether a desired model version already exists
+    function to validate whether a desired model version already exists.
+
+    In addition to the standard arguments from the DataRobot SDK, this function accepts a `max_wait`
+    argument to specify the maximum time to wait for the registered model version to build.
     """
     dr.Client(token=token, endpoint=endpoint)  # type: ignore[attr-defined]
+    timeout_seconds = kwargs.pop("max_wait", 600)
     model_version_token = get_hash(custom_model_version_id, registered_model_name, **kwargs)
 
     try:
@@ -86,7 +90,7 @@ def get_or_create_registered_custom_model_version(
         for model_version in existing_model.list_versions():
             description = model_version.model_description["description"]
             if description is not None and model_version_token in description:
-                _await_registered_model_build(model_version)
+                _await_registered_model_build(model_version, timeout_seconds)
                 return str(model_version.id)  # Return existing, matching version
         # Create incremental registered version
         kwargs["registered_model_id"] = existing_model.id
@@ -99,7 +103,7 @@ def get_or_create_registered_custom_model_version(
         custom_model_version_id,
         **kwargs,
     )
-    _await_registered_model_build(model_version)
+    _await_registered_model_build(model_version, timeout_seconds)
     return str(model_version.id)
 
 
@@ -116,9 +120,13 @@ def get_or_create_registered_external_model_version(
     Notes
     -----
     Records a checksum in the registered model version description field to allow future calls to this
-    function to validate whether a desired model version already exists
+    function to validate whether a desired model version already exists.
+
+    In addition to the standard arguments from the DataRobot SDK, this function accepts a `max_wait`
+    argument to specify the maximum time to wait for the registered model version to build.
     """
     dr.Client(token=token, endpoint=endpoint)  # type: ignore[attr-defined]
+    timeout_seconds = kwargs.pop("max_wait", 600)
     model_version_token = get_hash(name, target, registered_model_name, **kwargs)
 
     try:
@@ -126,7 +134,7 @@ def get_or_create_registered_external_model_version(
         for model_version in existing_model.list_versions():
             description = model_version.model_description["description"]
             if description is not None and model_version_token in description:
-                _await_registered_model_build(model_version)
+                _await_registered_model_build(model_version, timeout_seconds)
                 return str(model_version.id)  # Return existing, matching version
         # Create incremental registered version
         kwargs["registered_model_id"] = existing_model.id
@@ -147,7 +155,7 @@ def get_or_create_registered_external_model_version(
         target,
         **kwargs,
     )
-    _await_registered_model_build(model_version)
+    _await_registered_model_build(model_version, timeout_seconds)
     return str(model_version.id)
 
 
@@ -163,17 +171,22 @@ def get_or_create_registered_leaderboard_model_version(
     Notes
     -----
     Records a checksum in the registered model version description field to allow future calls to this
-    function to validate whether a desired model version already exists
+    function to validate whether a desired model version already exists.
+
+    In addition to the standard arguments from the DataRobot SDK, this function accepts a `max_wait`
+    argument to specify the maximum time to wait for the registered model version to build.
     """
     dr.Client(token=token, endpoint=endpoint)  # type: ignore[attr-defined]
+    timeout_seconds = kwargs.pop("max_wait", 600)
     model_version_token = get_hash(model_id, registered_model_name, **kwargs)
 
     try:
         existing_model = _find_existing_registered_model(registered_model_name)
+
         for model_version in existing_model.list_versions():
             description = model_version.model_description["description"]
             if description is not None and model_version_token in description:
-                _await_registered_model_build(model_version)
+                _await_registered_model_build(model_version, timeout_seconds)
                 return str(model_version.id)  # Return existing, matching version
         # Create incremental registered version
         kwargs["registered_model_id"] = existing_model.id
@@ -186,5 +199,5 @@ def get_or_create_registered_leaderboard_model_version(
         model_id,
         **kwargs,
     )
-    _await_registered_model_build(model_version)
+    _await_registered_model_build(model_version, timeout_seconds)
     return str(model_version.id)
