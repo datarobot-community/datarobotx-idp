@@ -11,9 +11,9 @@
 # Released under the terms of DataRobot Tool and Utility Agreement.
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
-import pytest
-import pandas as pd
 import numpy as np
+import pandas as pd
+import pytest
 
 from datarobotx.idp.batch_predictions import get_update_or_create_batch_prediction_job
 from datarobotx.idp.datasets import get_or_create_dataset_from_df
@@ -50,7 +50,7 @@ def dataset(dr_endpoint, dr_token, df, use_case, cleanup_dr):
 
 @pytest.fixture
 def deployment_id():
-    """Random deployment ID"""
+    """Random deployment ID."""
     return "6671e1c5a536861654e445a3"
 
 

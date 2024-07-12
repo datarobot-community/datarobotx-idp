@@ -10,16 +10,16 @@
 # Released under the terms of DataRobot Tool and Utility Agreement.
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
-from typing import TypedDict, Optional
+from typing import Optional, TypedDict
 
 import datarobot as dr
-
-from datarobot.models.batch_prediction_job import BatchPredictionJobDefinition
 from datarobot.models.batch_job import IntakeSettings, OutputSettings, Schedule
+from datarobot.models.batch_prediction_job import BatchPredictionJobDefinition
 
 
 class JobSpec(TypedDict):
-    """
+    """Jobspec type definition.
+
     num_concurrent : int (optional)
             Number of concurrent chunks to score simultaneously. Defaults to
             the available number of cores of the deployment. Lower it to leave
@@ -51,7 +51,7 @@ def get_update_or_create_batch_prediction_job(
     name=str,
     schedule=Optional[Schedule],
 ) -> str:
-    """Create or update a batch prediction job definition
+    """Create or update a batch prediction job definition.
 
     Parameters
     ----------
