@@ -75,11 +75,10 @@ def get_update_or_create_batch_prediction_job(
     """
     dr.Client(token=token, endpoint=endpoint)
 
-    # TODO: says this will be deprecated...
     jobs = BatchPredictionJobDefinition.list(search_name=name, deployment_id=deployment_id, limit=0)
 
     if jobs:
-        # TODO: if len(jobs) > 1: Can there be more than 1 Batch Prediction Job Definition w the same name?
+        # There should only be 1 batchpredictionjobdefinition with the same name.
         job = jobs[0]
         job.update(enabled=enabled, batch_prediction_job=batch_prediction_job, name=name, schedule=schedule)
     else:
