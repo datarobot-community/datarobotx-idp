@@ -43,6 +43,7 @@ def df():
         .sample(n=50, random_state=42)
     )
 
+
 @pytest.fixture
 def use_case(dr_endpoint, dr_token, cleanup_dr):
     with cleanup_dr("useCases/"):
@@ -110,9 +111,9 @@ def deployment_id(
 ):
     with cleanup_dr("deployments/"):
         yield dr.Deployment.create_from_registered_model_version(
-            model_package_id=registered_model_version, 
+            model_package_id=registered_model_version,
             label=registered_model_name,
-            default_prediction_server_id=default_prediction_server_id
+            default_prediction_server_id=default_prediction_server_id,
         ).id
 
 
@@ -132,10 +133,12 @@ def batch_prediction_job(dataset, deployment_id):
         "deployment_id": deployment_id,
     }
 
+
 @pytest.fixture
 def cleanup_batch_predictions(cleanup_dr, registered_model_version):
     with cleanup_dr("job-definitions/"):
         yield
+
 
 # dr_endpoint, dr_token, schedule are pytest fixtures in other locations
 def test_create_update_batch_prediction(
