@@ -37,7 +37,7 @@ class JobSpec(TypedDict):
     """
 
     num_concurrent: Optional[int]
-    deployment_id: str  # is this rquired
+    deployment_id: str
     intake_settings: IntakeSettings
     output_settings: Optional[OutputSettings]
 
@@ -48,9 +48,9 @@ def get_update_or_create_batch_prediction_job(
     deployment_id: str,
     batch_prediction_job: JobSpec,
     enabled: bool,
-    name=str,
-    schedule=Optional[Schedule],
-) -> str:
+    name: str,
+    schedule: Optional[Schedule],
+) -> str | None:
     """Create or update a batch prediction job definition.
 
     Parameters
