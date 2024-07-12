@@ -18,7 +18,7 @@ import datarobot as dr
 def update_or_create_retraining_policy(
     endpoint: str, token: str, deployment_id: str, name: str, dataset_id: str = None, **kwargs
 ) -> str:
-    """Update or create a retraining policy for a model deployment
+    """Update or create a retraining policy for a model deployment.
 
     Parameters
     ----------
@@ -37,25 +37,35 @@ def update_or_create_retraining_policy(
 
     # Configure retraining settings
     if dataset_id is not None:
-        prediction_env_id = dr.models.Deployment.get(deployment_id=deployment_id).default_prediction_server["id"]
-        payload = {"datasetId": dataset_id,
-                   "predictionEnvironmentId": prediction_env_id}
+        prediction_env_id = dr.models.Deployment.get(
+            deployment_id=deployment_id
+        ).default_prediction_server["id"]
+        payload = {"datasetId": dataset_id, "predictionEnvironmentId": prediction_env_id}
         client.request(
             method="PATCH", url=f"deployments/{deployment_id}/retrainingSettings", json=payload
         )
-    
+
     response = client.request(method="GET", url=f"deployments/{deployment_id}/retrainingPolicies")
     payload = json.loads(response.text)
     policies = payload["data"]
-    # Create payload, how do I add on kwargs here?
-    policy_payload = {"name": name}
 
-    if not policies:
-        response = client.request(method="POST", 
-                       url=f"deployments/{deployment_id}/retrainingPolicies",
-                       json=policy_payload)
-        print(response.text)
-    else:
-        print("Patch")
+    policy_payload = {"name": name, **kwargs}
+    response = None
 
-    return True
+    for policy in policies:
+        if policy["name"] == name:
+            retraining_policy_id = policy["id"]
+            response = client.request(
+                method="PATCH",
+                url=f"deployments/{deployment_id}/retrainingPolicies{retraining_policy_id}",
+                json=policy_payload,
+            )
+
+    if response is None:
+        response = client.request(
+            method="POST",
+            url=f"deployments/{deployment_id}/retrainingPolicies",
+            json=policy_payload,
+        )
+
+    return response.text

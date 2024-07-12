@@ -153,7 +153,7 @@ def update_or_create_batch_prediction_job(
         * Must be unique to your organization *
         Name of batch prediction job definition. If given the name of an existing definition within the supplied
         deployment (according to deployment_id), this function will overwrite that existing definition with parameters
-        specified in this function (batch_prediction_job, enabled, schedule). 
+        specified in this function (batch_prediction_job, enabled, schedule).
     schedule : dict (optional)
         The ``schedule`` payload defines at what intervals the job should run, which can be
         combined in various ways to construct complex scheduling terms if needed. In all of
