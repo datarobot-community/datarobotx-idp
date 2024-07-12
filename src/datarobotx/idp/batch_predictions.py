@@ -35,7 +35,7 @@ class JobSpec(TypedDict):
 
     """
     num_concurrent: Optional[int]
-    deployment_id: str
+    deployment_id: str # is this rquired
     intake_settings: IntakeSettings
     output_settings: Optional[OutputSettings]
 
@@ -70,15 +70,16 @@ def get_update_or_create_batch_prediction_job(
     
     Returns
     -------
-    string of the created/updated batch prediction job definition
+    id of the created/updated batch prediction job definition
 
     """
     dr.Client(token=token, endpoint=endpoint)
 
-    jobs = BatchPredictionJobDefinition.list(search_name=name, deployment_id=deployment_id)
+    # TODO: says this will be deprecated...
+    jobs = BatchPredictionJobDefinition.list(search_name=name, deployment_id=deployment_id, limit=0)
 
-    if jobs is not None:
-        # if len(jobs) > 1: Can there be more than 1 Batch Prediction Job Definition w the same name?
+    if jobs:
+        # TODO: if len(jobs) > 1: Can there be more than 1 Batch Prediction Job Definition w the same name?
         job = jobs[0]
         job.update(enabled=enabled, batch_prediction_job=batch_prediction_job, name=name, schedule=schedule)
     else:
