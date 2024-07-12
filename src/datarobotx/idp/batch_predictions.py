@@ -76,7 +76,7 @@ def get_update_or_create_batch_prediction_job(
     id of the created/updated batch prediction job definition
 
     """
-    dr.Client(token=token, endpoint=endpoint)
+    dr.Client(token=token, endpoint=endpoint)  # type: ignore
 
     jobs = BatchPredictionJobDefinition.list(search_name=name, deployment_id=deployment_id, limit=0)
 
