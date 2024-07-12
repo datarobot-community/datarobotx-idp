@@ -16,7 +16,12 @@ import datarobot as dr
 
 
 def update_or_create_retraining_policy(
-    endpoint: str, token: str, deployment_id: str, name: str, dataset_id: str = None, **kwargs
+    endpoint: str, 
+    token: str, 
+    deployment_id: str, 
+    name: str, 
+    dataset_id: str | None = None, 
+    **kwargs
 ) -> str:
     """Update or create a retraining policy for a model deployment.
 
@@ -33,7 +38,7 @@ def update_or_create_retraining_policy(
     -------
     id of the created retraining policy
     """
-    client = dr.Client(token=token, endpoint=endpoint)
+    client = dr.Client(token=token, endpoint=endpoint)  # type: ignore
 
     # Configure retraining settings
     if dataset_id is not None:
