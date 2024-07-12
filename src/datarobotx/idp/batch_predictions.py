@@ -17,6 +17,7 @@ import datarobot as dr
 from datarobot.models.batch_prediction_job import BatchPredictionJobDefinition
 from datarobot.models.batch_job import IntakeSettings, OutputSettings, Schedule
 
+
 class JobSpec(TypedDict):
     """
     num_concurrent : int (optional)
@@ -24,29 +25,31 @@ class JobSpec(TypedDict):
             the available number of cores of the deployment. Lower it to leave
             resources for real-time scoring.
     intake_settings : dict (optional)
-            A dict configuring how data is coming from. 
-            
+            A dict configuring how data is coming from.
+
             See supported options: https://github.com/datarobot/public_api_client/blob/master/datarobot/models/batch_prediction_job.py#L429
 
     output_settings : dict (optional)
-            A dict configuring how scored data is to be saved. 
-            
+            A dict configuring how scored data is to be saved.
+
             See supported options: https://github.com/datarobot/public_api_client/blob/master/datarobot/models/batch_prediction_job.py#L474
 
     """
+
     num_concurrent: Optional[int]
-    deployment_id: str # is this rquired
+    deployment_id: str  # is this rquired
     intake_settings: IntakeSettings
     output_settings: Optional[OutputSettings]
+
 
 def get_update_or_create_batch_prediction_job(
     endpoint: str,
     token: str,
     deployment_id: str,
     batch_prediction_job: JobSpec,
-    enabled: bool, 
-    name = str, 
-    schedule = Optional[Schedule]
+    enabled: bool,
+    name=str,
+    schedule=Optional[Schedule],
 ) -> str:
     """Create or update a batch prediction job definition
 
@@ -67,7 +70,7 @@ def get_update_or_create_batch_prediction_job(
         "every" time denomination or an array of integers (e.g. ``[1, 2, 3]``) to define
         a specific interval.
         See specifics: https://github.com/datarobot/public_api_client/blob/master/datarobot/models/batch_prediction_job.py#L1872
-    
+
     Returns
     -------
     id of the created/updated batch prediction job definition
@@ -80,8 +83,12 @@ def get_update_or_create_batch_prediction_job(
     if jobs:
         # There should only be 1 batchpredictionjobdefinition with the same name.
         job = jobs[0]
-        job.update(enabled=enabled, batch_prediction_job=batch_prediction_job, name=name, schedule=schedule)
+        job.update(
+            enabled=enabled, batch_prediction_job=batch_prediction_job, name=name, schedule=schedule
+        )
     else:
-        job = BatchPredictionJobDefinition.create(enabled=enabled, batch_prediction_job=batch_prediction_job, name=name, schedule=schedule)
+        job = BatchPredictionJobDefinition.create(
+            enabled=enabled, batch_prediction_job=batch_prediction_job, name=name, schedule=schedule
+        )
 
     return job.id

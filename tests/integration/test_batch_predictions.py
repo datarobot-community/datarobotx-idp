@@ -24,6 +24,7 @@ from datarobotx.idp.use_cases import get_or_create_use_case
 def df():
     return pd.DataFrame(np.random.randint(0, 100, size=(20, 4)), columns=list("ABCD"))
 
+
 @pytest.fixture
 def use_case(dr_endpoint, dr_token, cleanup_dr):
     with cleanup_dr("useCases/"):
@@ -32,6 +33,7 @@ def use_case(dr_endpoint, dr_token, cleanup_dr):
             dr_token,
             "pytest use case",
         )
+
 
 # Using pytest fixture dataset...
 @pytest.fixture
@@ -45,14 +47,17 @@ def dataset(dr_endpoint, dr_token, df, use_case, cleanup_dr):
             data_frame=df,
         )
 
+
 @pytest.fixture
 def deployment_id():
-    """ Random deployment ID """
+    """Random deployment ID"""
     return "6671e1c5a536861654e445a3"
+
 
 @pytest.fixture
 def schedule():
     return {"month": ["*"], "day_of_month": ["*"], "day_of_week": ["*"], "hour": [0], "minute": [0]}
+
 
 @pytest.fixture
 def batch_prediction_job(dataset, deployment_id):
@@ -62,12 +67,17 @@ def batch_prediction_job(dataset, deployment_id):
             "type": "dataset",
             "dataset_id": dataset,
         },
-        "deployment_id": deployment_id
+        "deployment_id": deployment_id,
     }
+
 
 # dr_endpoint, dr_token, schedule are pytest fixtures in other locations
 def test_create_update_batch_prediction(
-    dr_endpoint, dr_token, deployment_id, batch_prediction_job, schedule,
+    dr_endpoint,
+    dr_token,
+    deployment_id,
+    batch_prediction_job,
+    schedule,
 ):
     job_id_1 = get_update_or_create_batch_prediction_job(
         endpoint=dr_endpoint,
@@ -76,7 +86,7 @@ def test_create_update_batch_prediction(
         batch_prediction_job=batch_prediction_job,
         enabled=True,
         name="pytest #1",
-        schedule=schedule
+        schedule=schedule,
     )
     job_id_2 = get_update_or_create_batch_prediction_job(
         endpoint=dr_endpoint,
@@ -85,7 +95,7 @@ def test_create_update_batch_prediction(
         batch_prediction_job=batch_prediction_job,
         enabled=False,
         name="pytest #1",
-        schedule=schedule
+        schedule=schedule,
     )
     assert job_id_1 == job_id_2
 
@@ -96,6 +106,6 @@ def test_create_update_batch_prediction(
         batch_prediction_job=batch_prediction_job,
         enabled=True,
         name="pytest #2",
-        schedule=schedule
+        schedule=schedule,
     )
     assert job_id_3 != job_id_2
