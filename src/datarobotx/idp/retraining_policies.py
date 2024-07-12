@@ -23,6 +23,7 @@ def update_or_create_retraining_policy(
     Parameters
     ----------
     name:
+        name of the retraining policy
     dataset_id: str
         id of the dataset used for retraining
     kwargs:
@@ -36,10 +37,25 @@ def update_or_create_retraining_policy(
 
     # Configure retraining settings
     if dataset_id is not None:
-        payload = client.request(
-            method="GET", url=f"deployments/{deployment_id}/retrainingSettings"
+        prediction_env_id = dr.models.Deployment.get(deployment_id=deployment_id).default_prediction_server["id"]
+        payload = {"datasetId": dataset_id,
+                   "predictionEnvironmentId": prediction_env_id}
+        client.request(
+            method="PATCH", url=f"deployments/{deployment_id}/retrainingSettings", json=payload
         )
-        print(type(payload))
-        print(json.loads(payload.text))
+    
+    response = client.request(method="GET", url=f"deployments/{deployment_id}/retrainingPolicies")
+    payload = json.loads(response.text)
+    policies = payload["data"]
+    # Create payload, how do I add on kwargs here?
+    policy_payload = {"name": name}
 
-    return payload
+    if not policies:
+        response = client.request(method="POST", 
+                       url=f"deployments/{deployment_id}/retrainingPolicies",
+                       json=policy_payload)
+        print(response.text)
+    else:
+        print("Patch")
+
+    return True
