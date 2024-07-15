@@ -15,6 +15,7 @@ from typing import Any, Union, Dict
 
 import datarobot as dr
 
+
 def update_or_create_retraining_policy(
     endpoint: str,
     token: str,
@@ -80,9 +81,11 @@ def update_or_create_retraining_policy(
             url=f"deployments/{deployment_id}/retrainingPolicies",
             json=policy_payload,
         )
-    
+
     if retraining_policy_id is None:
-        response = client.request(method="GET", url=f"deployments/{deployment_id}/retrainingPolicies")
+        response = client.request(
+            method="GET", url=f"deployments/{deployment_id}/retrainingPolicies"
+        )
         payload: Dict[str, Any] = json.loads(response.text)
         policies = payload["data"]
         for policy in policies:
@@ -90,4 +93,3 @@ def update_or_create_retraining_policy(
                 return policy["id"]
 
     return retraining_policy_id
-
