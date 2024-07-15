@@ -142,4 +142,3 @@ def test_retraining_policy(dr_endpoint, dr_token, deployment_id, dataset):
         dataset_id=dataset,
     )
     assert retraining_id_3 != retraining_id_2
-    
