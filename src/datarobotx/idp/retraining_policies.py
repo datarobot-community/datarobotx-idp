@@ -16,12 +16,12 @@ import datarobot as dr
 
 
 def update_or_create_retraining_policy(
-    endpoint: str, 
-    token: str, 
-    deployment_id: str, 
-    name: str, 
-    dataset_id: str | None = None, 
-    **kwargs
+    endpoint: str,
+    token: str,
+    deployment_id: str,
+    name: str,
+    dataset_id: str | None = None,
+    **kwargs,
 ) -> str:
     """Update or create a retraining policy for a model deployment.
 
