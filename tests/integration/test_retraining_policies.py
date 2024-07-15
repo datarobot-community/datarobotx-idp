@@ -118,7 +118,7 @@ def deployment_id(
         ).id
 
 
-def test_create_retraining_policy(dr_endpoint, dr_token, deployment_id, dataset):
+def test_retraining_policy(dr_endpoint, dr_token, deployment_id, dataset):
     retraining_id_1 = update_or_create_retraining_policy(
         endpoint=dr_endpoint,
         token=dr_token,
@@ -126,4 +126,20 @@ def test_create_retraining_policy(dr_endpoint, dr_token, deployment_id, dataset)
         name="test",
         dataset_id=dataset,
     )
-    print(retraining_id_1)
+    retraining_id_2 = update_or_create_retraining_policy(
+        endpoint=dr_endpoint,
+        token=dr_token,
+        deployment_id=deployment_id,
+        name="test",
+        dataset_id=dataset,
+    )
+    assert retraining_id_1 == retraining_id_2
+    retraining_id_3 = update_or_create_retraining_policy(
+        endpoint=dr_endpoint,
+        token=dr_token,
+        deployment_id=deployment_id,
+        name="test2",
+        dataset_id=dataset,
+    )
+    assert retraining_id_3 != retraining_id_2
+    
