@@ -16,6 +16,11 @@ from typing import Any, Dict, Union
 import datarobot as dr
 
 
+def _check_response(response: Any) -> None:
+    if response.status_code < 200 or response.status_code > 399:
+        raise Exception(f"Request failed with status code {response.status_code}: {response.text}")
+
+
 def update_or_create_retraining_policy(
     endpoint: str,
     token: str,
@@ -53,9 +58,10 @@ def update_or_create_retraining_policy(
         deployment = dr.Deployment.get(deployment_id=deployment_id)  # type: ignore
         prediction_env_id = deployment.default_prediction_server["id"]  # type: ignore
         get_payload = {"datasetId": dataset_id, "predictionEnvironmentId": prediction_env_id}
-        client.request(
+        settings_response = client.request(
             method="PATCH", url=f"deployments/{deployment_id}/retrainingSettings", json=get_payload
         )
+        _check_response(settings_response)
 
     get_response = client.request(
         method="GET", url=f"deployments/{deployment_id}/retrainingPolicies"
@@ -67,6 +73,7 @@ def update_or_create_retraining_policy(
     response: Any = None
     retraining_policy_id: str = ""
 
+    # If there is an existing policy w/ inputted name, PATCH, otherwise POST
     for policy in policies:
         if policy["name"] == name:
             retraining_policy_id = policy["id"]
@@ -75,7 +82,8 @@ def update_or_create_retraining_policy(
                 url=f"deployments/{deployment_id}/retrainingPolicies/{retraining_policy_id}",
                 json=policy_payload_update,
             )
-            break  # No need to continue once the policy is found and updated
+            print(json.loads(response.text))
+            break
 
     if response is None:
         response = client.request(
@@ -83,16 +91,7 @@ def update_or_create_retraining_policy(
             url=f"deployments/{deployment_id}/retrainingPolicies",
             json=policy_payload_update,
         )
+        retraining_policy_id = json.loads(response.text)["id"]
+        print(json.loads(response.text))
 
-    if retraining_policy_id == "":
-        get_response_id = client.request(
-            method="GET", url=f"deployments/{deployment_id}/retrainingPolicies"
-        )
-        payload: Dict[str, Any] = json.loads(get_response_id.text)
-        policies = payload["data"]
-        for policy in policies:
-            if policy["name"] == name:
-                retraining_policy_id = policy["id"]
-                break
-
-    return retraining_policy_id if retraining_policy_id != "" else "Policy creation failed."
+    return retraining_policy_id
