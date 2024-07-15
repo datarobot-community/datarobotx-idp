@@ -11,7 +11,7 @@
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
 import json
-from typing import Any, Union, Dict
+from typing import Any, Dict, Union
 
 import datarobot as dr
 
