@@ -23,7 +23,7 @@ def update_or_create_retraining_policy(
     name: str,
     dataset_id: Union[str, None] = None,
     **kwargs: Any,
-) -> None:
+) -> str:
     """Update or create a retraining policy for a model deployment.
 
     Parameters
@@ -47,23 +47,23 @@ def update_or_create_retraining_policy(
         The ID of the created retraining policy.
     """
     client = dr.Client(token=token, endpoint=endpoint)  # type: ignore
-
+    
     # Configure retraining settings
     if dataset_id is not None:
-        deployment = dr.models.Deployment.get(deployment_id=deployment_id)
+        deployment = dr.Deployment.get(deployment_id=deployment_id) # type: ignore
         prediction_env_id = deployment.default_prediction_server["id"]  # type: ignore
-        payload = {"datasetId": dataset_id, "predictionEnvironmentId": prediction_env_id}
+        get_payload = {"datasetId": dataset_id, "predictionEnvironmentId": prediction_env_id}
         client.request(
-            method="PATCH", url=f"deployments/{deployment_id}/retrainingSettings", json=payload
+            method="PATCH", url=f"deployments/{deployment_id}/retrainingSettings", json=get_payload
         )
 
-    response = client.request(method="GET", url=f"deployments/{deployment_id}/retrainingPolicies")
-    payload: Dict[str, Any] = json.loads(response.text)
-    policies = payload["data"]
+    get_response = client.request(method="GET", url=f"deployments/{deployment_id}/retrainingPolicies")
+    retraining_policies_payload: Dict[str, Any] = json.loads(get_response.text)
+    policies = retraining_policies_payload["data"]
 
-    policy_payload = {"name": name, **kwargs}
-    response = None
-    retraining_policy_id = None
+    policy_payload_update = {"name": name, **kwargs}
+    response: Any = None
+    retraining_policy_id: str = ""
 
     for policy in policies:
         if policy["name"] == name:
@@ -71,7 +71,7 @@ def update_or_create_retraining_policy(
             response = client.request(
                 method="PATCH",
                 url=f"deployments/{deployment_id}/retrainingPolicies/{retraining_policy_id}",
-                json=policy_payload,
+                json=policy_payload_update,
             )
             break  # No need to continue once the policy is found and updated
 
@@ -79,17 +79,19 @@ def update_or_create_retraining_policy(
         response = client.request(
             method="POST",
             url=f"deployments/{deployment_id}/retrainingPolicies",
-            json=policy_payload,
+            json=policy_payload_update,
         )
 
-    if retraining_policy_id is None:
-        response = client.request(
+    if retraining_policy_id == "":
+        get_response_id = client.request(
             method="GET", url=f"deployments/{deployment_id}/retrainingPolicies"
         )
-        payload: Dict[str, Any] = json.loads(response.text)
+        payload: Dict[str, Any] = json.loads(get_response_id.text)
         policies = payload["data"]
         for policy in policies:
             if policy["name"] == name:
-                return policy["id"]
+                retraining_policy_id = policy["id"]
+                break
+            
+    return retraining_policy_id if retraining_policy_id != "" else "Policy creation failed."
 
-    return retraining_policy_id
