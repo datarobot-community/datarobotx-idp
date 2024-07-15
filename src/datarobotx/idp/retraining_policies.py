@@ -47,17 +47,19 @@ def update_or_create_retraining_policy(
         The ID of the created retraining policy.
     """
     client = dr.Client(token=token, endpoint=endpoint)  # type: ignore
-    
+
     # Configure retraining settings
     if dataset_id is not None:
-        deployment = dr.Deployment.get(deployment_id=deployment_id) # type: ignore
+        deployment = dr.Deployment.get(deployment_id=deployment_id)  # type: ignore
         prediction_env_id = deployment.default_prediction_server["id"]  # type: ignore
         get_payload = {"datasetId": dataset_id, "predictionEnvironmentId": prediction_env_id}
         client.request(
             method="PATCH", url=f"deployments/{deployment_id}/retrainingSettings", json=get_payload
         )
 
-    get_response = client.request(method="GET", url=f"deployments/{deployment_id}/retrainingPolicies")
+    get_response = client.request(
+        method="GET", url=f"deployments/{deployment_id}/retrainingPolicies"
+    )
     retraining_policies_payload: Dict[str, Any] = json.loads(get_response.text)
     policies = retraining_policies_payload["data"]
 
@@ -92,6 +94,5 @@ def update_or_create_retraining_policy(
             if policy["name"] == name:
                 retraining_policy_id = policy["id"]
                 break
-            
-    return retraining_policy_id if retraining_policy_id != "" else "Policy creation failed."
 
+    return retraining_policy_id if retraining_policy_id != "" else "Policy creation failed."
