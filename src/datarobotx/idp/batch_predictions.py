@@ -25,8 +25,6 @@ class JobSpec(TypedDict):
         the available number of cores of the deployment. Lower it to leave
         resources for real-time scoring.
     intake_settings : dict (optional)
-        A dict configuring how data is coming from.
-
          A dict configuring how data is coming from. Supported options:
 
                 - type : string, either `localFile`, `s3`, `azure`, `gcp`, `dataset`, `jdbc`
@@ -160,7 +158,6 @@ def update_or_create_batch_prediction_job(
         the elements in the objects, you can supply either an asterisk ``["*"]`` denoting
         "every" time denomination or an array of integers (e.g. ``[1, 2, 3]``) to define
         a specific interval.
-        See specifics: https://github.com/datarobot/public_api_client/blob/master/datarobot/models/batch_prediction_job.py#L1872
 
     Returns
     -------
