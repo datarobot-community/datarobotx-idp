@@ -16,7 +16,7 @@ import pytest
 
 import datarobot as dr
 from datarobotx.idp.autopilot import get_or_create_autopilot_run
-from datarobotx.idp.batch_predictions import update_or_create_batch_prediction_job
+from datarobotx.idp.batch_predictions import get_update_or_create_batch_prediction_job
 from datarobotx.idp.datasets import get_or_create_dataset_from_df
 from datarobotx.idp.registered_model_versions import (
     get_or_create_registered_leaderboard_model_version,
@@ -148,7 +148,7 @@ def test_create_update_batch_prediction(
     batch_prediction_job,
     schedule,
 ):
-    job_id_1 = update_or_create_batch_prediction_job(
+    job_id_1 = get_update_or_create_batch_prediction_job(
         endpoint=dr_endpoint,
         token=dr_token,
         deployment_id=deployment_id,
@@ -157,7 +157,7 @@ def test_create_update_batch_prediction(
         name="pytest batch #1",
         schedule=schedule,
     )
-    job_id_2 = update_or_create_batch_prediction_job(
+    job_id_2 = get_update_or_create_batch_prediction_job(
         endpoint=dr_endpoint,
         token=dr_token,
         deployment_id=deployment_id,
@@ -168,7 +168,7 @@ def test_create_update_batch_prediction(
     )
     assert job_id_1 == job_id_2
 
-    job_id_3 = update_or_create_batch_prediction_job(
+    job_id_3 = get_update_or_create_batch_prediction_job(
         endpoint=dr_endpoint,
         token=dr_token,
         deployment_id=deployment_id,

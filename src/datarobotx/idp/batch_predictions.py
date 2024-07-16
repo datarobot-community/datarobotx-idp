@@ -10,18 +10,18 @@
 # Released under the terms of DataRobot Tool and Utility Agreement.
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
-from typing import Optional, Union
+from typing import Any, Dict, Optional
 
 import datarobot as dr
 from datarobot.models.batch_job import Schedule
 from datarobot.models.batch_prediction_job import BatchPredictionJobDefinition
 
 
-def update_or_create_batch_prediction_job(
+def get_update_or_create_batch_prediction_job(
     endpoint: str,
     token: str,
     deployment_id: str,
-    batch_prediction_job: dict[str, Union[str, int]],
+    batch_prediction_job: Dict[str, Any],
     enabled: bool,
     name: str,
     schedule: Optional[Schedule],
@@ -31,111 +31,8 @@ def update_or_create_batch_prediction_job(
     Parameters
     ----------
     batch_prediction_job: dict
-        deployment_id: str
-
-        num_concurrent : int (optional)
-          Number of concurrent chunks to score simultaneously. Defaults to
-          the available number of cores of the deployment. Lower it to leave
-          resources for real-time scoring.
-
-        intake_settings : dict (optional)
-            A dict configuring how data is coming from. Supported options:
-
-                    - type : string, either `localFile`, `s3`, `azure`, `gcp`, `dataset`, `jdbc`
-                      `snowflake`, `synapse` or `bigquery`
-
-                Note that to pass a dataset, you not only need to specify the `type` parameter
-                as `dataset`, but you must also set the `dataset` parameter as a
-                `dr.Dataset` object.
-
-                To score from a local file, add the this parameter to the
-                settings:
-
-                    - file : file-like object, string path to file or a
-                      pandas.DataFrame of scoring data
-
-                To score from S3, add the next parameters to the settings:
-
-                    - url : string, the URL to score (e.g.: `s3://bucket/key`)
-                    - credential_id : string (optional)
-                    - endpoint_url : string (optional), any non-default endpoint
-                      URL for S3 access (omit to use the default)
-
-                .. _batch_predictions_jdbc_creds_usage:
-
-                To score from JDBC, add the next parameters to the settings:
-
-                    - data_store_id : string, the ID of the external data store connected
-                      to the JDBC data source (see
-                      :ref:`Database Connectivity <database_connectivity_overview>`).
-                    - query : string (optional if `table`, `schema` and/or `catalog` is specified),
-                      a self-supplied SELECT statement of the data set you wish to predict.
-                    - table : string (optional if `query` is specified),
-                      the name of specified database table.
-                    - schema : string (optional if `query` is specified),
-                      the name of specified database schema.
-                    - catalog : string  (optional if `query` is specified),
-                      (new in v2.22) the name of specified database catalog.
-                    - fetch_size : int (optional),
-                      Changing the `fetchSize` can be used to balance throughput and memory
-                      usage.
-                    - credential_id : string (optional) the ID of the credentials holding
-                      information about a user with read-access to the JDBC data source (see
-                      :ref:`Credentials <credentials_api_doc>`).
-
-        output_settings : dict (optional)
-            A dict configuring how scored data is to be saved. Supported
-                options:
-
-                    - type : string, either `localFile`, `s3`, `azure`, `gcp`, `jdbc`,
-                      `snowflake`, `synapse` or `bigquery`
-
-                To save scored data to a local file, add this parameters to the
-                settings:
-
-                    - path : string (optional), path to save the scored data
-                      as CSV. If a path is not specified, you must download
-                      the scored data yourself with `job.download()`.
-                      If a path is specified, the call will block until the
-                      job is done. if there are no other jobs currently
-                      processing for the targeted prediction instance,
-                      uploading, scoring, downloading will happen in parallel
-                      without waiting for a full job to complete. Otherwise,
-                      it will still block, but start downloading the scored
-                      data as soon as it starts generating data. This is the
-                      fastest method to get predictions.
-
-                To save scored data to S3, add the next parameters to the settings:
-
-                    - url : string, the URL for storing the results
-                      (e.g.: `s3://bucket/key`)
-                    - credential_id : string (optional)
-                    - endpoint_url : string (optional), any non-default endpoint
-                      URL for S3 access (omit to use the default)
-
-                To save scored data to JDBC, add the next parameters to the settings:
-
-                    - `data_store_id` : string, the ID of the external data store connected to
-                      the JDBC data source (see
-                      :ref:`Database Connectivity <database_connectivity_overview>`).
-                    - `table` : string,  the name of specified database table.
-                    - `schema` : string (optional), the name of specified database schema.
-                    - `catalog` : string (optional), (new in v2.22) the name of specified database
-                      catalog.
-                    - `statement_type` : string, the type of insertion statement to create,
-                      one of ``datarobot.enums.AVAILABLE_STATEMENT_TYPES``.
-                    - `update_columns` : list(string) (optional),  a list of strings containing
-                      those column names to be updated in case `statement_type` is set to a
-                      value related to update or upsert.
-                    - `where_columns` : list(string) (optional), a list of strings containing
-                      those column names to be selected in case `statement_type` is set to a
-                      value related to insert or update.
-                    - `credential_id` : string, the ID of the credentials holding information about
-                      a user with write-access to the JDBC data source (see
-                      :ref:`Credentials <credentials_api_doc>`).
-                    - `create_table_if_not_exists` : bool (optional), If no existing table is detected,
-                      attempt to create it before writing data with the strategy defined in the
-                      statementType parameter.
+        The job specifications for your batch prediction job.
+        See 'datarobot.models.batch_prediction_job.BatchPredictionJobDefinition.create()'
     enabled: bool
         Whether or not the definition should be active on a scheduled basis. If True, `schedule` is required
     name: str
