@@ -129,7 +129,6 @@ def deployment_id(
 
 
 def test_retraining_policy(dr_endpoint, dr_token, deployment_id, dataset):
-    print(deployment_id)
     # Can we create policy
     retraining_id_1 = get_update_or_create_retraining_policy(
         endpoint=dr_endpoint,
@@ -137,6 +136,7 @@ def test_retraining_policy(dr_endpoint, dr_token, deployment_id, dataset):
         deployment_id=deployment_id,
         name="post_test",
         dataset_id=dataset,
+        featureListStrategy="same_as_champion",
     )
 
     # If we "update" policy, is the ID the same?
@@ -146,23 +146,14 @@ def test_retraining_policy(dr_endpoint, dr_token, deployment_id, dataset):
         deployment_id=deployment_id,
         name="post_test",
         dataset_id=dataset,
-    )
-    assert retraining_id_1 == retraining_id_2
-
-    # If we actually change a parameter, is the ID the same?
-    retraining_id_3 = get_update_or_create_retraining_policy(
-        endpoint=dr_endpoint,
-        token=dr_token,
-        deployment_id=deployment_id,
-        name="patch_test",
-        dataset_id=dataset,
         featureListStrategy="informative_features",
     )
+    assert retraining_id_1 == retraining_id_2
 
     # Add test to assert the update occurred
     client = dr.Client(token=dr_token, endpoint=dr_endpoint)
     get_response = client.request(
-        method="GET", url=f"deployments/{deployment_id}/retrainingPolicies/{retraining_id_3}"
+        method="GET", url=f"deployments/{deployment_id}/retrainingPolicies/{retraining_id_2}"
     )
     policy_data = json.loads(get_response.text)
     assert policy_data["featureListStrategy"] == "informative_features"
@@ -171,7 +162,7 @@ def test_retraining_policy(dr_endpoint, dr_token, deployment_id, dataset):
         endpoint=dr_endpoint,
         token=dr_token,
         deployment_id=deployment_id,
-        name="test",
+        name="idempotency test (no changes in API background)",
         dataset_id=dataset,
     )
 
@@ -183,7 +174,7 @@ def test_retraining_policy(dr_endpoint, dr_token, deployment_id, dataset):
         endpoint=dr_endpoint,
         token=dr_token,
         deployment_id=deployment_id,
-        name="test",
+        name="idempotency test (no changes in API background)",
         dataset_id=dataset,
     )
 
