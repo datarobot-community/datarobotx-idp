@@ -11,7 +11,7 @@
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
 import json
-from typing import Any, Union
+from typing import Any, Optional
 
 import datarobot as dr
 
@@ -21,11 +21,20 @@ def _check_response(response: Any) -> None:
         raise Exception(f"Request failed with status code {response.status_code}: {response.text}")
 
 
-def _configure_retraining_settings(dataset_id: str, deployment_id: str, client: Any) -> None:
-    deployment = dr.Deployment.get(deployment_id=deployment_id)  # type: ignore
-    prediction_env_id = deployment.default_prediction_server["id"]  # type: ignore
+def _configure_retraining_settings(
+    dataset_id: str, deployment_id: str, client: Any, retraining_user_id: Optional[str] = None
+) -> None:
+    deployment: dr.Deployment = dr.Deployment.get(deployment_id=deployment_id)  # type: ignore
+    prediction_env_id = deployment.default_prediction_server["id"]
 
-    get_payload = {"datasetId": dataset_id, "predictionEnvironmentId": prediction_env_id}
+    if retraining_user_id is None:
+        retraining_user_id = deployment.owners.get("preview")[0].get("id")
+
+    get_payload = {
+        "datasetId": dataset_id,
+        "predictionEnvironmentId": prediction_env_id,
+        "retrainingUserId": retraining_user_id,
+    }
 
     settings_response = client.request(
         method="PATCH", url=f"deployments/{deployment_id}/retrainingSettings", json=get_payload
@@ -70,15 +79,22 @@ def get_update_or_create_retraining_policy(
     token: str,
     deployment_id: str,
     name: str,
-    dataset_id: Union[str, None] = None,
+    dataset_id: Optional[str] = None,
+    retraining_user_id: Optional[str] = None,
     **kwargs: Any,
 ) -> str:
     """Update or create a retraining policy for a model deployment.
 
     Parameters
     ----------
-    dataset_id : Union[str, None], optional
+    dataset_id : Optional
         The ID of the dataset used for retraining, by default None.
+        Inputting the dataset triggers an update of the retrainingSettings,
+            which causes the first owner of the deployment to be set as the
+            policy owner of the retraining policy (within retraining settings)
+    retraining_user_id: Optional
+        The ID of the user that will be tied to the retraining policy
+        Will only be used if dataset_id is supplied.
     **kwargs : Any
         Additional keyword arguments for the retraining policy.
         Reference: https://docs.datarobot.com/en/docs/api/reference/public-api/deployments.html#patch-apiv2deploymentsdeploymentidretrainingpoliciesretrainingpolicyid
@@ -91,7 +107,7 @@ def get_update_or_create_retraining_policy(
     client = dr.Client(token=token, endpoint=endpoint)  # type: ignore
 
     if dataset_id:
-        _configure_retraining_settings(dataset_id, deployment_id, client)
+        _configure_retraining_settings(dataset_id, deployment_id, client, retraining_user_id)
 
     policy_payload_to_upload = {"name": name, **kwargs}
 
