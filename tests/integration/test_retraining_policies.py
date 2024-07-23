@@ -158,7 +158,7 @@ def test_retraining_policy(dr_endpoint, dr_token, deployment_id, dataset):
     policy_data = json.loads(get_response.text)
     assert policy_data["featureListStrategy"] == "informative_features"
 
-    retraining_id = get_update_or_create_retraining_policy(
+    retraining_id_1 = get_update_or_create_retraining_policy(
         endpoint=dr_endpoint,
         token=dr_token,
         deployment_id=deployment_id,
@@ -167,7 +167,7 @@ def test_retraining_policy(dr_endpoint, dr_token, deployment_id, dataset):
     )
 
     retraining_response_1 = client.get(
-        f"deployments/{deployment_id}/retrainingPolicies/{retraining_id}"
+        f"deployments/{deployment_id}/retrainingPolicies/{retraining_id_1}"
     ).json()
 
     retraining_id_2 = get_update_or_create_retraining_policy(
@@ -183,3 +183,43 @@ def test_retraining_policy(dr_endpoint, dr_token, deployment_id, dataset):
     ).json()
 
     assert retraining_response_1 == retraining_response_2
+
+    autopilotOptions = {
+        "blendBestModels": False,
+        "mode": "quick",
+        "shapOnlyMode": False,
+        "runLeakageRemovedFeatureList": True,
+    }
+    trigger = {
+        "type": "accuracy_decline",
+        "schedule": {
+            "minute": [0],
+            "hour": [0],
+            "dayOfMonth": ["*"],
+            "month": ["*"],
+            "dayOfWeek": ["*"],
+        },
+        "statusDeclinesToWarning": True,
+        "statusDeclinesToFailing": False,
+        "statusStillInDecline": False,
+    }
+    featureListStrategy = "informative_features"
+    projectOptionsStrategy = "same_as_champion"
+
+    retraining_id = get_update_or_create_retraining_policy(
+        endpoint=dr_endpoint,
+        token=dr_token,
+        deployment_id=deployment_id,
+        name="Full Retraining Policy",
+        dataset_id=dataset,
+        trigger=trigger,
+        autopilotOptions=autopilotOptions,
+        featureListStrategy=featureListStrategy,
+        projectOptionsStrategy=projectOptionsStrategy,
+    )
+
+    retraining_response = client.get(
+        f"deployments/{deployment_id}/retrainingPolicies/{retraining_id}"
+    )
+
+    assert retraining_response.status_code == 200
