@@ -27,8 +27,8 @@ def _configure_retraining_settings(
     deployment: dr.Deployment = dr.Deployment.get(deployment_id=deployment_id)  # type: ignore
     prediction_env_id = deployment.default_prediction_server["id"]
 
-    if retraining_user_id is None:
-        retraining_user_id = deployment.owners.get("preview")[0].get("id")
+    user_info = client.request(method="GET", url="account/info")
+    retraining_user_id = json.loads(user_info.text)["uid"]
 
     get_payload = {
         "datasetId": dataset_id,
@@ -80,7 +80,6 @@ def get_update_or_create_retraining_policy(
     deployment_id: str,
     name: str,
     dataset_id: Optional[str] = None,
-    retraining_user_id: Optional[str] = None,
     **kwargs: Any,
 ) -> str:
     """Update or create a retraining policy for a model deployment.
@@ -107,7 +106,7 @@ def get_update_or_create_retraining_policy(
     client = dr.Client(token=token, endpoint=endpoint)  # type: ignore
 
     if dataset_id:
-        _configure_retraining_settings(dataset_id, deployment_id, client, retraining_user_id)
+        _configure_retraining_settings(dataset_id, deployment_id, client)
 
     policy_payload_to_upload = {"name": name, **kwargs}
 
