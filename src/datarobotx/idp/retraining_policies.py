@@ -22,7 +22,7 @@ def _check_response(response: Any) -> None:
 
 
 def _configure_retraining_settings(
-    dataset_id: str, deployment_id: str, client: Any, retraining_user_id: Optional[str] = None
+    dataset_id: str, deployment_id: str, client: Any, credential_id: Optional[str] = None
 ) -> None:
     deployment: dr.Deployment = dr.Deployment.get(deployment_id=deployment_id)  # type: ignore
     prediction_env_id = deployment.default_prediction_server["id"]
@@ -35,6 +35,9 @@ def _configure_retraining_settings(
         "predictionEnvironmentId": prediction_env_id,
         "retrainingUserId": retraining_user_id,
     }
+
+    if credential_id:
+        get_payload["credentialId"] = credential_id
 
     settings_response = client.request(
         method="PATCH", url=f"deployments/{deployment_id}/retrainingSettings", json=get_payload
@@ -105,8 +108,10 @@ def get_update_or_create_retraining_policy(
     """
     client = dr.Client(token=token, endpoint=endpoint)  # type: ignore
 
+    credential_id = kwargs.get("credential_id", None)
+
     if dataset_id:
-        _configure_retraining_settings(dataset_id, deployment_id, client)
+        _configure_retraining_settings(dataset_id, deployment_id, client, credential_id)
 
     policy_payload_to_upload = {"name": name, **kwargs}
 
