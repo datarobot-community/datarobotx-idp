@@ -108,7 +108,7 @@ def get_update_or_create_retraining_policy(
     """
     client = dr.Client(token=token, endpoint=endpoint)  # type: ignore
 
-    credential_id = kwargs.get("credential_id", None)
+    credential_id = kwargs.pop("credential_id", None)
 
     if dataset_id:
         _configure_retraining_settings(dataset_id, deployment_id, client, credential_id)
