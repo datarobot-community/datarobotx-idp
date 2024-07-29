@@ -57,6 +57,17 @@ def _ensure_dependency_build(custom_model_id: str, custom_model_version_id: str)
         )
 
 
+def _has_requirements(folder_path: Optional[Any], files: Optional[List[Any]]) -> bool:
+    if folder_path is not None and (pathlib.Path(folder_path) / "requirements.txt").exists():
+        return True
+    elif files is not None and any(
+        [dest_path == "requirements.txt" for src_path, dest_path in files]
+    ):
+        return True
+    else:
+        return False
+
+
 def _get_or_create(
     from_previous: bool,
     endpoint: str,
@@ -88,7 +99,7 @@ def _get_or_create(
         existing_version_id = _find_existing_custom_model_version(
             custom_model_id, model_version_token, from_previous
         )
-        if folder_path is not None and (pathlib.Path(folder_path) / "requirements.txt").exists():
+        if _has_requirements(folder_path, kwargs.get("files", None)):
             _ensure_dependency_build(custom_model_id, existing_version_id)
         return existing_version_id
 
@@ -107,7 +118,7 @@ def _get_or_create(
 
         env_version.update(description=f"\nChecksum: {model_version_token}")
 
-        if folder_path is not None and (pathlib.Path(folder_path) / "requirements.txt").exists():
+        if _has_requirements(folder_path, kwargs.get("files", None)):
             _ensure_dependency_build(custom_model_id, env_version.id)
         return str(env_version.id)
 

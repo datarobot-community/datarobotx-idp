@@ -104,6 +104,17 @@ def folder_path_with_metadata_and_reqs(folder_path_with_metadata):
 
 
 @pytest.fixture
+def files_with_metadata_and_reqs(folder_path_with_metadata):
+    p = pathlib.Path(folder_path_with_metadata)
+    file_paths = []
+    for file in p.glob("**/*"):
+        if file.is_file():
+            relative_path = file.relative_to(p)
+            file_paths.append((str(file), str(relative_path)))
+    return file_paths
+
+
+@pytest.fixture
 def updated_folder_path_with_metadata_and_reqs(another_folder_path_with_metadata):
     requirements = "scikit-learn==1.4.2"
     p = pathlib.Path(another_folder_path_with_metadata)
@@ -134,6 +145,7 @@ def test_get_or_create(
     sklearn_drop_in_env,
     pythonic_runtime_parameters,
     folder_path_with_metadata_and_reqs,
+    files_with_metadata_and_reqs,
     updated_folder_path_with_metadata_and_reqs,
 ):
     model_ver_id_1 = get_or_create_custom_model_version(
@@ -186,13 +198,25 @@ def test_get_or_create(
     )
     assert model_ver_id_5 == model_ver_id_4
 
-    dr.Client(endpoint=dr_endpoint, token=dr_token)
-    assert (
-        dr.CustomModelVersionDependencyBuild.get_build_info(
-            custom_model, model_ver_id_5
-        ).build_status
-        == "success"
+    model_ver_id_6 = get_or_create_custom_model_version(
+        dr_endpoint,
+        dr_token,
+        custom_model,
+        base_environment_id=sklearn_drop_in_env,
+        files=files_with_metadata_and_reqs,
+        runtime_parameter_values=pythonic_runtime_parameters,
+        maximum_memory=4096 * 1024 * 1024,
     )
+
+    dr.Client(endpoint=dr_endpoint, token=dr_token)
+    for dep_build_model_ver in [model_ver_id_5, model_ver_id_6]:
+        assert (
+            dr.CustomModelVersionDependencyBuild.get_build_info(
+                custom_model, dep_build_model_ver
+            ).build_status
+            == "success"
+        )
+
     updated_version_1 = _unsafe_get_or_create_custom_model_version_from_previous(
         endpoint=dr_endpoint,
         token=dr_token,
