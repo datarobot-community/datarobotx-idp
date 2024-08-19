@@ -81,7 +81,15 @@ def get_hash(*args: Any, **kwargs: Any) -> str:
                         for chunk in iter(lambda: f.read(8192), b""):
                             arg = get_hash(chunk, arg)
             arg = arg.encode("utf-8")
-
+        elif isinstance(arg, list):
+            hash_list = arg
+            arg = ""
+            for i in hash_list:
+                if Path(i).exists():
+                    arg += get_hash(Path(arg))
+                else:
+                    arg += get_hash(arg)
+            arg = arg.encode("utf-8")
         elif callable(arg):
             arg = inspect.getsource(arg).encode("utf-8")
         elif isinstance(arg, pd.DataFrame):
