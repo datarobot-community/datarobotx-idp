@@ -33,7 +33,6 @@ def _create_custom_app(
 ) -> str:
     client = dr.Client(endpoint=endpoint, token=token)  # type: ignore[attr-defined]
     max_wait = kwargs.pop("max_wait", dr.enums.DEFAULT_MAX_WAIT)
-    max_wait = kwargs.pop("max_wait", dr.enums.DEFAULT_MAX_WAIT)
     body = {"name": name}
     if environment_id is not None:
         body["environmentId"] = environment_id
@@ -126,9 +125,6 @@ def get_replace_or_create_custom_app(
     # temporarily remove for hashing
     max_wait = kwargs.pop("max_wait", None)
 
-    # temporarily remove for hashing
-    max_wait = kwargs.pop("max_wait", None)
-
     # test if environment_id xor custom_application_source_version_id is provided
     if bool(environment_id) == bool(custom_application_source_version_id):
         raise ValueError(
@@ -151,8 +147,6 @@ def get_replace_or_create_custom_app(
     except KeyError:
         pass
 
-    if max_wait is not None:
-        kwargs["max_wait"] = max_wait
     if max_wait is not None:
         kwargs["max_wait"] = max_wait
     return _create_custom_app(
@@ -231,7 +225,6 @@ def get_or_create_qanda_app(
         The ID of the Q&A app.
     """
     max_wait = kwargs.pop("max_wait", dr.enums.DEFAULT_MAX_WAIT)
-    max_wait = kwargs.pop("max_wait", dr.enums.DEFAULT_MAX_WAIT)
     app_token = get_hash(name, deployment_id, environment_id)
 
     client = dr.Client(endpoint=endpoint, token=token)  # type: ignore
@@ -244,7 +237,6 @@ def get_or_create_qanda_app(
     except:
         pass
 
-    initial_resp = client.post(
     initial_resp = client.post(
         "customApplications/qanda/",
         json={"deploymentId": deployment_id, "environmentId": environment_id},
