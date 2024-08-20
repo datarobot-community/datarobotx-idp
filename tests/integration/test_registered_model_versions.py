@@ -186,7 +186,6 @@ def test_get_or_create_external(
         name="pytest external registered model version #1",
         target=external_model_target,
         registered_model_name=registered_external_model_name,
-        max_wait=1800,
     )
     assert len(model_1)
 
@@ -196,7 +195,6 @@ def test_get_or_create_external(
         name="pytest external registered model version #1",
         target=external_model_target,
         registered_model_name=registered_external_model_name,
-        max_wait=1800,
     )
     assert model_1 == model_2
     model_2_max_wait = get_or_create_registered_external_model_version(
@@ -205,7 +203,7 @@ def test_get_or_create_external(
         name="pytest external registered model version #1",
         target=external_model_target,
         registered_model_name=registered_external_model_name,
-        max_wait=1801,
+        max_wait=1234,
     )
     assert model_1 == model_2_max_wait
 
@@ -215,7 +213,6 @@ def test_get_or_create_external(
         name="pytest external registered model version #2",
         target=external_model_target,
         registered_model_name=registered_external_model_name,
-        max_wait=1800,
     )
     assert model_1 != model_3
 
