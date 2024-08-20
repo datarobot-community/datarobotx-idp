@@ -19,7 +19,6 @@ import requests
 import datarobot as dr
 from datarobot.rest import handle_http_error
 
-from datarobotx.idp import DEFAULT_MAX_WAIT
 from datarobotx.idp.common.hashing import get_hash
 
 
@@ -64,7 +63,7 @@ def get_or_create_deployment_from_registered_model_version(
     parameters and registered model version.
     """
     dr.Client(token=token, endpoint=endpoint)  # type: ignore[attr-defined]
-    max_wait = kwargs.pop("max_wait", DEFAULT_MAX_WAIT)
+    max_wait = kwargs.pop("max_wait", dr.enums.DEFAULT_MAX_WAIT)
     deployment_token = get_hash(registered_model_version_id, label, **kwargs)
 
     try:
@@ -101,7 +100,7 @@ def get_replace_or_create_deployment_from_registered_model(
     model version is different from what is already deployed.
     """
     dr.Client(token=token, endpoint=endpoint)  # type: ignore[attr-defined]
-    max_wait = kwargs.pop("max_wait", DEFAULT_MAX_WAIT)
+    max_wait = kwargs.pop("max_wait", dr.enums.DEFAULT_MAX_WAIT)
     deployment_token = get_hash(registered_model_name, label, **kwargs)
 
     try:

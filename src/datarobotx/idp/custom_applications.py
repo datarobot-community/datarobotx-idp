@@ -20,7 +20,6 @@ from datarobot.utils import camelize
 from datarobot.utils.pagination import unpaginate
 from datarobot.utils.waiters import wait_for_async_resolution
 
-from datarobotx.idp import DEFAULT_MAX_WAIT
 from datarobotx.idp.common.hashing import get_hash
 
 
@@ -33,7 +32,7 @@ def _create_custom_app(
     **kwargs: Any,
 ) -> str:
     client = dr.Client(endpoint=endpoint, token=token)  # type: ignore[attr-defined]
-    max_wait = kwargs.pop("max_wait", DEFAULT_MAX_WAIT)
+    max_wait = kwargs.pop("max_wait", dr.enums.DEFAULT_MAX_WAIT)
     body = {"name": name}
     if environment_id is not None:
         body["environmentId"] = environment_id
@@ -123,6 +122,9 @@ def get_replace_or_create_custom_app(
         If both environment_id and custom_application_source_version_id are provided or if neither is provided.
 
     """
+    # temporarily remove for hashing
+    max_wait = kwargs.pop("max_wait", None)
+
     # test if environment_id xor custom_application_source_version_id is provided
     if bool(environment_id) == bool(custom_application_source_version_id):
         raise ValueError(
@@ -145,6 +147,8 @@ def get_replace_or_create_custom_app(
     except KeyError:
         pass
 
+    if max_wait is not None:
+        kwargs["max_wait"] = max_wait
     return _create_custom_app(
         endpoint=endpoint,
         token=token,
@@ -215,7 +219,7 @@ def get_or_create_qanda_app(
     str
         The ID of the Q&A app.
     """
-    max_wait = kwargs.pop("max_wait", DEFAULT_MAX_WAIT)
+    max_wait = kwargs.pop("max_wait", dr.enums.DEFAULT_MAX_WAIT)
     app_token = get_hash(name, deployment_id, environment_id)
 
     client = dr.Client(endpoint=endpoint, token=token)  # type: ignore

@@ -15,7 +15,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import datarobot as dr
 
-from datarobotx.idp import DEFAULT_MAX_WAIT
 from datarobotx.idp.common.hashing import get_hash
 from datarobotx.idp.projects import get_or_create_project_from_dataset
 
@@ -174,15 +173,19 @@ def get_or_create_autopilot_run(
     dr.Client(token=token, endpoint=endpoint)  # type: ignore[attr-defined]
 
     # pull out arguments that are not relevant for hashing
-    max_wait_create_from_dataset = DEFAULT_MAX_WAIT
-    max_wait_analyze_and_model = DEFAULT_MAX_WAIT
+    max_wait_create_from_dataset = dr.enums.DEFAULT_MAX_WAIT
+    max_wait_analyze_and_model = dr.enums.DEFAULT_MAX_WAIT
     worker_count_analyze_and_model = None
 
     if create_from_dataset_config is not None:
-        max_wait_create_from_dataset = create_from_dataset_config.pop("max_wait", DEFAULT_MAX_WAIT)
+        max_wait_create_from_dataset = create_from_dataset_config.pop(
+            "max_wait", dr.enums.DEFAULT_MAX_WAIT
+        )
 
     if analyze_and_model_config is not None:
-        max_wait_analyze_and_model = analyze_and_model_config.pop("max_wait", DEFAULT_MAX_WAIT)
+        max_wait_analyze_and_model = analyze_and_model_config.pop(
+            "max_wait", dr.enums.DEFAULT_MAX_WAIT
+        )
         worker_count_analyze_and_model = analyze_and_model_config.pop("worker_count", None)
 
     project_config_token = get_hash(

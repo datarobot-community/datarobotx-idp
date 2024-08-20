@@ -27,8 +27,8 @@ from datarobotx.idp.registered_model_versions import get_or_create_registered_cu
 def custom_model(cleanup_dr, dr_endpoint, dr_token):
     with cleanup_dr("customModels/"):
         yield get_or_create_custom_model(
-            dr_endpoint,
-            dr_token,
+            endpoint=dr_endpoint,
+            token=dr_token,
             name="pytest custom model",
             target_type="Regression",
             target_name="foo",
@@ -41,7 +41,11 @@ def custom_model_version(
 ):
     with cleanup_dr(f"customModels/{custom_model}/versions/"):
         yield get_or_create_custom_model_version(
-            dr_endpoint, dr_token, custom_model, sklearn_drop_in_env, folder_path
+            endpoint=dr_endpoint,
+            token=dr_token,
+            custom_model_id=custom_model,
+            base_environment_id=sklearn_drop_in_env,
+            folder_path=folder_path,
         )
 
 
@@ -61,7 +65,10 @@ def registered_model_version(
 ):
     with cleanup_dr("registeredModels/"):
         yield get_or_create_registered_custom_model_version(
-            dr_endpoint, dr_token, custom_model_version, registered_model_name
+            endpoint=dr_endpoint,
+            token=dr_token,
+            custom_model_version_id=custom_model_version,
+            registered_model_name=registered_model_name,
         )
 
 
@@ -80,28 +87,28 @@ def test_get_or_create(
     deployment_name,
 ):
     deployment_1 = get_or_create_deployment_from_registered_model_version(
-        dr_endpoint,
-        dr_token,
-        registered_model_version,
-        deployment_name.format(i=1),
+        endpoint=dr_endpoint,
+        token=dr_token,
+        registered_model_version_id=registered_model_version,
+        label=deployment_name.format(i=1),
         default_prediction_server_id=default_prediction_server_id,
     )
     assert len(deployment_1)
 
     deployment_2 = get_or_create_deployment_from_registered_model_version(
-        dr_endpoint,
-        dr_token,
-        registered_model_version,
-        deployment_name.format(i=1),
+        endpoint=dr_endpoint,
+        token=dr_token,
+        registered_model_version_id=registered_model_version,
+        label=deployment_name.format(i=1),
         default_prediction_server_id=default_prediction_server_id,
     )
     assert deployment_1 == deployment_2
 
     deployment_3 = get_or_create_deployment_from_registered_model_version(
-        dr_endpoint,
-        dr_token,
-        registered_model_version,
-        deployment_name.format(i=2),
+        endpoint=dr_endpoint,
+        token=dr_token,
+        registered_model_version_id=registered_model_version,
+        label=deployment_name.format(i=2),
         default_prediction_server_id=default_prediction_server_id,
     )
     assert deployment_1 != deployment_3
@@ -120,42 +127,42 @@ def test_get_create_or_replace(
     deployment_name,
 ):
     deployment_1 = get_replace_or_create_deployment_from_registered_model(
-        dr_endpoint,
-        dr_token,
-        registered_model_version,
-        registered_model_name,
-        deployment_name.format(i=1),
+        endpoint=dr_endpoint,
+        token=dr_token,
+        registered_model_version_id=registered_model_version,
+        registered_model_name=registered_model_name,
+        label=deployment_name.format(i=1),
         default_prediction_server_id=default_prediction_server_id,
     )
     assert len(deployment_1)
 
     deployment_2 = get_replace_or_create_deployment_from_registered_model(
-        dr_endpoint,
-        dr_token,
-        registered_model_version,
-        registered_model_name,
-        deployment_name.format(i=1),
+        endpoint=dr_endpoint,
+        token=dr_token,
+        registered_model_version_id=registered_model_version,
+        registered_model_name=registered_model_name,
+        label=deployment_name.format(i=1),
         default_prediction_server_id=default_prediction_server_id,
     )
     assert deployment_1 == deployment_2
 
     custom_model_version_2 = get_or_create_custom_model_version(
-        dr_endpoint,
-        dr_token,
-        custom_model,
-        sklearn_drop_in_env,
-        folder_path,
+        endpoint=dr_endpoint,
+        token=dr_token,
+        custom_model_id=custom_model,
+        base_environment_id=sklearn_drop_in_env,
+        folder_path=folder_path,
         maximum_memory=4096 * 1024 * 1024,
     )
     registered_model_version_2 = get_or_create_registered_custom_model_version(
         dr_endpoint, dr_token, custom_model_version_2, registered_model_name
     )
     deployment_3 = get_replace_or_create_deployment_from_registered_model(
-        dr_endpoint,
-        dr_token,
-        registered_model_version_2,
-        registered_model_name,
-        deployment_name.format(i=1),
+        endpoint=dr_endpoint,
+        token=dr_token,
+        registered_model_version_id=registered_model_version_2,
+        registered_model_name=registered_model_name,
+        label=deployment_name.format(i=1),
         default_prediction_server_id=default_prediction_server_id,
     )
     # swapping in a new registered model version replaces deployment instead of creating new
@@ -169,11 +176,11 @@ def test_get_create_or_replace(
 
     # but changes other than updating registered model version always create a new deployment
     deployment_4 = get_replace_or_create_deployment_from_registered_model(
-        dr_endpoint,
-        dr_token,
-        registered_model_version_2,
-        registered_model_name,
-        deployment_name.format(i=2),
+        endpoint=dr_endpoint,
+        token=dr_token,
+        registered_model_version_id=registered_model_version_2,
+        registered_model_name=registered_model_name,
+        label=deployment_name.format(i=2),
         default_prediction_server_id=default_prediction_server_id,
     )
     assert deployment_1 != deployment_4

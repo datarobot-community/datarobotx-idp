@@ -20,7 +20,6 @@ from datarobot.models.model_registry.registered_model_version import (
     ExternalTarget,
 )
 
-from datarobotx.idp import DEFAULT_MAX_WAIT
 from datarobotx.idp.common.hashing import get_hash
 
 
@@ -83,7 +82,7 @@ def get_or_create_registered_custom_model_version(
     argument to specify the maximum time to wait for the registered model version to build.
     """
     dr.Client(token=token, endpoint=endpoint)  # type: ignore[attr-defined]
-    max_wait = kwargs.pop("max_wait", DEFAULT_MAX_WAIT)
+    max_wait = kwargs.pop("max_wait", dr.enums.DEFAULT_MAX_WAIT)
     model_version_token = get_hash(custom_model_version_id, registered_model_name, **kwargs)
 
     try:
@@ -178,7 +177,7 @@ def get_or_create_registered_leaderboard_model_version(
     argument to specify the maximum time to wait for the registered model version to build.
     """
     dr.Client(token=token, endpoint=endpoint)  # type: ignore[attr-defined]
-    timeout_seconds = kwargs.pop("max_wait", DEFAULT_MAX_WAIT)
+    timeout_seconds = kwargs.pop("max_wait", dr.enums.DEFAULT_MAX_WAIT)
     model_version_token = get_hash(model_id, registered_model_name, **kwargs)
 
     try:

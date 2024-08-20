@@ -17,8 +17,6 @@ from typing import Any, Tuple, Union
 import datarobot as dr
 from datarobot.models.genai.custom_model_llm_validation import CustomModelLLMValidation
 
-from datarobotx.idp import DEFAULT_MAX_WAIT
-
 
 def _find_existing_validation(
     max_wait: int,
@@ -76,7 +74,7 @@ def get_update_or_create_custom_model_llm_validation(
     """
     dr.Client(token=token, endpoint=endpoint)  # type: ignore
     name = kwargs.pop("name", None)
-    max_wait = kwargs.pop("max_wait", DEFAULT_MAX_WAIT)
+    max_wait = kwargs.pop("max_wait", dr.enums.DEFAULT_MAX_WAIT)
     if name is None:
         deployment = dr.Deployment.get(deployment_id)  # type: ignore
         name = f'{deployment.label}: "{prompt_column_name}" -> "{target_column_name}"'

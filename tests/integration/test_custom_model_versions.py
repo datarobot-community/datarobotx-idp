@@ -158,9 +158,9 @@ def test_get_or_create(
     assert len(model_ver_id_1)
 
     model_ver_id_2 = get_or_create_custom_model_version(
-        dr_endpoint,
-        dr_token,
-        custom_model,
+        endpoint=dr_endpoint,
+        token=dr_token,
+        custom_model_id=custom_model,
         base_environment_id=sklearn_drop_in_env,
         folder_path=folder_path_with_metadata_and_reqs,
     )
@@ -168,9 +168,9 @@ def test_get_or_create(
 
     # test that max_wait doesn't affect the hash
     model_ver_id_2_max_wait = get_or_create_custom_model_version(
-        dr_endpoint,
-        dr_token,
-        custom_model,
+        endpoint=dr_endpoint,
+        token=dr_token,
+        custom_model_id=custom_model,
         base_environment_id=sklearn_drop_in_env,
         folder_path=folder_path_with_metadata_and_reqs,
         max_wait=1000,
@@ -178,9 +178,9 @@ def test_get_or_create(
     assert model_ver_id_1 == model_ver_id_2_max_wait
 
     model_ver_id_3 = get_or_create_custom_model_version(
-        dr_endpoint,
-        dr_token,
-        custom_model,
+        endpoint=dr_endpoint,
+        token=dr_token,
+        custom_model_id=custom_model,
         base_environment_id=sklearn_drop_in_env,
         folder_path=folder_path_with_metadata_and_reqs,
         maximum_memory=4096 * 1024 * 1024,
@@ -188,9 +188,9 @@ def test_get_or_create(
     assert model_ver_id_1 != model_ver_id_3
 
     model_ver_id_4 = get_or_create_custom_model_version(
-        dr_endpoint,
-        dr_token,
-        custom_model,
+        endpoint=dr_endpoint,
+        token=dr_token,
+        custom_model_id=custom_model,
         base_environment_id=sklearn_drop_in_env,
         folder_path=folder_path_with_metadata_and_reqs,
         runtime_parameter_values=pythonic_runtime_parameters,
