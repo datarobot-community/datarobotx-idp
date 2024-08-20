@@ -18,6 +18,7 @@ from typing import Any, Dict, List, Optional, Union
 import datarobot as dr
 
 from datarobotx.idp.common.hashing import get_hash
+from datarobotx.idp import DEFAULT_MAX_WAIT
 
 try:
     from datarobot.models.runtime_parameters import RuntimeParameterValue
@@ -86,7 +87,7 @@ def _get_or_create(
 
     dr.Client(token=token, endpoint=endpoint)  # type: ignore
     folder_path = kwargs.pop("folder_path", None)
-    max_wait = kwargs.pop("max_wait", 20 * 60)
+    max_wait = kwargs.pop("max_wait", DEFAULT_MAX_WAIT)
     model_version_token = get_hash(
         Path(folder_path) if folder_path is not None else None,
         custom_model_id,
