@@ -15,15 +15,13 @@ import time
 from typing import Any, Tuple, Union
 
 import datarobot as dr
+from datarobot.models.genai.custom_model_llm_validation import CustomModelLLMValidation
 
-try:
-    from datarobot.models.genai.custom_model_llm_validation import CustomModelLLMValidation
-except ImportError as e:
-    raise ImportError("datarobot>=3.4.0 is required for CustomModelLLMValidation support") from e
+from datarobotx.idp import DEFAULT_MAX_WAIT
 
 
 def _find_existing_validation(
-    timeout_secs: int,
+    max_wait: int,
     deployment_id: Union[str, dr.Deployment],  # type: ignore
     **kwargs: Any,
 ) -> Tuple[str, str]:
@@ -42,7 +40,7 @@ def _find_existing_validation(
             return str(validation.id), "GET"
         elif validation_status in ["FAILED", "PASSED"]:
             return str(validation.id), "PATCH"
-        elif waited_secs > timeout_secs:
+        elif waited_secs > max_wait:
             raise TimeoutError("Timed out waiting for LLM validation to finish validating.")
         time.sleep(3)
         waited_secs += 3
@@ -78,13 +76,14 @@ def get_update_or_create_custom_model_llm_validation(
     """
     dr.Client(token=token, endpoint=endpoint)  # type: ignore
     name = kwargs.pop("name", None)
+    max_wait = kwargs.pop("max_wait", DEFAULT_MAX_WAIT)
     if name is None:
         deployment = dr.Deployment.get(deployment_id)  # type: ignore
         name = f'{deployment.label}: "{prompt_column_name}" -> "{target_column_name}"'
 
     try:
         existing_id, status = _find_existing_validation(
-            timeout_secs=600,
+            max_wait=max_wait,
             deployment_id=deployment_id,
             prompt_column_name=prompt_column_name,
             target_column_name=target_column_name,

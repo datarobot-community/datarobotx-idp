@@ -227,6 +227,16 @@ def test_get_or_create_from_leaderboard(
     )
     assert model_1 == model_2
 
+    # test that max_wait doesn't affect the hash
+    model_2_max_wait = get_or_create_registered_leaderboard_model_version(
+        dr_endpoint,
+        dr_token,
+        recommended_model,
+        registered_model_name.format(source="datarobot", i=1),
+        max_wait=1000,
+    )
+    assert model_1 == model_2_max_wait
+
     model_3 = get_or_create_registered_leaderboard_model_version(
         dr_endpoint,
         dr_token,

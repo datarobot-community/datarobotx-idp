@@ -165,6 +165,17 @@ def test_get_or_create_custom_model_llm_validation(
     )
     assert validation_id == validation_id_2
 
+    # test that max_wait doesn't affect hash
+    validation_id_2_max_wait = get_update_or_create_custom_model_llm_validation(
+        endpoint=dr_endpoint,
+        token=dr_token,
+        prompt_column_name="question",
+        target_column_name="answer",
+        deployment_id=deployment,
+        max_wait=1000,
+    )
+    assert validation_id == validation_id_2_max_wait
+
     # updates in place if validation for this deployment already exist
     validation_id_3 = get_update_or_create_custom_model_llm_validation(
         endpoint=dr_endpoint,

@@ -19,6 +19,7 @@ import requests
 import datarobot as dr
 from datarobot.rest import handle_http_error
 
+from datarobotx.idp import DEFAULT_MAX_WAIT
 from datarobotx.idp.common.hashing import get_hash
 
 
@@ -63,6 +64,7 @@ def get_or_create_deployment_from_registered_model_version(
     parameters and registered model version.
     """
     dr.Client(token=token, endpoint=endpoint)  # type: ignore[attr-defined]
+    max_wait = kwargs.pop("max_wait", DEFAULT_MAX_WAIT)
     deployment_token = get_hash(registered_model_version_id, label, **kwargs)
 
     try:
@@ -72,6 +74,7 @@ def get_or_create_deployment_from_registered_model_version(
         deployment = dr.Deployment.create_from_registered_model_version(  # type: ignore[attr-defined]
             registered_model_version_id,
             label,
+            max_wait=max_wait,
             **kwargs,
         )
         return str(deployment.id)
@@ -98,6 +101,7 @@ def get_replace_or_create_deployment_from_registered_model(
     model version is different from what is already deployed.
     """
     dr.Client(token=token, endpoint=endpoint)  # type: ignore[attr-defined]
+    max_wait = kwargs.pop("max_wait", DEFAULT_MAX_WAIT)
     deployment_token = get_hash(registered_model_name, label, **kwargs)
 
     try:
@@ -108,7 +112,9 @@ def get_replace_or_create_deployment_from_registered_model(
         ) = _lookup_registered_model_version(endpoint, token, curr_deployment_id)
         if registered_model_version_id != curr_registered_model_version_id:
             dr.Deployment.get(curr_deployment_id).perform_model_replace(  # type: ignore[attr-defined]
-                new_registered_model_version_id=registered_model_version_id, reason=reason
+                new_registered_model_version_id=registered_model_version_id,
+                reason=reason,
+                max_wait=max_wait,
             )
         return curr_deployment_id
     except KeyError:
@@ -116,6 +122,7 @@ def get_replace_or_create_deployment_from_registered_model(
         deployment = dr.Deployment.create_from_registered_model_version(  # type: ignore[attr-defined]
             registered_model_version_id,
             label,
+            max_wait=max_wait,
             **kwargs,
         )
         return str(deployment.id)

@@ -166,6 +166,17 @@ def test_get_or_create(
     )
     assert model_ver_id_1 == model_ver_id_2
 
+    # test that max_wait doesn't affect the hash
+    model_ver_id_2_max_wait = get_or_create_custom_model_version(
+        dr_endpoint,
+        dr_token,
+        custom_model,
+        base_environment_id=sklearn_drop_in_env,
+        folder_path=folder_path_with_metadata_and_reqs,
+        max_wait=1000,
+    )
+    assert model_ver_id_1 == model_ver_id_2_max_wait
+
     model_ver_id_3 = get_or_create_custom_model_version(
         dr_endpoint,
         dr_token,

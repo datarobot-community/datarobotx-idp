@@ -11,6 +11,7 @@
 # Released under the terms of DataRobot Tool and Utility Agreement.
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
+from copy import deepcopy
 import uuid
 
 import pandas as pd
@@ -194,6 +195,24 @@ def test_get_or_create_autopilot_run(
     )
 
     assert project_id_1 == project_id_2
+
+    analyze_and_model_config_max_wait = deepcopy(analyze_and_model_config)
+    analyze_and_model_config_max_wait["max_wait"] = 1234
+
+    project_id_2_max_wait = get_or_create_autopilot_run(
+        dr_endpoint,
+        dr_token,
+        "pytest autopilot",
+        dataset,
+        analyze_and_model_config=analyze_and_model_config_max_wait,
+        datetime_partitioning_config=datetime_partitioning_config,
+        feature_settings_config=feature_settings_config,
+        advanced_options_config=advanced_options_config,
+        use_case=use_case,
+        calendar_id=calendar_from_dataset,
+    )
+
+    assert project_id_1 == project_id_2_max_wait
 
     advanced_options_config["seed"] = 43
 

@@ -86,7 +86,7 @@ def _get_or_create(
 
     dr.Client(token=token, endpoint=endpoint)  # type: ignore
     folder_path = kwargs.pop("folder_path", None)
-
+    max_wait = kwargs.pop("max_wait", 20 * 60)
     model_version_token = get_hash(
         Path(folder_path) if folder_path is not None else None,
         custom_model_id,
@@ -111,7 +111,7 @@ def _get_or_create(
         env_version = create(
             custom_model_id,
             folder_path=folder_path,
-            max_wait=20 * 60,
+            max_wait=max_wait,
             runtime_parameter_values=runtime_parameter_values_objs,
             **kwargs,
         )
