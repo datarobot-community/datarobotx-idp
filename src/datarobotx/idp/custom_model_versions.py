@@ -17,8 +17,8 @@ from typing import Any, Dict, List, Optional, Union
 
 import datarobot as dr
 
-from datarobotx.idp.common.hashing import get_hash
 from datarobotx.idp import DEFAULT_MAX_WAIT
+from datarobotx.idp.common.hashing import get_hash
 
 try:
     from datarobot.models.runtime_parameters import RuntimeParameterValue
