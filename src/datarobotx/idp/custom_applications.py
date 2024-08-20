@@ -197,7 +197,12 @@ def get_replace_or_create_custom_app_from_env(
 
 
 def get_or_create_qanda_app(
-    endpoint: str, token: str, deployment_id: str, environment_id: str, name: str, **kwargs: Any
+    endpoint: str,
+    token: str,
+    deployment_id: str,
+    environment_id: str,
+    name: str,
+    **kwargs: Any,
 ) -> str:
     """Get or create a Q&A app.
 
@@ -235,7 +240,7 @@ def get_or_create_qanda_app(
     initial_resp = client.post(
         "customApplications/qanda/",
         json={"deploymentId": deployment_id, "environmentId": environment_id},
-    ).json()
+    )
 
     if not initial_resp:
         handle_http_error(initial_resp)
@@ -247,17 +252,19 @@ def get_or_create_qanda_app(
         max_wait=max_wait,
     )
 
+    res = initial_resp.json()
+
     client.patch(
-        f"customApplications/{initial_resp['id']}",
+        f"customApplications/{res['id']}",
         json={
             "name": f"{name} [{app_token}]",
         },
     )
     client.patch(
-        f"customApplicationSources/{initial_resp['customApplicationSourceId']}/",
+        f"customApplicationSources/{res['customApplicationSourceId']}/",
         json={
             "name": f"{name} [{app_token}]",
         },
     )
 
-    return str(initial_resp["id"])
+    return str(res["id"])
