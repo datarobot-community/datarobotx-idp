@@ -193,7 +193,7 @@ def get_replace_or_create_custom_app_from_env(
 
 
 def get_or_create_qanda_app(
-    endpoint: str, token: str, deployment_id: str, environment_id: str, name: str, **kwargs
+    endpoint: str, token: str, deployment_id: str, environment_id: str, name: str, **kwargs: Any
 ) -> str:
     """Get or create a Q&A app.
 
