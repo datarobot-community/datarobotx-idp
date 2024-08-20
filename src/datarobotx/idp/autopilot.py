@@ -172,6 +172,22 @@ def get_or_create_autopilot_run(
     """
     dr.Client(token=token, endpoint=endpoint)  # type: ignore[attr-defined]
 
+    # pull out arguments that are not relevant for hashing
+    max_wait_create_from_dataset = dr.enums.DEFAULT_MAX_WAIT
+    max_wait_analyze_and_model = dr.enums.DEFAULT_MAX_WAIT
+    worker_count_analyze_and_model = None
+
+    if create_from_dataset_config is not None:
+        max_wait_create_from_dataset = create_from_dataset_config.pop(
+            "max_wait", dr.enums.DEFAULT_MAX_WAIT
+        )
+
+    if analyze_and_model_config is not None:
+        max_wait_analyze_and_model = analyze_and_model_config.pop(
+            "max_wait", dr.enums.DEFAULT_MAX_WAIT
+        )
+        worker_count_analyze_and_model = analyze_and_model_config.pop("worker_count", None)
+
     project_config_token = get_hash(
         name,
         dataset_id,
@@ -207,7 +223,12 @@ def get_or_create_autopilot_run(
 
     project = dr.Project.get(  # type: ignore[attr-defined]
         get_or_create_project_from_dataset(
-            endpoint, token, project_name, dataset_id, **create_from_dataset_config
+            endpoint=endpoint,
+            token=token,
+            name=project_name,
+            dataset_id=dataset_id,
+            max_wait=max_wait_create_from_dataset,
+            **create_from_dataset_config,
         )
     )
 
@@ -219,6 +240,8 @@ def get_or_create_autopilot_run(
         )
 
     project.analyze_and_model(  # type: ignore
+        max_wait=max_wait_analyze_and_model,
+        worker_count=worker_count_analyze_and_model,
         **analyze_and_model_config,
     )
     project.wait_for_autopilot()

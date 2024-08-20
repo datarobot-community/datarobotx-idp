@@ -32,6 +32,7 @@ def _create_custom_app(
     **kwargs: Any,
 ) -> str:
     client = dr.Client(endpoint=endpoint, token=token)  # type: ignore[attr-defined]
+    max_wait = kwargs.pop("max_wait", dr.enums.DEFAULT_MAX_WAIT)
     body = {"name": name}
     if environment_id is not None:
         body["environmentId"] = environment_id
@@ -48,7 +49,7 @@ def _create_custom_app(
     app_url = wait_for_async_resolution(
         dr.Client(token=token, endpoint=endpoint),  # type: ignore[attr-defined]
         status_location,
-        max_wait=30 * 60,
+        max_wait=max_wait,
     )
     return str(app_url).split("/")[-2]
 
@@ -121,6 +122,9 @@ def get_replace_or_create_custom_app(
         If both environment_id and custom_application_source_version_id are provided or if neither is provided.
 
     """
+    # temporarily remove for hashing
+    max_wait = kwargs.pop("max_wait", None)
+
     # test if environment_id xor custom_application_source_version_id is provided
     if bool(environment_id) == bool(custom_application_source_version_id):
         raise ValueError(
@@ -143,6 +147,8 @@ def get_replace_or_create_custom_app(
     except KeyError:
         pass
 
+    if max_wait is not None:
+        kwargs["max_wait"] = max_wait
     return _create_custom_app(
         endpoint=endpoint,
         token=token,
@@ -191,11 +197,7 @@ def get_replace_or_create_custom_app_from_env(
 
 
 def get_or_create_qanda_app(
-    endpoint: str,
-    token: str,
-    deployment_id: str,
-    environment_id: str,
-    name: str,
+    endpoint: str, token: str, deployment_id: str, environment_id: str, name: str, **kwargs: Any
 ) -> str:
     """Get or create a Q&A app.
 
@@ -217,6 +219,7 @@ def get_or_create_qanda_app(
     str
         The ID of the Q&A app.
     """
+    max_wait = kwargs.pop("max_wait", dr.enums.DEFAULT_MAX_WAIT)
     app_token = get_hash(name, deployment_id, environment_id)
 
     client = dr.Client(endpoint=endpoint, token=token)  # type: ignore
@@ -229,22 +232,32 @@ def get_or_create_qanda_app(
     except:
         pass
 
-    quanda_app_response = client.post(
+    initial_resp = client.post(
         "customApplications/qanda/",
         json={"deploymentId": deployment_id, "environmentId": environment_id},
     ).json()
 
+    if not initial_resp:
+        handle_http_error(initial_resp)
+
+    status_location = initial_resp.headers["location"]
+    _ = wait_for_async_resolution(
+        dr.Client(token=token, endpoint=endpoint),  # type: ignore[attr-defined]
+        status_location,
+        max_wait=max_wait,
+    )
+
     client.patch(
-        f"customApplications/{quanda_app_response['id']}",
+        f"customApplications/{initial_resp['id']}",
         json={
             "name": f"{name} [{app_token}]",
         },
     )
     client.patch(
-        f"customApplicationSources/{quanda_app_response['customApplicationSourceId']}/",
+        f"customApplicationSources/{initial_resp['customApplicationSourceId']}/",
         json={
             "name": f"{name} [{app_token}]",
         },
     )
 
-    return str(quanda_app_response["id"])
+    return str(initial_resp["id"])

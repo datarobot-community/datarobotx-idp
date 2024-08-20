@@ -311,6 +311,15 @@ def test_get_or_create_from_app_source(
     )
     assert custom_app_id_1 == custom_app_id_2
 
+    custom_app_id_2_max_wait = get_replace_or_create_custom_app(
+        endpoint=dr_endpoint,
+        token=dr_token,
+        name=custom_app_name.format(i=1),
+        custom_application_source_version_id=custom_application_source_version,
+        max_wait=1000,
+    )
+    assert custom_app_id_1 == custom_app_id_2_max_wait
+
     custom_app_id_3 = get_replace_or_create_custom_app(
         endpoint=dr_endpoint,
         token=dr_token,

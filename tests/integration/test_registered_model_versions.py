@@ -42,9 +42,9 @@ def analyze_and_model_config():
 def use_case(dr_endpoint, dr_token, cleanup_dr):
     with cleanup_dr("useCases/"):
         yield get_or_create_use_case(
-            dr_endpoint,
-            dr_token,
-            "pytest use case #1",
+            endpoint=dr_endpoint,
+            token=dr_token,
+            name="pytest use case #1",
         )
 
 
@@ -63,9 +63,9 @@ def df():
 def dataset(dr_endpoint, dr_token, df, use_case, cleanup_dr):
     with cleanup_dr("datasets/", id_attribute="datasetId"):
         yield get_or_create_dataset_from_df(
-            dr_endpoint,
-            dr_token,
-            use_case_id=use_case,
+            endpoint=dr_endpoint,
+            token=dr_token,
+            use_cases=use_case,
             name="pytest_test_autopilot_dataset",
             data_frame=df,
         )
@@ -75,10 +75,10 @@ def dataset(dr_endpoint, dr_token, df, use_case, cleanup_dr):
 def autopilot_model(dr_endpoint, dr_token, use_case, dataset, analyze_and_model_config, cleanup_dr):
     with cleanup_dr("projects/", paginated=False):
         yield get_or_create_autopilot_run(
-            dr_endpoint,
-            dr_token,
-            "pytest autopilot",
-            dataset,
+            endpoint=dr_endpoint,
+            token=dr_token,
+            name="pytest autopilot",
+            dataset_id=dataset,
             analyze_and_model_config=analyze_and_model_config,
             use_case=use_case,
         )
@@ -93,8 +93,8 @@ def recommended_model(autopilot_model, cleanup_dr):
 def custom_model(cleanup_dr, dr_endpoint, dr_token):
     with cleanup_dr("customModels/"):
         yield get_or_create_custom_model(
-            dr_endpoint,
-            dr_token,
+            endpoint=dr_endpoint,
+            token=dr_token,
             name="pytest custom model",
             target_type="Regression",
             target_name="foo",
@@ -107,9 +107,9 @@ def custom_model_version(
 ):
     with cleanup_dr(f"customModels/{custom_model}/versions/"):
         yield get_or_create_custom_model_version(
-            dr_endpoint,
-            dr_token,
-            custom_model,
+            endpoint=dr_endpoint,
+            token=dr_token,
+            custom_model_id=custom_model,
             base_environment_id=sklearn_drop_in_env,
             folder_path=folder_path,
         )
@@ -135,18 +135,18 @@ def test_get_or_create_from_custom_model(
     dr_endpoint, dr_token, cleanup_registered_models, custom_model_version, registered_model_name
 ):
     model_1 = get_or_create_registered_custom_model_version(
-        dr_endpoint,
-        dr_token,
-        custom_model_version,
-        registered_model_name.format(source="custom", i=1),
+        endpoint=dr_endpoint,
+        token=dr_token,
+        custom_model_version_id=custom_model_version,
+        registered_model_name=registered_model_name.format(source="custom", i=1),
     )
     assert len(model_1)
 
     model_2 = get_or_create_registered_custom_model_version(
-        dr_endpoint,
-        dr_token,
-        custom_model_version,
-        registered_model_name.format(source="custom", i=1),
+        endpoint=dr_endpoint,
+        token=dr_token,
+        custom_model_version_id=custom_model_version,
+        registered_model_name=registered_model_name.format(source="custom", i=1),
     )
     assert model_1 == model_2
 
@@ -159,10 +159,10 @@ def test_get_or_create_from_custom_model(
     assert model_1 != model_3
 
     model_4 = get_or_create_registered_custom_model_version(
-        dr_endpoint,
-        dr_token,
-        custom_model_version,
-        registered_model_name.format(source="custom", i=2),
+        endpoint=dr_endpoint,
+        token=dr_token,
+        custom_model_version_id=custom_model_version,
+        registered_model_name=registered_model_name.format(source="custom", i=2),
         description="New description",
     )
     assert model_3 != model_4
@@ -181,29 +181,38 @@ def test_get_or_create_external(
     registered_external_model_name = registered_model_name.format(source="external", i=1)
 
     model_1 = get_or_create_registered_external_model_version(
-        dr_endpoint,
-        dr_token,
-        "pytest external registered model version #1",
-        external_model_target,
-        registered_external_model_name,
+        endpoint=dr_endpoint,
+        token=dr_token,
+        name="pytest external registered model version #1",
+        target=external_model_target,
+        registered_model_name=registered_external_model_name,
     )
     assert len(model_1)
 
     model_2 = get_or_create_registered_external_model_version(
-        dr_endpoint,
-        dr_token,
-        "pytest external registered model version #1",
-        external_model_target,
-        registered_external_model_name,
+        endpoint=dr_endpoint,
+        token=dr_token,
+        name="pytest external registered model version #1",
+        target=external_model_target,
+        registered_model_name=registered_external_model_name,
     )
     assert model_1 == model_2
+    model_2_max_wait = get_or_create_registered_external_model_version(
+        endpoint=dr_endpoint,
+        token=dr_token,
+        name="pytest external registered model version #1",
+        target=external_model_target,
+        registered_model_name=registered_external_model_name,
+        max_wait=1234,
+    )
+    assert model_1 == model_2_max_wait
 
     model_3 = get_or_create_registered_external_model_version(
-        dr_endpoint,
-        dr_token,
-        "pytest external registered model version #2",
-        external_model_target,
-        registered_external_model_name,
+        endpoint=dr_endpoint,
+        token=dr_token,
+        name="pytest external registered model version #2",
+        target=external_model_target,
+        registered_model_name=registered_external_model_name,
     )
     assert model_1 != model_3
 
@@ -212,25 +221,35 @@ def test_get_or_create_from_leaderboard(
     dr_endpoint, dr_token, cleanup_registered_models, recommended_model, registered_model_name
 ):
     model_1 = get_or_create_registered_leaderboard_model_version(
-        dr_endpoint,
-        dr_token,
-        recommended_model,
-        registered_model_name.format(source="datarobot", i=1),
+        endpoint=dr_endpoint,
+        token=dr_token,
+        model_id=recommended_model,
+        registered_model_name=registered_model_name.format(source="datarobot", i=1),
     )
     assert len(model_1)
 
     model_2 = get_or_create_registered_leaderboard_model_version(
-        dr_endpoint,
-        dr_token,
-        recommended_model,
-        registered_model_name.format(source="datarobot", i=1),
+        endpoint=dr_endpoint,
+        token=dr_token,
+        model_id=recommended_model,
+        registered_model_name=registered_model_name.format(source="datarobot", i=1),
     )
     assert model_1 == model_2
 
+    # test that max_wait doesn't affect the hash
+    model_2_max_wait = get_or_create_registered_leaderboard_model_version(
+        endpoint=dr_endpoint,
+        token=dr_token,
+        model_id=recommended_model,
+        registered_model_name=registered_model_name.format(source="datarobot", i=1),
+        max_wait=1000,
+    )
+    assert model_1 == model_2_max_wait
+
     model_3 = get_or_create_registered_leaderboard_model_version(
-        dr_endpoint,
-        dr_token,
-        recommended_model,
-        registered_model_name.format(source="datarobot", i=2),
+        endpoint=dr_endpoint,
+        token=dr_token,
+        model_id=recommended_model,
+        registered_model_name=registered_model_name.format(source="datarobot", i=2),
     )
     assert model_1 != model_3
