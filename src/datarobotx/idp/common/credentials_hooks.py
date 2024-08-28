@@ -42,9 +42,7 @@ class CredentialsHooks:
         """Validate credentials and add them to the catalog for node consumption."""
         self._validate_or_replace_credentials(conf_creds)
 
-        creds = get_feed_dict(
-            conf_creds, copy_dict_as=None, key_prefix="params:credentials."
-        )
+        creds = get_feed_dict(conf_creds, copy_dict_as=None, key_prefix="params:credentials.")
         catalog.add_feed_dict(creds)
 
     def _validate_or_replace_credentials(self, conf_creds: Dict[str, Any]) -> None:
@@ -86,6 +84,4 @@ class CredentialsHooks:
 
                 conf_creds["datarobot"]["api_token"] = client.token
                 conf_creds["datarobot"]["endpoint"] = client.endpoint
-                conf_creds["datarobot"][
-                    "prediction_environment_id"
-                ] = prediction_environment_id
+                conf_creds["datarobot"]["prediction_environment_id"] = prediction_environment_id
