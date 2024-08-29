@@ -13,6 +13,7 @@
 
 """Hashing utilities."""
 
+from datetime import date
 from hashlib import sha256
 import inspect
 import os

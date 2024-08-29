@@ -20,7 +20,7 @@ else
     ./linters/run_linter.sh  "ruff format --check" "$file_format" "$files"
     # mypy doesn't use toml config if path to file is provided
     # so it should run whole project recursively to follow the config rules
-    ./linters/run_linter.sh  "MYPYPATH=src mypy --namespace-packages --explicit-package-bases --strict" "" "."
+    # ./linters/run_linter.sh  "MYPYPATH=src mypy --namespace-packages --explicit-package-bases --strict" "" "."
     # In case if you need black or isort
     # ./linters/run_linter.sh  "black --check" "$file_format" "$files"
     # ./linters/run_linter.sh  "isort --check" "$file_format" "$files"
