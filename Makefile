@@ -41,7 +41,9 @@ lint-all: check-linter-image
 lint-changed: check-linter-image
 	sh ./linters/utils/diff.sh origin/main $(GIT_COMMIT) > changed-files.txt
 	docker run -v $(PWD):/workspace -w /workspace $(IMAGE) sh -c "chmod +x ./linters/lint.sh && ./linters/lint.sh changed-files.txt"
-	rm -rf changed-files.txt
+	rm changed-files.txt
+	exit 0
+
 # Run specific linter
 lint-%: check-linter-image
 	docker run --rm -v $(PWD):/workspace -w /workspace $(IMAGE) ./linters/lint_$*.sh
