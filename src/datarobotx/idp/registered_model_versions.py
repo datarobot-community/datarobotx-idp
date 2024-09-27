@@ -24,7 +24,7 @@ from datarobotx.idp.common.hashing import get_hash
 
 
 def _find_existing_registered_model(registered_model_name: str) -> RegisteredModel:
-    for model in dr.RegisteredModel.list():  # type: ignore[attr-defined]
+    for model in dr.RegisteredModel.list(search=registered_model_name):  # type: ignore[attr-defined]
         if model.name == registered_model_name:
             return model
     raise KeyError("No matching registered model found")
