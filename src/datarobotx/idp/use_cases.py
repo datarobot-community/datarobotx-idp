@@ -17,7 +17,7 @@ import datarobot as dr
 
 
 def _find_existing_use_case(**kwargs: Any) -> str:
-    for use_case in dr.UseCase.list():  # type: ignore[attr-defined]
+    for use_case in dr.UseCase.list(search_params={"search": kwargs["name"]}):  # type: ignore[attr-defined]
         if all([getattr(use_case, key) == kwargs[key] for key in kwargs]):
             return str(use_case.id)
     raise KeyError("No matching use case found")
