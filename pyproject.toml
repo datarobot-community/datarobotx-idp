@@ -1,8 +1,19 @@
 [project]
 name = "datarobotx-idp"
-version = "0.2.0-alpha"
+version = "0.2.10"
 requires-python = ">=3.8"
 dynamic = ["dependencies", "optional-dependencies"]
+description = "Suite of utilities for idempotent creation of DataRobot assets"
+readme = "README.md"
+keywords = ["datarobot", "idempotent", "utilities"]
+license = { file = "LICENSE" }
+classifiers = [
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+]
+
+[project.urls]
+Homepage = "https://github.com/datarobot-community/datarobotx-idp"
 
 [build-system]
 requires = ["setuptools >= 65.5.0", "wheel>=0.42.0"]
@@ -48,3 +59,25 @@ module = [
     "requests_toolbelt"
 ]
 ignore_missing_imports = true
+
+[tool.bumpver]
+current_version = "2024.1001-alpha"
+version_pattern = "YYYY.BUILD[-TAG]"
+commit_message = "bump version {old_version} -> {new_version}"
+tag_message = "{new_version}"
+tag_scope = "default"
+pre_commit_hook = ""
+post_commit_hook = ""
+commit = true
+tag = true
+push = true
+
+[tool.bumpver.file_patterns]
+"pyproject.toml" = [
+    'current_version = "{version}"',
+]
+"README.md" = [
+    "{version}",
+    "{pep440_version}",
+]
+

@@ -7,3 +7,4 @@ types-requests==2.31.0
 pandas-stubs<=2.1.5
 kedro==0.19.5
 kedro-datasets==3.0.0
+bumpver==2023.1129
