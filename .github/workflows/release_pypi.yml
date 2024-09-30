@@ -1,9 +1,6 @@
 name: "Release PyPI"
 
-on:
-  push:
-    tags:
-      - v*.*.*
+on: ["push"]
 
 jobs:
   publish-to-test-pypi:
