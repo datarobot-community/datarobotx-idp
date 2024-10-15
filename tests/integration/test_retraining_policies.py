@@ -114,7 +114,7 @@ def deployment_id(
     cleanup_dr,
     registered_model_version,
     registered_model_name,
-    default_prediction_server_id,
+    prediction_environment_id,
     dr_endpoint,
     dr_token,
 ):
@@ -124,11 +124,13 @@ def deployment_id(
             token=dr_token,
             registered_model_version_id=registered_model_version,
             label=registered_model_name,
-            default_prediction_server_id=default_prediction_server_id,
+            prediction_environment_id=prediction_environment_id,
         )
 
 
-def test_retraining_policy(dr_endpoint, dr_token, deployment_id, dataset):
+def test_retraining_policy(
+    dr_endpoint, dr_token, deployment_id, dataset, prediction_environment_id
+):
     # Can we create policy
     retraining_id_1 = get_update_or_create_retraining_policy(
         endpoint=dr_endpoint,
@@ -136,6 +138,7 @@ def test_retraining_policy(dr_endpoint, dr_token, deployment_id, dataset):
         deployment_id=deployment_id,
         name="post_test",
         dataset_id=dataset,
+        prediction_environment_id=prediction_environment_id,
         featureListStrategy="same_as_champion",
     )
 
@@ -146,6 +149,7 @@ def test_retraining_policy(dr_endpoint, dr_token, deployment_id, dataset):
         deployment_id=deployment_id,
         name="post_test",
         dataset_id=dataset,
+        prediction_environment_id=prediction_environment_id,
         featureListStrategy="informative_features",
     )
     assert retraining_id_1 == retraining_id_2
@@ -164,6 +168,7 @@ def test_retraining_policy(dr_endpoint, dr_token, deployment_id, dataset):
         deployment_id=deployment_id,
         name="idempotency test (no changes in API background)",
         dataset_id=dataset,
+        prediction_environment_id=prediction_environment_id,
     )
 
     retraining_response_1 = client.get(
@@ -176,6 +181,7 @@ def test_retraining_policy(dr_endpoint, dr_token, deployment_id, dataset):
         deployment_id=deployment_id,
         name="idempotency test (no changes in API background)",
         dataset_id=dataset,
+        prediction_environment_id=prediction_environment_id,
     )
 
     retraining_response_2 = client.get(
@@ -212,6 +218,7 @@ def test_retraining_policy(dr_endpoint, dr_token, deployment_id, dataset):
         deployment_id=deployment_id,
         name="Full Retraining Policy",
         dataset_id=dataset,
+        prediction_environment_id=prediction_environment_id,
         trigger=trigger,
         autopilotOptions=autopilotOptions,
         featureListStrategy=featureListStrategy,

@@ -15,6 +15,7 @@
 
 from hashlib import sha256
 import os
+import uuid
 
 import pytest
 
@@ -56,6 +57,28 @@ def dr_endpoint():
 def default_prediction_server_id():
     """DR prediction server id."""
     return "5f06612df1740600260aca72"
+
+
+@pytest.fixture()
+def serverless_prediction_environment():
+    short_uuid = str(uuid.uuid4())[:5]
+    import datarobot as dr
+
+    prediction_environment = dr.PredictionEnvironment.create(
+        platform=dr.enums.PredictionEnvironmentPlatform.DATAROBOT_SERVERLESS,
+        name=f"pytest {short_uuid}",
+    )
+    return prediction_environment.id
+
+
+@pytest.fixture(params=["serverless", "dpe"])
+def prediction_environment_id(
+    request, serverless_prediction_environment, default_prediction_server_id
+):
+    if request.param == "serverless":
+        return serverless_prediction_environment
+    else:
+        return default_prediction_server_id
 
 
 @pytest.fixture

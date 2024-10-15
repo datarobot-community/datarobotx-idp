@@ -22,17 +22,22 @@ def _check_response(response: Any) -> None:
 
 
 def _configure_retraining_settings(
-    dataset_id: str, deployment_id: str, client: Any, credential_id: Optional[str] = None
+    dataset_id: str,
+    deployment_id: str,
+    client: Any,
+    credential_id: Optional[str] = None,
+    prediction_environment_id: Optional[str] = None,
 ) -> None:
-    deployment: dr.Deployment = dr.Deployment.get(deployment_id=deployment_id)  # type: ignore
-    prediction_env_id = deployment.default_prediction_server["id"]
+    if prediction_environment_id is None:
+        deployment: dr.Deployment = dr.Deployment.get(deployment_id=deployment_id)  # type: ignore
+        prediction_environment_id = deployment.default_prediction_server["id"]
 
     user_info = client.request(method="GET", url="account/info")
     retraining_user_id = json.loads(user_info.text)["uid"]
 
     get_payload = {
         "datasetId": dataset_id,
-        "predictionEnvironmentId": prediction_env_id,
+        "predictionEnvironmentId": prediction_environment_id,
         "retrainingUserId": retraining_user_id,
     }
 
@@ -40,7 +45,9 @@ def _configure_retraining_settings(
         get_payload["credentialId"] = credential_id
 
     settings_response = client.request(
-        method="PATCH", url=f"deployments/{deployment_id}/retrainingSettings", json=get_payload
+        method="PATCH",
+        url=f"deployments/{deployment_id}/retrainingSettings",
+        json=get_payload,
     )
     _check_response(settings_response)
 
@@ -83,6 +90,7 @@ def get_update_or_create_retraining_policy(
     deployment_id: str,
     name: str,
     dataset_id: Optional[str] = None,
+    prediction_environment_id: Optional[str] = None,
     **kwargs: Any,
 ) -> str:
     """Update or create a retraining policy for a model deployment.
@@ -111,7 +119,13 @@ def get_update_or_create_retraining_policy(
     credential_id = kwargs.pop("credential_id", None)
 
     if dataset_id:
-        _configure_retraining_settings(dataset_id, deployment_id, client, credential_id)
+        _configure_retraining_settings(
+            dataset_id=dataset_id,
+            deployment_id=deployment_id,
+            client=client,
+            credential_id=credential_id,
+            prediction_environment_id=prediction_environment_id,
+        )
 
     policy_payload_to_upload = {"name": name, **kwargs}
 
