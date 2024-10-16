@@ -68,7 +68,8 @@ def serverless_prediction_environment():
         platform=dr.enums.PredictionEnvironmentPlatform.DATAROBOT_SERVERLESS,
         name=f"pytest {short_uuid}",
     )
-    return prediction_environment.id
+    yield prediction_environment.id
+    prediction_environment.delete()
 
 
 @pytest.fixture(params=["serverless", "dpe"])
