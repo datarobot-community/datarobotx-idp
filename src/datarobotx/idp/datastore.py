@@ -20,7 +20,7 @@ import datarobot as dr
 
 
 def _find_existing_datastore(canonical_name: str) -> str:
-    dss = dr.DataStore.list()  # type: ignore
+    dss = dr.DataStore.list(typ="all")  # type: ignore
     datastore = [
         ds for ds in dss if ds.canonical_name is not None and ds.canonical_name == canonical_name
     ][0]
