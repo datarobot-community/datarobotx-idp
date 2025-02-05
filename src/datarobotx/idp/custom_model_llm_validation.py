@@ -91,11 +91,12 @@ def get_update_or_create_custom_model_llm_validation(
         if status == "PATCH":
             validation = CustomModelLLMValidation.get(existing_id)
             validation.update(
+                name=name,
                 prompt_column_name=prompt_column_name,
                 target_column_name=target_column_name,
                 deployment=deployment_id,
-                name=name,
-                **kwargs,
+                model=kwargs.get("model", None),
+                prediction_timeout=kwargs.get("prediction_timeout", None),
             )
             try:
                 validation.revalidate(validation.id)
