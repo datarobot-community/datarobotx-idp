@@ -32,6 +32,8 @@ TRUNCATE_HASH_TO = 7
 
 _NONE_REPRESENTATION = 0xFCA86420
 
+ALLOWED_FILE_TYPES = [".zip", ".py", ".java", ".js", ".ts", ".tar.gz", ".tar", ".json", ".yaml", ".txt", ".csv"]
+
 
 def int_to_bytes(number: int) -> bytes:
     """Get bytes representation of an int.
@@ -52,6 +54,10 @@ def get_hash(*args: Any, **kwargs: Any) -> str:
         elif arg is None:
             arg = int_to_bytes(_NONE_REPRESENTATION)
         elif isinstance(arg, str):
+            for t in ALLOWED_FILE_TYPES:
+                if t in arg:
+                    if Path(arg).exists():
+                        arg = get_hash(Path(arg))
             arg = arg.encode("utf-8")
         elif isinstance(arg, int):
             arg = int_to_bytes(arg)
@@ -81,7 +87,6 @@ def get_hash(*args: Any, **kwargs: Any) -> str:
                         for chunk in iter(lambda: f.read(8192), b""):
                             arg = get_hash(chunk, arg)
             arg = arg.encode("utf-8")
-
         elif callable(arg):
             arg = inspect.getsource(arg).encode("utf-8")
         elif isinstance(arg, pd.DataFrame):
