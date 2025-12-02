@@ -11,6 +11,7 @@
 # Released under the terms of DataRobot Tool and Utility Agreement.
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
+import asyncio
 from typing import Any
 
 import datarobot as dr
@@ -24,21 +25,39 @@ def _find_existing_project(project_name: str, dataset_id: str, dataset_version_i
     raise KeyError("No matching project found")
 
 
-def get_or_create_project_from_dataset(
+async def get_or_create_project_from_dataset_async(
     endpoint: str, token: str, name: str, dataset_id: str, **kwargs: Any
 ) -> str:
-    """Get or create a new project with requested parameters."""
-    dr.Client(token=token, endpoint=endpoint)  # type: ignore[attr-defined]
+    """Get or create a new project with requested parameters (async version)."""
+    # Run dr.Client initialization in thread to avoid blocking
+    await asyncio.to_thread(dr.Client, token=token, endpoint=endpoint)  # type: ignore[attr-defined]
     try:
         if "dataset_version_id" not in kwargs:
-            kwargs["dataset_version_id"] = dr.Dataset.get(dataset_id).version_id  # type: ignore[attr-defined]
-        return _find_existing_project(
+            # Run Dataset.get in thread to avoid blocking
+            dataset = await asyncio.to_thread(dr.Dataset.get, dataset_id)  # type: ignore[attr-defined]
+            kwargs["dataset_version_id"] = dataset.version_id
+        # Run project search in thread to avoid blocking
+        return await asyncio.to_thread(
+            _find_existing_project,
             project_name=name,
             dataset_id=dataset_id,
             dataset_version_id=kwargs["dataset_version_id"],
         )
     except KeyError:
-        project: Project = dr.Project.create_from_dataset(  # type: ignore[attr-defined]
-            dataset_id=dataset_id, project_name=name, **kwargs
+        # Run project creation in thread to avoid blocking
+        project: Project = await asyncio.to_thread(
+            dr.Project.create_from_dataset,  # type: ignore[attr-defined]
+            dataset_id=dataset_id,
+            project_name=name,
+            **kwargs,
         )
         return str(project.id)
+
+
+def get_or_create_project_from_dataset(
+    endpoint: str, token: str, name: str, dataset_id: str, **kwargs: Any
+) -> str:
+    """Get or create a new project with requested parameters."""
+    return asyncio.run(
+        get_or_create_project_from_dataset_async(endpoint, token, name, dataset_id, **kwargs)
+    )
