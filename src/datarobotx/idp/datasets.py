@@ -13,6 +13,7 @@
 
 import asyncio
 from pathlib import Path
+import time
 from typing import Any, Optional
 
 import pandas as pd
@@ -60,7 +61,6 @@ def _find_existing_dataset(
                     break
                 elif waited_secs > timeout_secs:
                     raise TimeoutError("Timed out waiting for dataset to process.")
-                import time
                 time.sleep(3)
                 waited_secs += 3
 
