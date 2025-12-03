@@ -54,6 +54,20 @@ def get_or_create_project_from_dataset(
     endpoint: str, token: str, name: str, dataset_id: str, **kwargs: Any
 ) -> str:
     """Get or create a new project with requested parameters."""
-    return asyncio.run(
-        get_or_create_project_from_dataset_async(endpoint, token, name, dataset_id, **kwargs)
-    )
+    dr.Client(token=token, endpoint=endpoint)  # type: ignore[attr-defined]
+    try:
+        if "dataset_version_id" not in kwargs:
+            dataset = dr.Dataset.get(dataset_id)  # type: ignore[attr-defined]
+            kwargs["dataset_version_id"] = dataset.version_id
+        return _find_existing_project(
+            project_name=name,
+            dataset_id=dataset_id,
+            dataset_version_id=kwargs["dataset_version_id"],
+        )
+    except KeyError:
+        project: Project = dr.Project.create_from_dataset(  # type: ignore[attr-defined]
+            dataset_id=dataset_id,
+            project_name=name,
+            **kwargs,
+        )
+        return str(project.id)

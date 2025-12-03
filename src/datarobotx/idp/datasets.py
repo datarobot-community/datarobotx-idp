@@ -48,7 +48,23 @@ async def _find_existing_dataset_async(
 def _find_existing_dataset(
     timeout_secs: int, dataset_token: str, use_cases: Optional[UseCaseLike] = None
 ) -> str:
-    return asyncio.run(_find_existing_dataset_async(timeout_secs, dataset_token, use_cases))
+    datasets = Dataset.list(use_cases=use_cases)
+    for dataset in datasets:
+        if dataset_token in dataset.name:
+            waited_secs = 0
+            while True:
+                status = Dataset.get(dataset.id).processing_state
+                if status == "COMPLETED":
+                    return str(dataset.id)
+                elif status == "ERROR":
+                    break
+                elif waited_secs > timeout_secs:
+                    raise TimeoutError("Timed out waiting for dataset to process.")
+                import time
+                time.sleep(3)
+                waited_secs += 3
+
+    raise KeyError("No matching dataset found")
 
 
 def get_or_create_dataset_from_file(
@@ -125,9 +141,20 @@ def get_or_create_dataset_from_df(
     Records a checksum in the dataset name to allow future calls to this
     function to validate whether a desired dataset already exists
     """
-    return asyncio.run(
-        get_or_create_dataset_from_df_async(endpoint, token, name, data_frame, use_cases, **kwargs)
-    )
+    dr.Client(token=token, endpoint=endpoint)  # type: ignore
+    dataset_token = get_hash(name, data_frame, use_cases, **kwargs)
+
+    try:
+        return _find_existing_dataset(
+            timeout_secs=600, dataset_token=dataset_token, use_cases=use_cases
+        )
+    except KeyError:
+        dataset: Dataset = Dataset.create_from_in_memory_data(
+            data_frame=data_frame, use_cases=use_cases
+        )
+        # Dataset API does not have a description attribute (also not exposed in Workbench UI)
+        dataset.modify(name=f"{name} [{dataset_token}]")
+        return str(dataset.id)
 
 
 def get_or_create_dataset_from_datasource(
