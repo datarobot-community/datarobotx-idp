@@ -17,7 +17,10 @@ from typing import Any, Dict, List, Optional, Tuple
 import datarobot as dr
 
 from datarobotx.idp.common.hashing import get_hash
-from datarobotx.idp.projects import get_or_create_project_from_dataset_async
+from datarobotx.idp.projects import (
+    get_or_create_project_from_dataset,
+    get_or_create_project_from_dataset_async,
+)
 
 
 def _find_existing_project(project_config_token: str) -> Optional[str]:
@@ -142,7 +145,6 @@ async def _wait_for_autopilot_async(project_id: str, max_wait: int = 3600) -> No
     waited_secs = 0
 
     while waited_secs < max_wait:
-        # Run Project.get in thread to avoid blocking
         project = await asyncio.to_thread(dr.Project.get, project_id)  # type: ignore[attr-defined]
         if project.stage != "modeling":
             return
@@ -262,7 +264,6 @@ async def get_or_create_autopilot_run_async(
 
     project_name = f"{name} [{project_config_token}]"
 
-    # Use async version of get_or_create_project_from_dataset
     project_id_str = await get_or_create_project_from_dataset_async(
         endpoint=endpoint,
         token=token,
@@ -274,7 +275,6 @@ async def get_or_create_autopilot_run_async(
     project = await asyncio.to_thread(dr.Project.get, project_id_str)  # type: ignore[attr-defined]
 
     if user_defined_segment_id_columns is not None:
-        # Run segmentation task creation in thread to avoid blocking
         segmentation_task_id = await asyncio.to_thread(
             create_segmentation_task_id,
             str(project.id),
@@ -283,7 +283,6 @@ async def get_or_create_autopilot_run_async(
         )
         analyze_and_model_config["segmentation_task_id"] = segmentation_task_id
 
-    # Run analyze_and_model in thread to avoid blocking the event loop
     await asyncio.to_thread(
         project.analyze_and_model,
         max_wait=max_wait_analyze_and_model,
