@@ -11,6 +11,7 @@
 # Released under the terms of DataRobot Tool and Utility Agreement.
 # https://www.datarobot.com/wp-content/uploads/2021/07/DataRobot-Tool-and-Utility-Agreement.pdf
 
+import asyncio
 from copy import deepcopy
 import uuid
 
@@ -18,7 +19,10 @@ import pandas as pd
 import pytest
 
 import datarobot as dr
-from datarobotx.idp.autopilot import get_or_create_autopilot_run
+from datarobotx.idp.autopilot import (
+    get_or_create_autopilot_run,
+    get_or_create_autopilot_run_async,
+)
 import datarobotx.idp.common.hashing
 from datarobotx.idp.datasets import get_or_create_dataset_from_df
 from datarobotx.idp.use_cases import get_or_create_use_case
@@ -232,6 +236,91 @@ def test_get_or_create_autopilot_run(
     assert project_id_1 != project_id_3
 
 
+def test_get_or_create_autopilot_run_async(
+    dr_endpoint,
+    dr_token,
+    dataset,
+    analyze_and_model_config,
+    datetime_partitioning_config,
+    feature_settings_config,
+    advanced_options_config,
+    use_case,
+    calendar_from_dataset,
+    cleanup_projects,
+):
+    project_id_1 = asyncio.run(
+        get_or_create_autopilot_run_async(
+            dr_endpoint,
+            dr_token,
+            "pytest autopilot",
+            dataset,
+            analyze_and_model_config=analyze_and_model_config,
+            datetime_partitioning_config=datetime_partitioning_config,
+            feature_settings_config=feature_settings_config,
+            advanced_options_config=advanced_options_config,
+            use_case=use_case,
+            calendar_id=calendar_from_dataset,
+        )
+    )
+    assert len(project_id_1)
+
+    project_id_2 = asyncio.run(
+        get_or_create_autopilot_run_async(
+            dr_endpoint,
+            dr_token,
+            "pytest autopilot",
+            dataset,
+            analyze_and_model_config=analyze_and_model_config,
+            datetime_partitioning_config=datetime_partitioning_config,
+            feature_settings_config=feature_settings_config,
+            advanced_options_config=advanced_options_config,
+            use_case=use_case,
+            calendar_id=calendar_from_dataset,
+        )
+    )
+
+    assert project_id_1 == project_id_2
+
+    analyze_and_model_config_max_wait = deepcopy(analyze_and_model_config)
+    analyze_and_model_config_max_wait["max_wait"] = 1234
+
+    project_id_2_max_wait = asyncio.run(
+        get_or_create_autopilot_run_async(
+            dr_endpoint,
+            dr_token,
+            "pytest autopilot",
+            dataset,
+            analyze_and_model_config=analyze_and_model_config_max_wait,
+            datetime_partitioning_config=datetime_partitioning_config,
+            feature_settings_config=feature_settings_config,
+            advanced_options_config=advanced_options_config,
+            use_case=use_case,
+            calendar_id=calendar_from_dataset,
+        )
+    )
+
+    assert project_id_1 == project_id_2_max_wait
+
+    advanced_options_config["seed"] = 43
+
+    project_id_3 = asyncio.run(
+        get_or_create_autopilot_run_async(
+            dr_endpoint,
+            dr_token,
+            "pytest autopilot",
+            dataset,
+            analyze_and_model_config=analyze_and_model_config,
+            datetime_partitioning_config=datetime_partitioning_config,
+            feature_settings_config=feature_settings_config,
+            advanced_options_config=advanced_options_config,
+            use_case=use_case,
+            calendar_id=calendar_from_dataset,
+        )
+    )
+
+    assert project_id_1 != project_id_3
+
+
 def test_get_or_create_partly_configured_autopilot_run(
     dr_endpoint,
     dr_token,
@@ -251,5 +340,30 @@ def test_get_or_create_partly_configured_autopilot_run(
         analyze_and_model_config=analyze_and_model_config,
         datetime_partitioning_config=datetime_partitioning_config,
         advanced_options_config=advanced_options_config,
+    )
+    assert len(project_id)
+
+
+def test_get_or_create_partly_configured_autopilot_run_async(
+    dr_endpoint,
+    dr_token,
+    dataset,
+    analyze_and_model_config,
+    datetime_partitioning_config,
+    advanced_options_config,
+    mock_get_hash,
+    partly_configured_dr_project,
+    cleanup_projects,
+):
+    project_id = asyncio.run(
+        get_or_create_autopilot_run_async(
+            dr_endpoint,
+            dr_token,
+            "pytest partial",
+            dataset,
+            analyze_and_model_config=analyze_and_model_config,
+            datetime_partitioning_config=datetime_partitioning_config,
+            advanced_options_config=advanced_options_config,
+        )
     )
     assert len(project_id)

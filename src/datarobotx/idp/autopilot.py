@@ -131,8 +131,15 @@ def create_segmentation_task_id(
     return segmentation_task.id
 
 
-async def _wait_for_autopilot_async(project_id: str, max_wait: int = 3600) -> None:
+async def _wait_for_autopilot_async(
+    project_id: str,
+    max_wait: int = 3600,
+    check_interval: float = 20.0,
+    verbosity: int = 1,
+) -> None:
     """Wait for autopilot to complete using async polling.
+
+    Async version of project.wait_for_autopilot() that mimics its full logic.
 
     Parameters
     ----------
@@ -140,18 +147,48 @@ async def _wait_for_autopilot_async(project_id: str, max_wait: int = 3600) -> No
         The project ID to wait for
     max_wait : int
         Maximum time in seconds to wait for autopilot to complete
+    check_interval : float
+        The maximum time (in seconds) to wait between checks
+    verbosity : int
+        Verbosity level for progress reporting (0=silent, 1=verbose)
     """
-    check_interval = 20
-    waited_secs = 0
+    waited_secs = 0.0
 
-    while waited_secs < max_wait:
+    while max_wait is None or waited_secs < max_wait:
         project = await asyncio.to_thread(dr.Project.get, project_id)  # type: ignore[attr-defined]
-        if project.stage != "modeling":
+
+        status = await asyncio.to_thread(project.get_status)
+        if status["stage"] != dr.enums.PROJECT_STAGE.MODELING:
+            raise RuntimeError("The target has not been set, there is no autopilot running")
+
+        await asyncio.to_thread(project.refresh)
+
+        # Check project mode - 0=full, 1=semi, 2=manual, 3=quick, 4=comprehensive
+        if project.mode not in {0, 3, 4}:
+            raise RuntimeError(
+                "Autopilot mode is not full auto, quick or comprehensive, autopilot will not "
+                "complete on its own"
+            )
+
+        # Check if autopilot is done
+        if status.get("autopilot_done"):
             return
+
+        # Progress reporting similar to original implementation
+        if verbosity > 0:  # VERBOSITY_LEVEL.SILENT = 0
+            try:
+                num_inprogress, num_queued = await asyncio.to_thread(project._get_job_status_counts)
+                print(
+                    f"In progress: {num_inprogress}, queued: {num_queued} (waited: {waited_secs:.0f}s)"
+                )
+            except Exception:
+                # If job status check fails, continue without progress reporting
+                pass
+
         await asyncio.sleep(check_interval)
         waited_secs += check_interval
 
-    raise TimeoutError(f"Autopilot did not complete within {max_wait} seconds")
+    raise dr.errors.AsyncTimeoutError("Autopilot did not finish within timeout period")
 
 
 async def get_or_create_autopilot_run_async(
@@ -234,7 +271,7 @@ async def get_or_create_autopilot_run_async(
         project = await asyncio.to_thread(dr.Project.get, str(project_id_str))  # type: ignore[attr-defined]
         if project.stage == "modeling":
             # Make sure project is done
-            await _wait_for_autopilot_async(str(project.id), max_wait_analyze_and_model)
+            await _wait_for_autopilot_async(str(project.id), max_wait=max_wait_analyze_and_model)
             return project.id
     except KeyError:
         pass
@@ -276,7 +313,7 @@ async def get_or_create_autopilot_run_async(
         worker_count=worker_count_analyze_and_model,
         **analyze_and_model_config,
     )
-    await _wait_for_autopilot_async(str(project.id), max_wait_analyze_and_model)
+    await _wait_for_autopilot_async(str(project.id), max_wait=max_wait_analyze_and_model)
     return project.id
 
 
