@@ -396,7 +396,7 @@ def test_get_or_create_autopilot_run_no_wait_for_completion(
         wait_for_completion=False,
     )
     assert len(project_id)
-    
+
     # Verify the project exists and is in modeling stage
     project = dr.Project.get(project_id)
     assert project.stage == "modeling"
