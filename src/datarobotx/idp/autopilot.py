@@ -204,6 +204,7 @@ async def get_or_create_autopilot_run_async(
     use_case: Optional[str] = None,
     user_defined_segment_id_columns: Optional[List[str]] = None,
     calendar_id: Optional[str] = None,
+    wait_for_completion: Optional[bool] = True,
 ) -> Optional[str]:
     """Get or create a new project with requested parameters (async version).
 
@@ -233,6 +234,8 @@ async def get_or_create_autopilot_run_async(
         The column to use for segmented modeling (time series only), by default None
     calendar_id : str, optional
         The calendar id to use for the project, by default None
+    wait_for_completion : bool, optional
+        Whether to wait for autopilot to complete, by default True
     """
     # Run dr.Client initialization in thread to avoid blocking
     await asyncio.to_thread(dr.Client, token=token, endpoint=endpoint)  # type: ignore[attr-defined]
@@ -269,10 +272,10 @@ async def get_or_create_autopilot_run_async(
         # Run project search and get in thread to avoid blocking
         project_id_str = await asyncio.to_thread(_find_existing_project, project_config_token)
         project = await asyncio.to_thread(dr.Project.get, str(project_id_str))  # type: ignore[attr-defined]
-        if project.stage == "modeling":
+        if project.stage == "modeling" and wait_for_completion:
             # Make sure project is done
             await _wait_for_autopilot_async(str(project.id), max_wait=max_wait_analyze_and_model)
-            return project.id
+        return project.id
     except KeyError:
         pass
 
@@ -313,7 +316,8 @@ async def get_or_create_autopilot_run_async(
         worker_count=worker_count_analyze_and_model,
         **analyze_and_model_config,
     )
-    await _wait_for_autopilot_async(str(project.id), max_wait=max_wait_analyze_and_model)
+    if wait_for_completion:
+        await _wait_for_autopilot_async(str(project.id), max_wait=max_wait_analyze_and_model)
     return project.id
 
 
@@ -330,6 +334,7 @@ def get_or_create_autopilot_run(
     use_case: Optional[str] = None,
     user_defined_segment_id_columns: Optional[List[str]] = None,
     calendar_id: Optional[str] = None,
+    wait_for_completion: Optional[bool] = True,
 ) -> Optional[str]:
     """Get or create a new project with requested parameters.
 
@@ -359,6 +364,8 @@ def get_or_create_autopilot_run(
         The column to use for segmented modeling (time series only), by default None
     calendar_id : str, optional
         The calendar id to use for the project, by default None
+    wait_for_completion : bool, optional
+        Whether to wait for autopilot to complete, by default True
     """
     dr.Client(token=token, endpoint=endpoint)  # type: ignore[attr-defined]
 
@@ -392,10 +399,10 @@ def get_or_create_autopilot_run(
 
     try:
         project = dr.Project.get(str(_find_existing_project(project_config_token)))  # type: ignore[attr-defined]
-        if project.stage == "modeling":
+        if project.stage == "modeling" and wait_for_completion:
             # Make sure project is done
             project.wait_for_autopilot()
-            return project.id
+        return project.id
     except KeyError:
         pass
 
@@ -434,5 +441,6 @@ def get_or_create_autopilot_run(
         worker_count=worker_count_analyze_and_model,
         **analyze_and_model_config,
     )
-    project.wait_for_autopilot()
+    if wait_for_completion:
+        project.wait_for_autopilot()
     return project.id

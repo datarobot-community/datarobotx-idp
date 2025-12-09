@@ -367,3 +367,55 @@ def test_get_or_create_partly_configured_autopilot_run_async(
         )
     )
     assert len(project_id)
+
+
+def test_get_or_create_autopilot_run_no_wait_for_completion(
+    dr_endpoint,
+    dr_token,
+    dataset,
+    analyze_and_model_config,
+    datetime_partitioning_config,
+    feature_settings_config,
+    advanced_options_config,
+    use_case,
+    calendar_from_dataset,
+    cleanup_projects,
+):
+    # Test wait_for_completion=False for sync function
+    project_id = get_or_create_autopilot_run(
+        dr_endpoint,
+        dr_token,
+        "pytest autopilot no wait",
+        dataset,
+        analyze_and_model_config=analyze_and_model_config,
+        datetime_partitioning_config=datetime_partitioning_config,
+        feature_settings_config=feature_settings_config,
+        advanced_options_config=advanced_options_config,
+        use_case=use_case,
+        calendar_id=calendar_from_dataset,
+        wait_for_completion=False,
+    )
+    assert len(project_id)
+    
+    # Verify the project exists and is in modeling stage
+    project = dr.Project.get(project_id)
+    assert project.stage == "modeling"
+
+    # Test wait_for_completion=False for async function using same project
+    project_id_async = asyncio.run(
+        get_or_create_autopilot_run_async(
+            dr_endpoint,
+            dr_token,
+            "pytest autopilot no wait",  # Same name to reuse project
+            dataset,
+            analyze_and_model_config=analyze_and_model_config,
+            datetime_partitioning_config=datetime_partitioning_config,
+            feature_settings_config=feature_settings_config,
+            advanced_options_config=advanced_options_config,
+            use_case=use_case,
+            calendar_id=calendar_from_dataset,
+            wait_for_completion=False,
+        )
+    )
+    # Should return the same project ID since config is identical
+    assert project_id == project_id_async
