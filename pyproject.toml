@@ -1,18 +1,18 @@
 [project]
 name = "datarobotx-idp"
-version = "0.2.18"
+version = "0.2.19"
 requires-python = ">=3.10"
 description = "Suite of utilities for idempotent creation of DataRobot assets"
 readme = "README.md"
 keywords = ["datarobot", "idempotent", "utilities"]
 license = { file = "LICENSE" }
 classifiers = [
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
 ]
 dynamic = ["dependencies", "optional-dependencies"]
-authors = [{name = "DataRobot", email = "support@datarobot.com"}]
-maintainers = [{name = "DataRobot", email = "support@datarobot.com"}]
+authors = [{ name = "DataRobot", email = "support@datarobot.com" }]
+maintainers = [{ name = "DataRobot", email = "support@datarobot.com" }]
 
 
 [project.urls]
@@ -23,8 +23,8 @@ requires = ["setuptools >= 65.5.0", "wheel>=0.42.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
-optional-dependencies = {dev = { file = ["dev-requirements.txt"] }}
+dependencies = { file = ["requirements.txt"] }
+optional-dependencies = { dev = { file = ["dev-requirements.txt"] } }
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -57,8 +57,5 @@ exclude = [
 ]
 
 [[tool.mypy.overrides]]
-module = [
-    "fsspec",
-    "requests_toolbelt"
-]
+module = ["fsspec", "requests_toolbelt"]
 ignore_missing_imports = true
