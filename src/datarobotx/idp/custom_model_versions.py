@@ -189,5 +189,6 @@ def get_or_create_custom_model_version(
         token=token,
         custom_model_id=custom_model_id,
         runtime_parameter_values=runtime_parameter_values,
+        args_to_hash=kwargs.get("files", None), 
         **kwargs,
     )
