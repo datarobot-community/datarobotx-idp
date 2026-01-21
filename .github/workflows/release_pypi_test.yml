@@ -1,18 +1,15 @@
-name: "Release PyPI"
+name: "Release PyPI Test"
 
 on:
-  push:
-    tags:
-      - "v*.*.*"
   workflow_dispatch:
 
 jobs:
-  publish-to-pypi:
-    name: Upload release to PyPI
+  publish-to-test-pypi:
+    name: Upload release to PyPI Test
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/datarobotx-idp
+      url: https://test.pypi.org/p/datarobotx-idp
     permissions:
       id-token: write # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
@@ -30,4 +27,5 @@ jobs:
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          password: ${{ secrets.PYPI_PASSWORD }}
+          repository-url: https://test.pypi.org/legacy/
+          password: ${{ secrets.PYPI_TEST_PASSWORD }}
